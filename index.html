@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KolTigin — Mehmet Köl Tiğin</title>
+  <meta name="description" content="Biyolog, Anatolian Team kurucu ortağı, validator, node runner ve blockchain içerik üreticisi Mehmet Köl Tiğin.">
+  <link rel="shortcut icon" href="./assets/images/profile.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="./assets/css/style.css?v=align3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <main>
+
+    <aside class="sidebar" data-sidebar>
+
+      <div class="sidebar-info">
+
+        <figure class="avatar-box">
+          <img src="./assets/images/profile.jpg" alt="KolTigin" width="80">
+        </figure>
+
+        <div class="info-content">
+          <h1 class="name" title="Mehmet Köl Tiğin">KolTigin</h1>
+          <p class="title">Validator · İçerik · Araştırma</p>
+        </div>
+
+        <button class="info_more-btn" data-sidebar-btn>
+          <span>İletişim</span>
+          <ion-icon name="chevron-down"></ion-icon>
+        </button>
+
+      </div>
+
+      <div class="sidebar-info_more">
+
+        <div class="separator"></div>
+
+        <ul class="contacts-list">
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="globe-outline"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title">Web</p>
+              <a href="https://anatolianteam.com" class="contact-link" target="_blank" rel="noopener">anatolianteam.com</a>
+            </div>
+          </li>
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="logo-github"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title">GitHub</p>
+              <a href="https://github.com/koltigin" class="contact-link" target="_blank" rel="noopener">github.com/koltigin</a>
+            </div>
+          </li>
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="location-outline"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title">Konum</p>
+              <address>Türkiye</address>
+            </div>
+          </li>
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="calendar-outline"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title">Güncelleme</p>
+              <time datetime="2026-08-29" data-last-update>29 Ağustos 2026</time>
+            </div>
+          </li>
+
+        </ul>
+
+        <div class="separator"></div>
+
+        <ul class="social-list">
+          <li class="social-item">
+            <a href="https://github.com/koltigin" class="social-link" target="_blank" rel="noopener" aria-label="GitHub">
+              <ion-icon name="logo-github"></ion-icon>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://x.com/mkoltigin" class="social-link" target="_blank" rel="noopener" aria-label="X">
+              <ion-icon name="logo-twitter"></ion-icon>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://link3.to/koltigin" class="social-link" target="_blank" rel="noopener" aria-label="Link3">
+              <ion-icon name="link-outline"></ion-icon>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://medium.com/@koltigin" class="social-link" target="_blank" rel="noopener" aria-label="Medium">
+              <ion-icon name="newspaper-outline"></ion-icon>
+            </a>
+          </li>
+        </ul>
+
+      </div>
+
+    </aside>
+
+    <div class="main-content">
+
+      <nav class="navbar">
+        <ul class="navbar-list">
+          <li class="navbar-item">
+            <button class="navbar-link  active" data-nav-link data-nav-page="about" onclick="activatePage('about')">Hakkında</button>
+          </li>
+          <li class="navbar-item">
+            <button class="navbar-link" data-nav-link data-nav-page="resume" onclick="activatePage('resume')">Özgeçmiş</button>
+          </li>
+          <li class="navbar-item">
+            <button class="navbar-link" data-nav-link data-nav-page="portfolio" onclick="activatePage('portfolio')">Projeler</button>
+          </li>
+          <li class="navbar-item">
+            <button class="navbar-link" data-nav-link data-nav-page="blog" onclick="activatePage('blog')">Yazılar</button>
+          </li>
+          <li class="navbar-item">
+            <button class="navbar-link" data-nav-link data-nav-page="videos" onclick="activatePage('videos')">Videolar</button>
+          </li>
+          <li class="navbar-item">
+            <button class="navbar-link" data-nav-link data-nav-page="contact" onclick="activatePage('contact')">İletişim</button>
+          </li>
+        </ul>
+      </nav>
+
+      <article class="about active" data-page="about">
+        <header>
+          <h2 class="h2 article-title">Hakkında</h2>
+        </header>
+      </article>
+
+      <article class="resume" data-page="resume">
+        <header>
+          <h2 class="h2 article-title">Özgeçmiş</h2>
+        </header>
+      </article>
+
+      <article class="portfolio" data-page="portfolio">
+        <header>
+          <h2 class="h2 article-title">Projeler</h2>
+        </header>
+        <section class="projects">
+          <ul class="filter-list"></ul>
+          <div class="filter-select-box">
+            <button class="filter-select" data-select>
+              <div class="select-value" data-selecct-value>Kategori seç</div>
+              <div class="select-icon">
+                <ion-icon name="chevron-down"></ion-icon>
+              </div>
+            </button>
+            <ul class="select-list"></ul>
+          </div>
+          <ul class="project-list"></ul>
+        </section>
+      </article>
+
+      <article class="blog" data-page="blog">
+        <header>
+          <h2 class="h2 article-title">Yazılar</h2>
+        </header>
+        <section class="blog-posts">
+          <ul class="blog-posts-list"></ul>
+        </section>
+      </article>
+
+      <article class="videos" data-page="videos">
+        <header>
+          <h2 class="h2 article-title">Videolar</h2>
+        </header>
+        <section class="videos-list">
+          <ul class="videos-posts-list"></ul>
+        </section>
+      </article>
+
+      <article class="contact" data-page="contact"></article>
+
+    </div>
+
+  </main>
+
+  <script src="./assets/js/script.js"></script>
+  <script src="./assets/js/last-update.js"></script>
+  <script src="./assets/js/blog-parser.js"></script>
+  <script src="./assets/js/portfolio-parser.js"></script>
+  <script src="./assets/js/videos-parser-new.js"></script>
+  <script src="./assets/js/resume-parser.js"></script>
+  <script src="./assets/js/about-parser.js"></script>
+  <script src="./assets/js/contact-parser.js"></script>
+
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+</body>
+
+</html>

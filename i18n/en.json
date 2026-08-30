@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "about": "About",
+    "resume": "Resume",
+    "projects": "Projects",
+    "blog": "Writings",
+    "videos": "Videos",
+    "contact": "Contact"
+  },
+  "pages": {
+    "about": "About",
+    "resume": "Resume",
+    "projects": "Projects",
+    "projectsNav": "Project sections",
+    "blog": "Writings",
+    "writingsNav": "Writing categories",
+    "videos": "Videos",
+    "contact": "Contact",
+    "guide": "Guide"
+  },
+  "sidebar": {
+    "contact": "Contact",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "location": "Location",
+    "updated": "UPDATE"
+  },
+  "about": {
+    "loadError": "The about page could not be loaded."
+  },
+  "resume": {
+    "summary": "Summary",
+    "experience": "Experience",
+    "education": "Education",
+    "focus": "Focus Areas",
+    "tools": "Tools & Skills",
+    "loadError": "The resume could not be loaded."
+  },
+  "projects": {
+    "groups": {
+      "mainnet": "Mainnet",
+      "activeTestnets": "Active Testnets",
+      "depin": "DePIN",
+      "defi": "DeFi & Ecosystem",
+      "completedTestnets": "Completed Testnets"
+    },
+    "status": {
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "links": {
+      "website": "Website",
+      "explorer": "Explorer",
+      "github": "GitHub",
+      "gateway": "Gateway",
+      "setupGuide": "Setup Guide",
+      "link": "Link",
+      "referral": "Referral"
+    },
+    "formerly": "formerly {name}",
+    "logoAlt": "{name} logo",
+    "referralCode": "Referral Code:",
+    "copyReferral": "Copy referral code {code}",
+    "copied": "Copied",
+    "empty": "No projects to list yet.",
+    "loadError": "Could not load projects.json"
+  },
+  "writings": {
+    "filters": {
+      "all": "All",
+      "articles": "Articles",
+      "notes": "Technical Notes",
+      "social": "X Posts"
+    },
+    "card": {
+      "articles": "Article",
+      "notes": "Technical Note",
+      "social": "X Post",
+      "thread": "X Thread"
+    },
+    "read": "Read →",
+    "viewOnX": "View on X →",
+    "back": "Back to writings",
+    "empty": "No content in this category yet.",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "videos": {
+    "loading": "Loading videos...",
+    "empty": "No videos found.",
+    "loadError": "An error occurred while loading videos.",
+    "duration": "Duration: {duration}",
+    "loadMore": "Show More",
+    "untitled": "Video",
+    "close": "Close video",
+    "openYoutube": "Open on YouTube"
+  },
+  "guides": {
+    "back": "Back to projects",
+    "loading": "Loading guide…",
+    "loadError": "The guide could not be loaded.",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "contact": {
+    "title": "Contact",
+    "formTitle": "Message",
+    "labelName": "Name",
+    "labelEmail": "Email",
+    "labelMessage": "Message",
+    "placeholderName": "Name",
+    "placeholderEmail": "Email",
+    "placeholderMessage": "Message",
+    "submit": "Send",
+    "submitting": "Sending...",
+    "success": "Your message has been sent successfully.",
+    "error": "The message could not be sent. Please try again later.",
+    "mapTitle": "Eskişehir, Türkiye"
+  },
+  "common": {
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "skip": "Skip to content",
+  "lang": {
+    "label": "Language",
+    "en": "EN",
+    "tr": "TR",
+    "enName": "English",
+    "trName": "Turkish"
+  }
+}

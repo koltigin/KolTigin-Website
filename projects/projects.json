@@ -1,0 +1,610 @@
+{
+  "mainnet": [
+    {
+      "id": "redbelly-network",
+      "name": "Redbelly Network",
+      "role": "Node Operator",
+      "status": "active",
+      "summary": {
+        "tr": "Redbelly Network üzerinde aktif node operator olarak çalışıyorum.",
+        "en": "I operate as an active node operator on Redbelly Network."
+      },
+      "logo": "./assets/images/projects/redbelly.svg",
+      "links": [
+        { "label": "Website", "url": "https://redbelly.network" },
+        { "label": "Explorer", "url": "https://redbelly.routescan.io" }
+      ]
+    },
+    {
+      "id": "ario",
+      "name": "AR.IO",
+      "role": "Gateway",
+      "status": "active",
+      "summary": {
+        "tr": "AR.IO ağında aktif gateway operasyonu.",
+        "en": "Active gateway operations on the AR.IO network."
+      },
+      "logo": "./assets/images/projects/ario.svg",
+      "links": [
+        { "label": "Website", "url": "https://ar.io" },
+        { "label": "Gateway", "url": "https://gateways.ar.io/#/dashboard" }
+      ]
+    }
+  ],
+  "activeTestnets": [],
+  "depin": [
+    {
+      "id": "optimai",
+      "name": "OptimAI",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized AI infrastructure powered by distributed computing resources.",
+        "tr": "Dağıtık bilgi işlem kaynaklarıyla çalışan merkeziyetsiz yapay zeka altyapısı."
+      },
+      "logo": "./assets/images/projects/optimai.svg",
+      "links": [
+        { "label": "Website", "url": "https://optimai.network" }
+      ],
+      "referralUrl": "https://node.optimai.network/register?ref=18ADBAE8",
+      "referralCode": "18ADBAE8"
+    },
+    {
+      "id": "dawn",
+      "name": "DAWN",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized wireless network for community-powered internet connectivity.",
+        "tr": "Topluluk destekli internet bağlantısı için merkeziyetsiz kablosuz ağ."
+      },
+      "logo": "./assets/images/projects/dawn.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.dawninternet.com" }
+      ],
+      "referralUrl": "https://dashboard.dawninternet.com/referrals",
+      "referralCode": "qkwsxwcd"
+    },
+    {
+      "id": "nodepay",
+      "name": "Nodepay",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized network that turns unused internet bandwidth into AI infrastructure.",
+        "tr": "Kullanılmayan internet bant genişliğini yapay zeka altyapısına dönüştüren merkeziyetsiz ağ."
+      },
+      "logo": "./assets/images/projects/nodepay.svg",
+      "links": [
+        { "label": "Website", "url": "https://nodepay.ai" }
+      ],
+      "referralUrl": "https://nodepay.ai/ref/9vjkeqm9yv2xyxd",
+      "referralCode": "9vjkeqm9yv2xyxd"
+    },
+    {
+      "id": "aioz-depin",
+      "name": "AIOZ DePIN",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized infrastructure for storage, streaming and AI computing.",
+        "tr": "Depolama, yayın ve yapay zeka hesaplama için merkeziyetsiz altyapı."
+      },
+      "logo": "./assets/images/projects/aioz.svg",
+      "links": [
+        { "label": "Website", "url": "https://aioz.network" },
+        { "label": "Setup Guide", "url": "https://github.com/koltigin/AIOZ-DePIN-CLI", "guide": "aioz-depin" }
+      ]
+    },
+    {
+      "id": "aro",
+      "name": "ARO",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized edge network for bandwidth and distributed infrastructure.",
+        "tr": "Bant genişliği ve dağıtık altyapı için merkeziyetsiz uç ağı."
+      },
+      "logo": "./assets/images/projects/ARO.png",
+      "links": [
+        { "label": "Website", "url": "https://aro.network" }
+      ],
+      "referralUrl": "https://dashboard.aro.network/signup?referral=9KAG",
+      "referralCode": "9KAG"
+    },
+    {
+      "id": "grass",
+      "name": "Grass",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized network that turns unused internet bandwidth into AI training data.",
+        "tr": "Kullanılmayan internet bant genişliğini yapay zeka eğitim verisine dönüştüren merkeziyetsiz ağ."
+      },
+      "logo": "./assets/images/projects/grass-logomark.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.getgrass.io" }
+      ],
+      "referralUrl": "https://app.grass.io/register?referralCode=RzU60zUHMlGJc0P",
+      "referralCode": "RzU60zUHMlGJc0P"
+    },
+    {
+      "id": "teneo",
+      "name": "Teneo",
+      "status": "active",
+      "summary": {
+        "en": "Community-powered network for accessing and contributing real-time public data.",
+        "tr": "Gerçek zamanlı kamusal veriye erişim ve katkı için topluluk destekli ağ."
+      },
+      "logo": "./assets/images/projects/teneo.svg",
+      "links": [
+        { "label": "Website", "url": "https://teneo-protocol.ai" }
+      ],
+      "referralUrl": "https://hub.teneo.pro/signup?ref=ASTCWDL2",
+      "referralCode": "ASTCWDL2"
+    },
+    {
+      "id": "bless-network",
+      "name": "Bless Network",
+      "role": "Extension Node",
+      "status": "active",
+      "summary": {
+        "en": "Decentralized compute infrastructure powered by a browser extension that shares idle resources with the network.",
+        "tr": "Boştaki kaynakları ağla paylaşan bir tarayıcı eklentisiyle çalışan merkeziyetsiz hesaplama altyapısı."
+      },
+      "logo": "./assets/images/projects/Bless.svg",
+      "links": [
+        { "label": "Website", "url": "https://bless.network/" }
+      ],
+      "referralUrl": "https://bless.network/dashboard?ref=Y7ONRV",
+      "referralCode": "Y7ONRV"
+    }
+  ],
+  "completedTestnets": [
+    {
+      "id": "5ire",
+      "name": "5ire",
+      "status": "completed",
+      "logo": "./assets/images/projects/5ire.webp",
+      "links": [
+        { "label": "Website", "url": "https://www.5ire.org" }
+      ]
+    },
+    {
+      "id": "aleph-zero",
+      "name": "Aleph Zero",
+      "status": "completed",
+      "logo": "./assets/images/projects/AlephZero.svg",
+      "links": [
+        { "label": "Website", "url": "https://alephzero.org" }
+      ]
+    },
+    {
+      "id": "babylon",
+      "name": "Babylon",
+      "status": "completed",
+      "logo": "./assets/images/projects/Babylon.svg",
+      "links": [
+        { "label": "Website", "url": "https://babylonlabs.io" }
+      ]
+    },
+    {
+      "id": "base",
+      "name": "Base",
+      "status": "completed",
+      "logo": "./assets/images/projects/Base.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.base.org" }
+      ]
+    },
+    {
+      "id": "bifrost",
+      "name": "Bifrost",
+      "status": "completed",
+      "logo": "./assets/images/projects/Bifrost.png",
+      "links": [
+        { "label": "Website", "url": "https://bifrostnetwork.com" }
+      ]
+    },
+    {
+      "id": "irys",
+      "name": "Irys",
+      "formerName": "Bundlr",
+      "status": "completed",
+      "logo": "./assets/images/projects/Irys.svg",
+      "links": [
+        { "label": "Website", "url": "https://irys.xyz" }
+      ]
+    },
+    {
+      "id": "chain4energy",
+      "name": "Chain4Energy",
+      "status": "completed",
+      "logo": "./assets/images/projects/c4e.svg",
+      "links": [
+        { "label": "Website", "url": "https://c4e.io" }
+      ]
+    },
+    {
+      "id": "crowd-control",
+      "name": "Crowd Control",
+      "status": "completed",
+      "logo": "./assets/images/projects/crowdcontrol.png",
+      "links": [
+        { "label": "Website", "url": "https://crowdcontrol.network" }
+      ]
+    },
+    {
+      "id": "dymension",
+      "name": "Dymension",
+      "status": "completed",
+      "logo": "./assets/images/projects/dymension.png",
+      "links": [
+        { "label": "Website", "url": "https://dymension.xyz" }
+      ]
+    },
+    {
+      "id": "dusk",
+      "name": "Dusk",
+      "status": "completed",
+      "logo": "./assets/images/projects/dusk.svg",
+      "links": [
+        { "label": "Website", "url": "https://dusk.network" }
+      ]
+    },
+    {
+      "id": "exorde",
+      "name": "Exorde",
+      "status": "completed",
+      "logo": "./assets/images/projects/exordelabs.svg",
+      "links": [
+        { "label": "Website", "url": "https://exordelabs.com" }
+      ]
+    },
+    {
+      "id": "empowerchain",
+      "name": "EmpowerChain",
+      "status": "completed",
+      "logo": "./assets/images/projects/empower.png",
+      "links": [
+        { "label": "Website", "url": "https://empowerchain.io" }
+      ]
+    },
+    {
+      "id": "forta",
+      "name": "Forta",
+      "status": "completed",
+      "logo": "./assets/images/projects/forta.png",
+      "links": [
+        { "label": "Website", "url": "https://forta.org" }
+      ]
+    },
+    {
+      "id": "gitopia",
+      "name": "Gitopia",
+      "status": "completed",
+      "logo": "./assets/images/projects/gitopia.png",
+      "links": [
+        { "label": "Website", "url": "https://gitopia.com" }
+      ]
+    },
+    {
+      "id": "gora-network",
+      "name": "Gora Network",
+      "formerName": "Goracle",
+      "status": "completed",
+      "logo": "./assets/images/projects/goracle.png",
+      "links": [
+        { "label": "Website", "url": "https://www.gora.io" }
+      ]
+    },
+    {
+      "id": "humanode",
+      "name": "Humanode",
+      "status": "completed",
+      "logo": "./assets/images/projects/humanode.png",
+      "links": [
+        { "label": "Website", "url": "https://humanode.io" }
+      ]
+    },
+    {
+      "id": "inery",
+      "name": "Inery",
+      "status": "completed",
+      "logo": "./assets/images/projects/inery.svg",
+      "links": [
+        { "label": "Website", "url": "https://inery.io" }
+      ]
+    },
+    {
+      "id": "iron-fish",
+      "name": "Iron Fish",
+      "status": "completed",
+      "logo": "./assets/images/projects/ironfish.svg",
+      "links": [
+        { "label": "Website", "url": "https://ironfish.network" }
+      ]
+    },
+    {
+      "id": "manta-network",
+      "name": "Manta Network",
+      "status": "completed",
+      "logo": "./assets/images/projects/mantanetwork.png",
+      "links": [
+        { "label": "Website", "url": "https://manta.network" }
+      ]
+    },
+    {
+      "id": "mars-protocol",
+      "name": "Mars Protocol",
+      "status": "completed",
+      "logo": "./assets/images/projects/mars.svg"
+    },
+    {
+      "id": "massa",
+      "name": "Massa",
+      "status": "completed",
+      "logo": "./assets/images/projects/Massa.svg",
+      "links": [
+        { "label": "Website", "url": "https://massa.network" }
+      ]
+    },
+    {
+      "id": "minima",
+      "name": "Minima",
+      "status": "completed",
+      "logo": "./assets/images/projects/minima.svg",
+      "links": [
+        { "label": "Website", "url": "https://minima.global" }
+      ]
+    },
+    {
+      "id": "nibiru",
+      "name": "Nibiru",
+      "status": "completed",
+      "logo": "./assets/images/projects/nibiru.svg",
+      "links": [
+        { "label": "Website", "url": "https://nibiru.fi" }
+      ]
+    },
+    {
+      "id": "nulink",
+      "name": "NuLink",
+      "status": "completed",
+      "logo": "./assets/images/projects/nulink.png",
+      "links": [
+        { "label": "Website", "url": "https://www.nulink.org" }
+      ]
+    },
+    {
+      "id": "lumoz",
+      "name": "Lumoz",
+      "formerName": "OPSide",
+      "status": "completed",
+      "logo": "./assets/images/projects/opside.png",
+      "links": [
+        { "label": "Website", "url": "https://lumoz.org" }
+      ]
+    },
+    {
+      "id": "paloma",
+      "name": "Paloma",
+      "status": "completed",
+      "logo": "./assets/images/projects/Paloma.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.palomachain.com" }
+      ]
+    },
+    {
+      "id": "penumbra",
+      "name": "Penumbra",
+      "status": "completed",
+      "logo": "./assets/images/projects/Penumbra.svg",
+      "links": [
+        { "label": "Website", "url": "https://penumbra.zone" }
+      ]
+    },
+    {
+      "id": "q-blockchain",
+      "name": "Q Blockchain",
+      "status": "completed",
+      "logo": "./assets/images/projects/QBlockchain.png",
+      "links": [
+        { "label": "Website", "url": "https://q.org" }
+      ]
+    },
+    {
+      "id": "quasar",
+      "name": "Quasar",
+      "status": "completed",
+      "logo": "./assets/images/projects/quasar.png",
+      "links": [
+        { "label": "Website", "url": "https://quasar.fi" }
+      ]
+    },
+    {
+      "id": "quicksilver",
+      "name": "Quicksilver",
+      "status": "completed",
+      "logo": "./assets/images/projects/quicksilver.png",
+      "links": [
+        { "label": "Website", "url": "https://quicksilver.zone" }
+      ]
+    },
+    {
+      "id": "razor",
+      "name": "Razor",
+      "status": "completed",
+      "logo": "./assets/images/projects/razor.png",
+      "links": [
+        { "label": "Website", "url": "https://razor.network" }
+      ]
+    },
+    {
+      "id": "rebus",
+      "name": "Rebus",
+      "status": "completed",
+      "logo": "./assets/images/projects/rebus.svg",
+      "links": [
+        { "label": "Website", "url": "https://rebuschain.com" }
+      ]
+    },
+    {
+      "id": "shardeum",
+      "name": "Shardeum",
+      "status": "completed",
+      "logo": "./assets/images/projects/shardeum.png",
+      "links": [
+        { "label": "Website", "url": "https://shardeum.org" }
+      ]
+    },
+    {
+      "id": "stafi",
+      "name": "StaFi",
+      "status": "completed",
+      "logo": "./assets/images/projects/StaFi - Dark BG.svg",
+      "links": [
+        { "label": "Website", "url": "https://stafi.io" }
+      ]
+    },
+    {
+      "id": "stratos",
+      "name": "Stratos",
+      "status": "completed",
+      "logo": "./assets/images/projects/stratos.png",
+      "links": [
+        { "label": "Website", "url": "https://www.thestratos.org" }
+      ]
+    },
+    {
+      "id": "stride",
+      "name": "Stride",
+      "status": "completed",
+      "logo": "./assets/images/projects/stride.svg",
+      "links": [
+        { "label": "Website", "url": "https://stride.zone" }
+      ]
+    },
+    {
+      "id": "autonomys-network",
+      "name": "Autonomys Network",
+      "formerName": "Subspace",
+      "status": "completed",
+      "logo": "./assets/images/projects/SubspaceAutonomys.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.autonomys.xyz" }
+      ]
+    },
+    {
+      "id": "sui",
+      "name": "Sui",
+      "status": "completed",
+      "logo": "./assets/images/projects/Sui.svg",
+      "links": [
+        { "label": "Website", "url": "https://sui.io" }
+      ]
+    },
+    {
+      "id": "taiko",
+      "name": "Taiko",
+      "status": "completed",
+      "logo": "./assets/images/projects/taiko.png",
+      "links": [
+        { "label": "Website", "url": "https://taiko.xyz" }
+      ]
+    },
+    {
+      "id": "wormholes",
+      "name": "Wormholes",
+      "status": "completed",
+      "logo": "./assets/images/projects/wormholes.png"
+    },
+    {
+      "id": "aleo",
+      "name": "Aleo",
+      "status": "completed",
+      "logo": "./assets/images/projects/Aleo.svg",
+      "links": [
+        { "label": "Website", "url": "https://aleo.org" }
+      ]
+    },
+    {
+      "id": "allora",
+      "name": "Allora",
+      "status": "completed",
+      "logo": "./assets/images/projects/Allora.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.allora.network" }
+      ]
+    },
+    {
+      "id": "avail",
+      "name": "Avail",
+      "status": "completed",
+      "logo": "./assets/images/projects/Avail.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.availproject.org" }
+      ]
+    },
+    {
+      "id": "celestia",
+      "name": "Celestia",
+      "status": "completed",
+      "logo": "./assets/images/projects/Celestia.svg",
+      "links": [
+        { "label": "Website", "url": "https://celestia.org" }
+      ]
+    },
+    {
+      "id": "cross-finance",
+      "name": "Cross Finance",
+      "status": "completed",
+      "logo": "./assets/images/projects/CrossFinance.svg",
+      "links": [
+        { "label": "Website", "url": "https://crossfi.org" }
+      ]
+    },
+    {
+      "id": "eigencloud",
+      "name": "EigenCloud",
+      "formerName": "EigenLayer",
+      "status": "completed",
+      "logo": "./assets/images/projects/EigenLayer.png",
+      "links": [
+        { "label": "Website", "url": "https://www.eigencloud.xyz" }
+      ]
+    },
+    {
+      "id": "farcaster",
+      "name": "Farcaster",
+      "status": "completed",
+      "logo": "./assets/images/projects/Farcaster.svg",
+      "links": [
+        { "label": "Website", "url": "https://farcaster.xyz" }
+      ]
+    },
+    {
+      "id": "nubit",
+      "name": "Nubit",
+      "status": "completed",
+      "logo": "./assets/images/projects/nubit.png",
+      "links": [
+        { "label": "Website", "url": "https://nubit.org" }
+      ]
+    },
+    {
+      "id": "sei-network",
+      "name": "Sei Network",
+      "status": "completed",
+      "logo": "./assets/images/projects/sei.svg",
+      "links": [
+        { "label": "Website", "url": "https://www.sei.io" }
+      ]
+    },
+    {
+      "id": "sqd",
+      "name": "SQD",
+      "formerName": "Subsquid",
+      "status": "completed",
+      "logo": "./assets/images/projects/Subsquid.svg",
+      "links": [
+        { "label": "Website", "url": "https://sqd.dev" }
+      ]
+    }
+  ],
+  "defi": []
+}

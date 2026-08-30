@@ -1,20 +1,36 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KolTigin — Mehmet Köl Tiğin</title>
-  <meta name="description" content="Biyolog, Anatolian Team kurucu ortağı, validator, node runner ve blockchain içerik üreticisi Mehmet Köl Tiğin.">
-  <link rel="shortcut icon" href="./assets/images/profile.jpg" type="image/jpeg">
-  <link rel="stylesheet" href="./assets/css/style.css?v=align3">
+  <title>KolTigin</title>
+  <meta name="description" content="Independent node operator, developer, and Web3 researcher. Mainnet, testnet, and DePIN operations, technical documentation, and ecosystem research.">
+  <link rel="canonical" href="https://koltigin.xyz/">
+  <meta name="theme-color" content="#121212">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="KolTigin">
+  <meta property="og:description" content="Independent node operator, developer, and Web3 researcher. Mainnet, testnet, and DePIN operations, technical documentation, and ecosystem research.">
+  <meta property="og:url" content="https://koltigin.xyz/">
+  <meta property="og:image" content="https://koltigin.xyz/assets/images/common/og-image.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KolTigin">
+  <meta name="twitter:description" content="Independent node operator, developer, and Web3 researcher. Mainnet, testnet, and DePIN operations, technical documentation, and ecosystem research.">
+  <meta name="twitter:image" content="https://koltigin.xyz/assets/images/common/og-image.png">
+  <link rel="icon" href="./assets/images/common/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="shortcut icon" href="./assets/images/common/favicon-32.png" type="image/png">
+  <link rel="apple-touch-icon" href="./assets/images/common/apple-touch-icon.png" sizes="180x180">
+  <link rel="stylesheet" href="./assets/css/style.css?v=prod5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
+
+  <a class="skip-link" href="#main-content" data-i18n="skip">Skip to content</a>
 
   <main>
 
@@ -23,22 +39,31 @@
       <div class="sidebar-info">
 
         <figure class="avatar-box">
-          <img src="./assets/images/profile.jpg" alt="KolTigin" width="80">
+          <img src="./assets/images/profile/profile.jpg" alt="KolTigin" width="80">
         </figure>
 
         <div class="info-content">
-          <h1 class="name" title="Mehmet Köl Tiğin">KolTigin</h1>
-          <p class="title">Validator · İçerik · Araştırma</p>
+          <div class="info-heading">
+            <h1 class="name" title="KolTigin">KolTigin</h1>
+            <div class="site-lang-switch site-lang-switch--sidebar" data-lang-switch role="group" aria-label="Language">
+              <button type="button" class="site-lang-btn" data-set-lang="en" aria-pressed="true" aria-label="English">EN</button>
+              <span class="site-lang-sep" aria-hidden="true">|</span>
+              <button type="button" class="site-lang-btn" data-set-lang="tr" aria-pressed="false" aria-label="Turkish">TR</button>
+            </div>
+          </div>
+          <div class="title">
+            <p class="title-motto">Think out of the box.</p>
+            <p class="title-focus">Node Operator · Developer · Web3 · Research</p>
+          </div>
         </div>
 
-        <button class="info_more-btn" data-sidebar-btn>
-          <span>İletişim</span>
-          <ion-icon name="chevron-down"></ion-icon>
+        <button type="button" class="info_more-btn" data-sidebar-btn aria-expanded="false" aria-controls="sidebar-details" aria-label="More">
+          <ion-icon name="chevron-down" aria-hidden="true"></ion-icon>
         </button>
 
       </div>
 
-      <div class="sidebar-info_more">
+      <div class="sidebar-info_more" id="sidebar-details">
 
         <div class="separator"></div>
 
@@ -46,21 +71,21 @@
 
           <li class="contact-item">
             <div class="icon-box">
-              <ion-icon name="globe-outline"></ion-icon>
+              <ion-icon name="mail-outline"></ion-icon>
             </div>
             <div class="contact-info">
-              <p class="contact-title">Web</p>
-              <a href="https://anatolianteam.com" class="contact-link" target="_blank" rel="noopener">anatolianteam.com</a>
+              <p class="contact-title" data-i18n="sidebar.email">Email</p>
+              <a href="mailto:hello@koltigin.xyz" class="contact-link">hello@koltigin.xyz</a>
             </div>
           </li>
 
           <li class="contact-item">
             <div class="icon-box">
-              <ion-icon name="logo-github"></ion-icon>
+              <ion-icon name="logo-whatsapp"></ion-icon>
             </div>
             <div class="contact-info">
-              <p class="contact-title">GitHub</p>
-              <a href="https://github.com/koltigin" class="contact-link" target="_blank" rel="noopener">github.com/koltigin</a>
+              <p class="contact-title" data-i18n="sidebar.whatsapp">WhatsApp</p>
+              <a href="https://wa.me/13653458473" class="contact-link" target="_blank" rel="noopener noreferrer">+1 (365) 345-8473</a>
             </div>
           </li>
 
@@ -69,8 +94,8 @@
               <ion-icon name="location-outline"></ion-icon>
             </div>
             <div class="contact-info">
-              <p class="contact-title">Konum</p>
-              <address>Türkiye</address>
+              <p class="contact-title" data-i18n="sidebar.location">Location</p>
+              <address>Eskişehir, Türkiye</address>
             </div>
           </li>
 
@@ -79,8 +104,8 @@
               <ion-icon name="calendar-outline"></ion-icon>
             </div>
             <div class="contact-info">
-              <p class="contact-title">Güncelleme</p>
-              <time datetime="2026-08-29" data-last-update>29 Ağustos 2026</time>
+              <p class="contact-title" data-i18n="sidebar.updated">UPDATE</p>
+              <time datetime="2026-08-29" data-last-update>August 29, 2026</time>
             </div>
           </li>
 
@@ -90,23 +115,34 @@
 
         <ul class="social-list">
           <li class="social-item">
-            <a href="https://github.com/koltigin" class="social-link" target="_blank" rel="noopener" aria-label="GitHub">
+            <a href="https://github.com/koltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub">
               <ion-icon name="logo-github"></ion-icon>
             </a>
           </li>
           <li class="social-item">
-            <a href="https://x.com/mkoltigin" class="social-link" target="_blank" rel="noopener" aria-label="X">
+            <a href="https://x.com/mkoltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="X" title="X">
               <ion-icon name="logo-twitter"></ion-icon>
             </a>
           </li>
           <li class="social-item">
-            <a href="https://link3.to/koltigin" class="social-link" target="_blank" rel="noopener" aria-label="Link3">
-              <ion-icon name="link-outline"></ion-icon>
+            <a href="https://farcaster.xyz/koltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Farcaster" title="Farcaster">
+              <svg class="social-brand-icon" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false">
+                <path d="M257.778 155.556H742.222V844.445H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.445H257.778V155.556Z"/>
+                <path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.445H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z"/>
+                <path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.445H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z"/>
+              </svg>
             </a>
           </li>
           <li class="social-item">
-            <a href="https://medium.com/@koltigin" class="social-link" target="_blank" rel="noopener" aria-label="Medium">
-              <ion-icon name="newspaper-outline"></ion-icon>
+            <a href="https://base.app/profile/0xdE821C1Ae8B6A6dcaECFE58be6F9265804AFc8b6" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Base" title="Base">
+              <svg class="social-brand-icon" viewBox="0 0 111 111" aria-hidden="true" focusable="false">
+                <path d="M54.921 110.034C85.359 110.034 110.034 85.402 110.034 55.017C110.034 24.6319 85.359 0 54.921 0C26.0432 0 2.35281 22.1714 0 50.3923H73.8457V59.6416H0C2.35281 87.8625 26.0432 110.034 54.921 110.034Z"/>
+              </svg>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://www.youtube.com/@mehmetkoltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube">
+              <ion-icon name="logo-youtube"></ion-icon>
             </a>
           </li>
         </ul>
@@ -115,94 +151,115 @@
 
     </aside>
 
-    <div class="main-content">
+    <div class="main-content" id="main-content">
 
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <button class="navbar-link  active" data-nav-link data-nav-page="about" onclick="activatePage('about')">Hakkında</button>
+            <button type="button" class="navbar-link  active" data-nav-link data-nav-page="about" data-i18n="nav.about">About</button>
           </li>
           <li class="navbar-item">
-            <button class="navbar-link" data-nav-link data-nav-page="resume" onclick="activatePage('resume')">Özgeçmiş</button>
+            <button type="button" class="navbar-link" data-nav-link data-nav-page="resume" data-i18n="nav.resume">Resume</button>
           </li>
           <li class="navbar-item">
-            <button class="navbar-link" data-nav-link data-nav-page="portfolio" onclick="activatePage('portfolio')">Projeler</button>
+            <button type="button" class="navbar-link" data-nav-link data-nav-page="projects" data-i18n="nav.projects">Projects</button>
           </li>
           <li class="navbar-item">
-            <button class="navbar-link" data-nav-link data-nav-page="blog" onclick="activatePage('blog')">Yazılar</button>
+            <button type="button" class="navbar-link" data-nav-link data-nav-page="blog" data-i18n="nav.blog">Writings</button>
           </li>
           <li class="navbar-item">
-            <button class="navbar-link" data-nav-link data-nav-page="videos" onclick="activatePage('videos')">Videolar</button>
+            <button type="button" class="navbar-link" data-nav-link data-nav-page="videos" data-i18n="nav.videos">Videos</button>
           </li>
           <li class="navbar-item">
-            <button class="navbar-link" data-nav-link data-nav-page="contact" onclick="activatePage('contact')">İletişim</button>
+            <button type="button" class="navbar-link" data-nav-link data-nav-page="contact" data-i18n="nav.contact">Contact</button>
           </li>
         </ul>
+        <div class="site-lang-switch site-lang-switch--nav" data-lang-switch role="group" aria-label="Language">
+          <button type="button" class="site-lang-btn" data-set-lang="en" aria-pressed="true" aria-label="English">EN</button>
+          <span class="site-lang-sep" aria-hidden="true">|</span>
+          <button type="button" class="site-lang-btn" data-set-lang="tr" aria-pressed="false" aria-label="Turkish">TR</button>
+        </div>
       </nav>
 
       <article class="about active" data-page="about">
         <header>
-          <h2 class="h2 article-title">Hakkında</h2>
+          <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
       </article>
 
       <article class="resume" data-page="resume">
         <header>
-          <h2 class="h2 article-title">Özgeçmiş</h2>
+          <h2 class="h2 article-title" data-i18n="pages.resume">Resume</h2>
         </header>
       </article>
 
-      <article class="portfolio" data-page="portfolio">
+      <article class="projects-page" data-page="projects">
         <header>
-          <h2 class="h2 article-title">Projeler</h2>
+          <h2 class="h2 article-title" data-i18n="pages.projects">Projects</h2>
+          <nav class="project-section-nav" aria-label="Proje bölümleri" data-i18n-aria="pages.projectsNav" hidden></nav>
         </header>
-        <section class="projects">
-          <ul class="filter-list"></ul>
-          <div class="filter-select-box">
-            <button class="filter-select" data-select>
-              <div class="select-value" data-selecct-value>Kategori seç</div>
-              <div class="select-icon">
-                <ion-icon name="chevron-down"></ion-icon>
-              </div>
-            </button>
-            <ul class="select-list"></ul>
-          </div>
-          <ul class="project-list"></ul>
-        </section>
+        <div class="project-groups"></div>
       </article>
 
       <article class="blog" data-page="blog">
         <header>
-          <h2 class="h2 article-title">Yazılar</h2>
+          <h2 class="h2 article-title" data-i18n="pages.blog">Writings</h2>
+          <nav class="writings-filter" data-writings-filter aria-label="Writing categories" data-i18n-aria="pages.writingsNav">
+            <button type="button" class="writings-filter-btn is-active" data-writings-kind="all" data-i18n="writings.filters.all" aria-pressed="true">All</button>
+            <button type="button" class="writings-filter-btn" data-writings-kind="articles" data-i18n="writings.filters.articles" aria-pressed="false">Articles</button>
+            <button type="button" class="writings-filter-btn" data-writings-kind="notes" data-i18n="writings.filters.notes" aria-pressed="false">Technical Notes</button>
+            <button type="button" class="writings-filter-btn" data-writings-kind="social" data-i18n="writings.filters.social" aria-pressed="false">X Posts</button>
+          </nav>
         </header>
-        <section class="blog-posts">
-          <ul class="blog-posts-list"></ul>
-        </section>
+        <div data-writings-view>
+          <section class="blog-posts">
+            <ul class="blog-posts-list"></ul>
+          </section>
+        </div>
       </article>
 
       <article class="videos" data-page="videos">
         <header>
-          <h2 class="h2 article-title">Videolar</h2>
+          <h2 class="h2 article-title" data-i18n="pages.videos">Videos</h2>
         </header>
         <section class="videos-list">
           <ul class="videos-posts-list"></ul>
+          <div class="videos-load-more" data-videos-more hidden>
+            <button type="button" class="videos-load-more-btn" data-videos-more-btn data-i18n="videos.loadMore">Show More</button>
+          </div>
         </section>
       </article>
 
       <article class="contact" data-page="contact"></article>
 
+      <article class="guide-page" data-page="guide">
+        <header class="guide-header">
+          <div class="guide-toolbar">
+            <button type="button" class="back-btn" data-guide-back>
+              <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+              <span data-i18n="guides.back">Back to projects</span>
+            </button>
+          </div>
+          <h2 class="h2 article-title" data-guide-title data-i18n="pages.guide">Guide</h2>
+        </header>
+        <div class="guide-body blog-post-content" data-guide-content></div>
+      </article>
+
     </div>
 
   </main>
 
-  <script src="./assets/js/script.js"></script>
-  <script src="./assets/js/last-update.js"></script>
-  <script src="./assets/js/blog-parser.js"></script>
-  <script src="./assets/js/portfolio-parser.js"></script>
-  <script src="./assets/js/videos-parser-new.js"></script>
-  <script src="./assets/js/resume-parser.js"></script>
-  <script src="./assets/js/about-parser.js"></script>
-  <script src="./assets/js/contact-parser.js"></script>
+  <script src="./assets/js/i18n.js?v=prod1"></script>
+  <script src="./assets/js/site.js?v=prod5"></script>
+  <script src="./assets/js/script.js?v=prod4"></script>
+  <script src="./assets/js/last-update.js?v=prod1"></script>
+  <script src="./assets/js/blog-parser.js?v=prod1"></script>
+  <script src="./assets/js/projects-parser.js?v=prod1"></script>
+  <script src="./assets/js/guides-parser.js?v=prod1"></script>
+  <script src="./assets/js/videos-parser-new.js?v=prod1"></script>
+  <script src="./assets/js/resume-parser.js?v=prod1"></script>
+  <script src="./assets/js/about-parser.js?v=prod1"></script>
+  <script src="./assets/js/contact-parser.js?v=prod1"></script>
 
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>

@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "about": "Hakkında",
+    "resume": "Özgeçmiş",
+    "projects": "Projeler",
+    "blog": "Yazılar",
+    "videos": "Videolar",
+    "contact": "İletişim"
+  },
+  "pages": {
+    "about": "Hakkında",
+    "resume": "Özgeçmiş",
+    "projects": "Projeler",
+    "projectsNav": "Proje bölümleri",
+    "blog": "Yazılar",
+    "writingsNav": "Yazı kategorileri",
+    "videos": "Videolar",
+    "contact": "İletişim",
+    "guide": "Rehber"
+  },
+  "sidebar": {
+    "contact": "İletişim",
+    "email": "E-posta",
+    "whatsapp": "WhatsApp",
+    "location": "Konum",
+    "updated": "GÜNCELLEME"
+  },
+  "about": {
+    "loadError": "Hakkında sayfası yüklenemedi."
+  },
+  "resume": {
+    "summary": "Özet",
+    "experience": "Deneyim",
+    "education": "Eğitim",
+    "focus": "Odak Alanları",
+    "tools": "Araçlar & Yetkinlikler",
+    "loadError": "Özgeçmiş yüklenemedi."
+  },
+  "projects": {
+    "groups": {
+      "mainnet": "Mainnet",
+      "activeTestnets": "Aktif Testnetler",
+      "depin": "DePIN",
+      "defi": "DeFi & Ekosistem",
+      "completedTestnets": "Tamamlanan Testnetler"
+    },
+    "status": {
+      "active": "Aktif",
+      "completed": "Tamamlandı"
+    },
+    "links": {
+      "website": "Website",
+      "explorer": "Explorer",
+      "github": "GitHub",
+      "gateway": "Gateway",
+      "setupGuide": "Kurulum Rehberi",
+      "link": "Bağlantı",
+      "referral": "Referans"
+    },
+    "formerly": "eski adıyla {name}",
+    "logoAlt": "{name} logosu",
+    "referralCode": "Referans kodu:",
+    "copyReferral": "Referans kodunu kopyala {code}",
+    "copied": "Kopyalandı",
+    "empty": "Henüz listelenecek proje yok.",
+    "loadError": "projects.json yüklenemedi"
+  },
+  "writings": {
+    "filters": {
+      "all": "Tümü",
+      "articles": "Makaleler",
+      "notes": "Teknik Notlar",
+      "social": "X Paylaşımları"
+    },
+    "card": {
+      "articles": "Makale",
+      "notes": "Teknik Not",
+      "social": "X Paylaşımı",
+      "thread": "X Thread"
+    },
+    "read": "Yazıyı Oku →",
+    "viewOnX": "X'te Görüntüle →",
+    "back": "Yazılara dön",
+    "empty": "Bu kategoride henüz içerik yok.",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı"
+  },
+  "videos": {
+    "loading": "Videolar yükleniyor...",
+    "empty": "Video bulunamadı.",
+    "loadError": "Videolar yüklenirken hata oluştu.",
+    "duration": "Süre: {duration}",
+    "loadMore": "Daha Fazla Göster",
+    "untitled": "Video",
+    "close": "Videoyu kapat",
+    "openYoutube": "YouTube'da aç"
+  },
+  "guides": {
+    "back": "Projelere dön",
+    "loading": "Rehber yükleniyor…",
+    "loadError": "Rehber yüklenemedi.",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı"
+  },
+  "contact": {
+    "title": "İletişim",
+    "formTitle": "Mesaj",
+    "labelName": "Adınız",
+    "labelEmail": "E-posta",
+    "labelMessage": "Mesajınız",
+    "placeholderName": "Adınız",
+    "placeholderEmail": "E-posta",
+    "placeholderMessage": "Mesajınız",
+    "submit": "Gönder",
+    "submitting": "Gönderiliyor...",
+    "success": "Mesajınız başarıyla gönderildi.",
+    "error": "Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin.",
+    "mapTitle": "Eskişehir, Türkiye"
+  },
+  "common": {
+    "copy": "Kopyala",
+    "copied": "Kopyalandı"
+  },
+  "skip": "İçeriğe geç",
+  "lang": {
+    "label": "Dil",
+    "en": "EN",
+    "tr": "TR",
+    "enName": "İngilizce",
+    "trName": "Türkçe"
+  }
+}

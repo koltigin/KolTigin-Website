@@ -6,22 +6,13 @@ const sidebar = document.querySelector("[data-sidebar]");
 const sidebarBtn = document.querySelector("[data-sidebar-btn]");
 
 if (sidebarBtn && sidebar) {
-  sidebarBtn.addEventListener("click", function () { elementToggleFunc(sidebar); });
+  sidebarBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    elementToggleFunc(sidebar);
+    sidebarBtn.setAttribute("aria-expanded", sidebar.classList.contains("active") ? "true" : "false");
+  });
 }
-
-const select = document.querySelector("[data-select]");
-const selectValue = document.querySelector("[data-selecct-value]");
-
-if (select) {
-  select.addEventListener("click", function () { elementToggleFunc(this); });
-}
-
-document.addEventListener("click", function (e) {
-  const item = e.target.closest("[data-select-item]");
-  if (!item || !select) return;
-  if (selectValue) selectValue.innerText = item.innerText;
-  elementToggleFunc(select);
-});
 
 function bindContactForm(root) {
   const scope = root || document;

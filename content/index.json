@@ -1,0 +1,58 @@
+{
+  "articles": {
+    "en": ["2025-01-13-sei-defi-tasarim.md"],
+    "tr": ["2025-01-13-sei-defi-tasarim.md"]
+  },
+  "notes": {
+    "en": [
+      "2026-08-29-validator-notlari.md",
+      "2025-06-01-turkce-node-rehberi.md"
+    ],
+    "tr": [
+      "2026-08-29-validator-notlari.md",
+      "2025-06-01-turkce-node-rehberi.md"
+    ]
+  },
+  "social": {
+    "en": [],
+    "tr": []
+  },
+  "videos": [
+    "akilli-cuzdanlar-smart-wallets.md",
+    "aleo-kontrat-ve-token-olusturma.md",
+    "aleo-leo-contributor-badge-islemleri.md",
+    "ambit-finance-testnet.md",
+    "anatolian-team-intro-2022.md",
+    "anatolian-team-intro.md",
+    "ar-io-kapsamli-rehber.md",
+    "asmatch-kullanim-rehberi.md",
+    "base-eth-aktarma-ve-nft-mintleme-islemi.md",
+    "bifrost-and-its-ecosystem.md",
+    "bifrost-nedir.md",
+    "braavos-starkfighter-kampanyasi.md",
+    "c4e-ile-ev-sarji.md",
+    "components-of-the-sei.md",
+    "cross-finance-tesvikli-testnet-rehberi.md",
+    "eigenlayer-testnet-rehberi.md",
+    "fuel-kontrat-olusturma.md",
+    "gercek-fayda-saglayan-bir-defi-projesi.md",
+    "mint-fun-nft-sayfasi-hazirlama.md",
+    "nubit-light-node-faz-2.md",
+    "nubit-tesvikli-testnet-faz-1.md",
+    "readon-kullanim-rehberi.md",
+    "rebusa-giris-turkce-altyazi.md",
+    "rebusa-giris-turkce.md",
+    "rebusa-giris.md",
+    "seekers-alliance-codename-kaydi.md",
+    "sei-bilesenleri-yeni.md",
+    "sei-network-neden-yeni-bir-defi-tasarim-alanidir.md",
+    "starknet-airdrop-rehberi-2023-03.md",
+    "starknet-airdrop-rehberi.md",
+    "starknet-cuzdaniniza-para-aktarma-smart-wallets.md",
+    "starknet-e-para-aktarma-yontemleri.md",
+    "subsquid-tech-gorevleri-github-codespaces.md",
+    "thirdweb-superchain-builder-nft-rehberi.md",
+    "venom-network-testnet-rehberi.md",
+    "what-is-project-q.md"
+  ]
+}

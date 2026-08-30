@@ -1,3 +1,89 @@
+'use strict';
+
+function readContactFormValues(form) {
+    if (!form) return { name: '', email: '', message: '' };
+    return {
+        name: form.fullname ? form.fullname.value : '',
+        email: form.email ? form.email.value : '',
+        message: form.message ? form.message.value : ''
+    };
+}
+
+function contactT(key, fallback) {
+    return window.KolTiginI18n ? window.KolTiginI18n.t(key, null, fallback) : fallback;
+}
+
+function contactEndpoint() {
+    const site = window.KolTiginI18n && window.KolTiginI18n.site;
+    return (site && site.contact && site.contact.endpoint) || '';
+}
+
+function localizedMapUrl() {
+    const site = window.KolTiginI18n && window.KolTiginI18n.site;
+    const raw = (site && site.contact && site.contact.mapEmbedUrl) || '';
+    const lang = (window.KolTiginI18n && window.KolTiginI18n.language) === 'tr' ? 'tr' : 'en';
+    if (!raw) return '';
+    try {
+        const url = new URL(raw);
+        url.searchParams.set('hl', lang);
+        return url.toString();
+    } catch {
+        if (/[?&]hl=/.test(raw)) return raw.replace(/([?&]hl=)[^&]*/, '$1' + lang);
+        return raw + (raw.includes('?') ? '&' : '?') + 'hl=' + lang;
+    }
+}
+
+function setContactStatus(form, type, message) {
+    const status = form && form.querySelector('[data-form-status]');
+    if (!status) return;
+    status.textContent = message || '';
+    status.classList.toggle('is-error', type === 'error');
+    status.hidden = !message;
+}
+
+async function handleContactSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.checkValidity()) return;
+
+    const btn = form.querySelector('[data-form-btn]');
+    const btnLabel = btn ? btn.querySelector('span') : null;
+    const idleLabel = contactT('contact.submit', 'Send');
+    const values = readContactFormValues(form);
+    const endpoint = contactEndpoint();
+
+    if (btn) btn.setAttribute('disabled', '');
+    if (btnLabel) btnLabel.textContent = contactT('contact.submitting', 'Sending...');
+    setContactStatus(form, '', '');
+
+    try {
+        if (!endpoint) throw new Error('missing endpoint');
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: values.name.trim(),
+                email: values.email.trim(),
+                message: values.message.trim()
+            })
+        });
+
+        if (!response.ok) throw new Error('request failed');
+
+        form.reset();
+        setContactStatus(form, 'success', contactT('contact.success', 'Your message has been sent successfully.'));
+    } catch (error) {
+        setContactStatus(form, 'error', contactT('contact.error', 'The message could not be sent. Please try again later.'));
+    } finally {
+        if (btnLabel) btnLabel.textContent = idleLabel;
+        if (btn) {
+            if (form.checkValidity()) btn.removeAttribute('disabled');
+            else btn.setAttribute('disabled', '');
+        }
+    }
+}
+
 class ContactParser {
     constructor() {
         this.contactSection = null;
@@ -5,73 +91,71 @@ class ContactParser {
     }
 
     async initialize() {
-        if (this.isInitialized) return;
         this.contactSection = document.querySelector('.contact');
         if (!this.contactSection) return;
+        if (window.KolTiginI18n && window.KolTiginI18n.ready) {
+            await window.KolTiginI18n.ready;
+        }
         this.renderContactContent();
         this.isInitialized = true;
         if (typeof bindContactForm === 'function') bindContactForm(this.contactSection);
     }
 
     renderContactContent() {
+        const existing = this.contactSection.querySelector('[data-form]');
+        const saved = readContactFormValues(existing);
+        const mapUrl = localizedMapUrl();
+        const mapTitle = contactT('contact.mapTitle', 'Eskişehir, Türkiye');
+
         this.contactSection.innerHTML = `
             <header>
-                <h2 class="h2 article-title">İletişim</h2>
+                <h2 class="h2 article-title">${contactT('contact.title', 'Contact')}</h2>
             </header>
-
-            <section class="about-text">
-                <p>İş birliği, validator soruları veya içerik için resmi hesaplardan yazın. Telefon numarası yayınlamıyorum.</p>
-            </section>
-
-            <section class="contact-info-block">
-                <h3 class="h3">Kanallar</h3>
-                <ul class="contact-channels">
-                    <li><a href="https://github.com/koltigin" target="_blank" rel="noopener">GitHub — koltigin</a></li>
-                    <li><a href="https://x.com/mkoltigin" target="_blank" rel="noopener">X — @mkoltigin</a></li>
-                    <li><a href="https://link3.to/koltigin" target="_blank" rel="noopener">Link3 — koltigin</a></li>
-                    <li><a href="https://anatolianteam.com" target="_blank" rel="noopener">Anatolian Team</a></li>
-                    <li><a href="https://medium.com/@koltigin" target="_blank" rel="noopener">Medium</a></li>
-                </ul>
-            </section>
 
             <section class="mapbox" data-mapbox>
                 <figure>
                     <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d12719000!2d35.243322!3d38.963745!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1str!2str"
-                        width="400" height="300" loading="lazy" title="Türkiye"></iframe>
+                        src="${mapUrl}"
+                        width="400" height="300" loading="lazy"
+                        title="${mapTitle}"
+                        referrerpolicy="no-referrer-when-downgrade"></iframe>
                 </figure>
             </section>
 
             <section class="contact-form">
-                <h3 class="h3 form-title">Mesaj</h3>
-                <p class="form-note">Form GitHub Issues’a yönlenmez; kopyalanabilir bir taslak üretir.</p>
+                <h3 class="h3 form-title">${contactT('contact.formTitle', 'Message')}</h3>
                 <form action="#" class="form" data-form>
                     <div class="input-wrapper">
-                        <input type="text" name="fullname" class="form-input" placeholder="Adınız" required data-form-input>
-                        <input type="email" name="email" class="form-input" placeholder="E-posta" required data-form-input>
+                        <div class="form-field">
+                            <label class="visually-hidden" for="contact-name">${contactT('contact.labelName', 'Name')}</label>
+                            <input id="contact-name" type="text" name="fullname" class="form-input" placeholder="${contactT('contact.placeholderName', 'Name')}" autocomplete="name" required data-form-input>
+                        </div>
+                        <div class="form-field">
+                            <label class="visually-hidden" for="contact-email">${contactT('contact.labelEmail', 'Email')}</label>
+                            <input id="contact-email" type="email" name="email" class="form-input" placeholder="${contactT('contact.placeholderEmail', 'Email')}" autocomplete="email" required data-form-input>
+                        </div>
                     </div>
-                    <textarea name="message" class="form-input" placeholder="Mesajınız" required data-form-input></textarea>
+                    <div class="form-field">
+                        <label class="visually-hidden" for="contact-message">${contactT('contact.labelMessage', 'Message')}</label>
+                        <textarea id="contact-message" name="message" class="form-input" placeholder="${contactT('contact.placeholderMessage', 'Message')}" required data-form-input></textarea>
+                    </div>
                     <button class="form-btn" type="submit" disabled data-form-btn>
-                        <ion-icon name="paper-plane"></ion-icon>
-                        <span>Taslağı kopyala</span>
+                        <ion-icon name="paper-plane" aria-hidden="true"></ion-icon>
+                        <span>${contactT('contact.submit', 'Send')}</span>
                     </button>
+                    <p class="form-status" data-form-status role="status" aria-live="polite" hidden></p>
                 </form>
             </section>
         `;
 
         const form = this.contactSection.querySelector('[data-form]');
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = form.fullname.value.trim();
-            const email = form.email.value.trim();
-            const message = form.message.value.trim();
-            const draft = `Gönderen: ${name} <${email}>\n\n${message}`;
-            navigator.clipboard.writeText(draft).then(() => {
-                alert('Mesaj taslağı panoya kopyalandı. GitHub veya X üzerinden iletebilirsiniz.');
-            }).catch(() => {
-                alert(draft);
-            });
-        });
+        if (saved.name) form.fullname.value = saved.name;
+        if (saved.email) form.email.value = saved.email;
+        if (saved.message) form.message.value = saved.message;
+        if (form.checkValidity()) {
+            form.querySelector('[data-form-btn]').removeAttribute('disabled');
+        }
+        form.addEventListener('submit', handleContactSubmit);
     }
 }
 
@@ -80,4 +164,12 @@ function initializeContact() {
         window.contactParser = new ContactParser();
     }
     window.contactParser.initialize();
+}
+
+if (window.KolTiginI18n) {
+    window.KolTiginI18n.onChange(() => {
+        if (window.contactParser && window.contactParser.isInitialized) {
+            window.contactParser.initialize();
+        }
+    });
 }

@@ -1,0 +1,73 @@
+{
+  "displayName": "KolTigin",
+  "motto": "Think out of the box.",
+  "tagline": {
+    "en": "Node Operator · Developer · Web3 · Research",
+    "tr": "Node Operatörü · Geliştirici · Web3 · Araştırma"
+  },
+  "avatar": "./assets/images/profile/profile.jpg",
+  "email": "hello@koltigin.xyz",
+  "whatsapp": {
+    "display": "+1 (365) 345-8473",
+    "url": "https://wa.me/13653458473"
+  },
+  "location": {
+    "en": "Eskişehir, Türkiye",
+    "tr": "Eskişehir, Türkiye"
+  },
+  "canonicalUrl": "https://koltigin.xyz/",
+  "ogImage": "./assets/images/common/og-image.png",
+  "seo": {
+    "en": {
+      "title": "KolTigin",
+      "description": "Independent node operator, developer, and Web3 researcher. Mainnet, testnet, and DePIN operations, technical documentation, and ecosystem research."
+    },
+    "tr": {
+      "title": "KolTigin",
+      "description": "Bağımsız node operatörü, geliştirici ve Web3 araştırmacısı. Mainnet, testnet ve DePIN operasyonları, teknik dokümantasyon ve ekosistem araştırması."
+    }
+  },
+  "social": [
+    {
+      "id": "github",
+      "label": "GitHub",
+      "url": "https://github.com/koltigin",
+      "icon": "logo-github"
+    },
+    {
+      "id": "x",
+      "label": "X",
+      "url": "https://x.com/mkoltigin",
+      "icon": "logo-twitter"
+    },
+    {
+      "id": "farcaster",
+      "label": "Farcaster",
+      "url": "https://farcaster.xyz/koltigin",
+      "icon": "farcaster"
+    },
+    {
+      "id": "base",
+      "label": "Base",
+      "url": "https://base.app/profile/0xdE821C1Ae8B6A6dcaECFE58be6F9265804AFc8b6",
+      "icon": "base"
+    },
+    {
+      "id": "youtube",
+      "label": "YouTube",
+      "url": "https://www.youtube.com/@mehmetkoltigin",
+      "icon": "logo-youtube"
+    }
+  ],
+  "contact": {
+    "endpoint": "https://koltigin-contact.mehmetkoltigin.workers.dev/",
+    "mapEmbedUrl": "https://maps.google.com/maps?q=Eski%C5%9Fehir%2C%20T%C3%BCrkiye&z=12&hl=tr&output=embed"
+  },
+  "github": {
+    "owner": "koltigin",
+    "repo": "KolTigin-Website",
+    "branch": "main"
+  },
+  "defaultLanguage": "en",
+  "supportedLanguages": ["en", "tr"]
+}

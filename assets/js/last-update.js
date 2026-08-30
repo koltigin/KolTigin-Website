@@ -1,20 +1,31 @@
 (function () {
-    const CONFIG = {
+    const LOCALE_MAP = {
+        tr: 'tr-TR',
+        en: 'en-US'
+    };
+
+    const STATE = {
         owner: 'koltigin',
         repo: 'KolTigin-Website',
         branch: 'main',
-        locale: 'tr',
+        locale: 'en',
         cacheKey: 'koltigin-website-last-commit',
         cacheTtlMs: 6 * 60 * 60 * 1000
     };
 
-    const LOCALE_MAP = {
-        tr: 'tr-TR',
-        en: 'en-GB'
-    };
+    function applyGithubFromSite() {
+        const github = window.KolTiginI18n && window.KolTiginI18n.site && window.KolTiginI18n.site.github;
+        if (!github) return;
+        if (github.owner) STATE.owner = github.owner;
+        if (github.repo) STATE.repo = github.repo;
+        if (github.branch) STATE.branch = github.branch;
+        if (window.KolTiginI18n && window.KolTiginI18n.language) {
+            STATE.locale = window.KolTiginI18n.language;
+        }
+    }
 
     function formatVisibleDate(iso, localeKey) {
-        const locale = LOCALE_MAP[localeKey] || LOCALE_MAP.tr;
+        const locale = LOCALE_MAP[localeKey] || LOCALE_MAP.en;
         return new Intl.DateTimeFormat(locale, {
             day: 'numeric',
             month: 'long',
@@ -31,19 +42,20 @@
     function applyDate(iso) {
         const timeEl = document.querySelector('[data-last-update]');
         if (!timeEl) return;
-        const datetimeValue = toDatetimeValue(iso);
+        if (!iso) return;
+    const datetimeValue = toDatetimeValue(iso);
         if (!datetimeValue) return;
         timeEl.setAttribute('datetime', datetimeValue);
-        timeEl.textContent = formatVisibleDate(iso, CONFIG.locale);
+        timeEl.textContent = formatVisibleDate(iso, STATE.locale);
     }
 
     function readCache() {
         try {
-            const raw = localStorage.getItem(CONFIG.cacheKey);
+            const raw = localStorage.getItem(STATE.cacheKey);
             if (!raw) return null;
             const data = JSON.parse(raw);
             if (!data || typeof data.iso !== 'string' || typeof data.cachedAt !== 'number') return null;
-            if (Date.now() - data.cachedAt > CONFIG.cacheTtlMs) return null;
+            if (Date.now() - data.cachedAt > STATE.cacheTtlMs) return null;
             if (Number.isNaN(new Date(data.iso).getTime())) return null;
             return data.iso;
         } catch (error) {
@@ -53,7 +65,7 @@
 
     function writeCache(iso) {
         try {
-            localStorage.setItem(CONFIG.cacheKey, JSON.stringify({
+            localStorage.setItem(STATE.cacheKey, JSON.stringify({
                 iso: iso,
                 cachedAt: Date.now()
             }));
@@ -64,9 +76,9 @@
 
     async function fetchLatestCommitIso() {
         const url = 'https://api.github.com/repos/'
-            + encodeURIComponent(CONFIG.owner) + '/'
-            + encodeURIComponent(CONFIG.repo)
-            + '/commits?sha=' + encodeURIComponent(CONFIG.branch)
+            + encodeURIComponent(STATE.owner) + '/'
+            + encodeURIComponent(STATE.repo)
+            + '/commits?sha=' + encodeURIComponent(STATE.branch)
             + '&per_page=1';
 
         const response = await fetch(url, {
@@ -90,6 +102,15 @@
     }
 
     async function initLastUpdate() {
+        if (window.KolTiginI18n && window.KolTiginI18n.ready) {
+            try {
+                await window.KolTiginI18n.ready;
+            } catch {
+                // keep built-in github fallbacks
+            }
+        }
+        applyGithubFromSite();
+
         const cachedIso = readCache();
         if (cachedIso) {
             applyDate(cachedIso);
@@ -108,9 +129,11 @@
     window.KolTiginLastUpdate = {
         setLocale: function (localeKey) {
             if (!LOCALE_MAP[localeKey]) return;
-            CONFIG.locale = localeKey;
+            STATE.locale = localeKey;
             const cachedIso = readCache();
-            if (cachedIso) applyDate(cachedIso);
+            const timeEl = document.querySelector('[data-last-update]');
+            const fallbackIso = timeEl && timeEl.getAttribute('datetime');
+            applyDate(cachedIso || fallbackIso);
         }
     };
 

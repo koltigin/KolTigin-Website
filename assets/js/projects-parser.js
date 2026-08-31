@@ -10,6 +10,21 @@ class ProjectsParser {
     this.bindReferralCopy();
     this.bindGuideLinks();
     this.bindAccordion();
+    this.bindStickyOffset();
+  }
+
+  syncStickyOffset() {
+    const page = document.querySelector('.projects-page');
+    const headerEl = page?.querySelector(':scope > header');
+    if (!page || !headerEl) return;
+    const offset = Math.ceil(headerEl.getBoundingClientRect().height) + 8;
+    page.style.setProperty('--projects-sticky-offset', `${offset}px`);
+  }
+
+  bindStickyOffset() {
+    if (this.stickyOffsetBound) return;
+    this.stickyOffsetBound = true;
+    window.addEventListener('resize', () => this.syncStickyOffset(), { passive: true });
   }
 
   t(key, vars, fallback) {
@@ -330,6 +345,9 @@ class ProjectsParser {
       return `<a class="project-section-nav-link${activeClass}" href="${href}" data-group="${group.key}"${current}>${this.escapeHtml(group.title)}</a>`;
     }).join('');
 
+    this.syncStickyOffset();
+    window.requestAnimationFrame(() => this.syncStickyOffset());
+
     this.nav.querySelectorAll('.project-section-nav-link').forEach((link) => {
       link.addEventListener('click', (event) => {
         event.preventDefault();
@@ -340,6 +358,7 @@ class ProjectsParser {
         if (trigger) this.setAccordionOpen(trigger, true);
 
         const scrollToSection = () => {
+          this.syncStickyOffset();
           const headerEl = document.querySelector('.projects-page > header');
           const offset = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) + 8 : 0;
           const top = window.scrollY + target.getBoundingClientRect().top - offset;
@@ -373,8 +392,10 @@ class ProjectsParser {
       : [];
     if (!sections.length) return;
 
+    this.syncStickyOffset();
     const headerEl = document.querySelector('.projects-page > header');
     const sync = () => {
+      this.syncStickyOffset();
       const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
       const line = headerH + 20;
       let current = sections[0];

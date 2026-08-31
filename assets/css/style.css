@@ -2397,16 +2397,20 @@ main {
 
 .writings-card .blog-banner-box,
 .writings-card .writings-cover {
-  height: 200px;
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
   background: var(--eerie-black-2);
 }
 
 .writings-cover img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
-  background: var(--eerie-black-2);
 }
 
 .blog-post-item > a:hover .writings-cover img {
@@ -2416,8 +2420,10 @@ main {
 .writings-cover-fallback .cover-fallback {
   flex-direction: column;
   gap: 10px;
+  position: absolute;
+  inset: 0;
   height: 100%;
-  min-height: 200px;
+  min-height: 0;
   font-weight: var(--fw-500);
   font-size: var(--fs-6);
   letter-spacing: 0.02em;
@@ -2447,9 +2453,11 @@ main {
 }
 
 .writings-detail-cover {
+  position: relative;
   display: block;
   width: 100%;
   max-width: 100%;
+  aspect-ratio: 16 / 9;
   margin: 0 0 28px;
   padding: 0;
   border-radius: 12px;
@@ -2459,13 +2467,13 @@ main {
 }
 
 .writings-detail-cover img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 220px;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   object-position: center;
-  background: var(--eerie-black-2);
 }
 
 .blog-post-detail .back-btn {
@@ -2606,13 +2614,6 @@ textarea.form-input::-webkit-resizer { display: none; }
    */
 
   .blog-banner-box { height: auto; }
-
-  .writings-card .blog-banner-box,
-  .writings-card .writings-cover,
-  .writings-cover-fallback .cover-fallback {
-    height: 200px;
-    min-height: 200px;
-  }
 
 }
 
@@ -3051,6 +3052,13 @@ textarea.form-input::-webkit-resizer { display: none; }
     max-width: 100%;
   }
 
+  .project-section-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
   .project-group {
     scroll-margin-top: 168px;
   }
@@ -3240,14 +3248,9 @@ textarea.form-input::-webkit-resizer { display: none; }
   .blog-banner-box { height: 230px; }
 
   .writings-card .blog-banner-box,
-  .writings-card .writings-cover,
-  .writings-cover-fallback .cover-fallback {
-    height: 230px;
-    min-height: 230px;
-  }
-
-  .writings-detail-cover img {
-    max-height: 260px;
+  .writings-card .writings-cover {
+    height: auto;
+    aspect-ratio: 16 / 9;
   }
 
   .guide-page {

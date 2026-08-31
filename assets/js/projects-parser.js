@@ -22,6 +22,7 @@ class ProjectsParser {
 
   applyLabels() {
     this.groups = [
+      { key: 'builtByMe', title: this.t('projects.groups.builtByMe', null, 'Built by Me') },
       { key: 'mainnet', title: this.t('projects.groups.mainnet', null, 'Mainnet') },
       { key: 'activeTestnets', title: this.t('projects.groups.activeTestnets', null, 'Active Testnets') },
       { key: 'depin', title: this.t('projects.groups.depin', null, 'DePIN') },
@@ -30,14 +31,17 @@ class ProjectsParser {
     ];
     this.statusLabels = {
       active: this.t('projects.status.active', null, 'Active'),
-      completed: this.t('projects.status.completed', null, 'Completed')
+      completed: this.t('projects.status.completed', null, 'Completed'),
+      built: this.t('projects.status.built', null, 'Built')
     };
     this.linkLabels = {
       website: this.t('projects.links.website', null, 'Website'),
       explorer: this.t('projects.links.explorer', null, 'Explorer'),
       github: this.t('projects.links.github', null, 'GitHub'),
       gateway: this.t('projects.links.gateway', null, 'Gateway'),
-      setupGuide: this.t('projects.links.setupGuide', null, 'Setup Guide')
+      setupGuide: this.t('projects.links.setupGuide', null, 'Setup Guide'),
+      openApp: this.t('projects.links.openApp', null, 'Open App'),
+      readArticle: this.t('projects.links.readArticle', null, 'Read Article')
     };
   }
 
@@ -47,7 +51,9 @@ class ProjectsParser {
       Explorer: 'projects.links.explorer',
       GitHub: 'projects.links.github',
       Gateway: 'projects.links.gateway',
-      'Setup Guide': 'projects.links.setupGuide'
+      'Setup Guide': 'projects.links.setupGuide',
+      'Open App': 'projects.links.openApp',
+      'Read Article': 'projects.links.readArticle'
     };
     const key = map[label];
     return key ? this.t(key, null, label) : label;
@@ -136,7 +142,9 @@ class ProjectsParser {
       GitHub: 'logo-github',
       Gateway: 'grid-outline',
       Stake: 'layers-outline',
-      'Setup Guide': 'document-text-outline'
+      'Setup Guide': 'document-text-outline',
+      'Open App': 'open-outline',
+      'Read Article': 'document-text-outline'
     };
     const name = custom || fallbacks[link && link.label] || '';
     return name ? `<ion-icon name="${this.escapeHtml(name)}"></ion-icon>` : '';
@@ -148,7 +156,7 @@ class ProjectsParser {
     const formerHtml = formerName
       ? `<p class="project-card-former">${this.escapeHtml(this.t('projects.formerly', { name: project.formerName }, 'formerly {name}'))}</p>`
       : '';
-    const role = this.escapeHtml(project.role || '');
+    const role = this.escapeHtml(this.localized(project.role));
     const statusKey = String(project.status || '').toLowerCase();
     const status = this.statusLabels[statusKey] || this.escapeHtml(project.status || '');
     const summary = this.escapeHtml(this.localized(project.summary));
@@ -163,12 +171,13 @@ class ProjectsParser {
     const linksHtml = links.length
       ? `<ul class="project-card-links">${links.map((link) => {
           const isGuide = Boolean(link.guide);
+          const isInternal = !isGuide && typeof link.url === 'string' && link.url.startsWith('#');
           const href = isGuide
             ? `#/guides/${encodeURIComponent(link.guide)}`
             : this.escapeHtml(link.url);
           const attrs = isGuide
             ? `data-guide="${this.escapeHtml(link.guide)}" data-guide-source="${this.escapeHtml(link.url)}"`
-            : 'target="_blank" rel="noopener noreferrer"';
+            : (isInternal ? '' : 'target="_blank" rel="noopener noreferrer"');
           return `
           <li>
             <a class="project-card-link-btn" href="${href}" ${attrs}>

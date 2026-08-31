@@ -38,6 +38,7 @@
   },
   "projects": {
     "groups": {
+      "builtByMe": "Benim Yaptıklarım",
       "mainnet": "Mainnet",
       "activeTestnets": "Aktif Testnetler",
       "depin": "DePIN",
@@ -46,7 +47,8 @@
     },
     "status": {
       "active": "Aktif",
-      "completed": "Tamamlandı"
+      "completed": "Tamamlandı",
+      "built": "Geliştirildi"
     },
     "links": {
       "website": "Website",
@@ -54,6 +56,8 @@
       "github": "GitHub",
       "gateway": "Gateway",
       "setupGuide": "Kurulum Rehberi",
+      "openApp": "Uygulamayı Aç",
+      "readArticle": "Yazıyı Oku",
       "link": "Bağlantı",
       "referral": "Referans"
     },

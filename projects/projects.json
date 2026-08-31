@@ -1,4 +1,24 @@
 {
+  "builtByMe": [
+    {
+      "id": "soulmemory",
+      "name": "SoulMemory",
+      "role": {
+        "en": "Base Mini App",
+        "tr": "Base Mini Uygulaması"
+      },
+      "status": "built",
+      "summary": {
+        "en": "An on-chain mood diary built on Base. Record your daily mood as an NFT and create a personal on-chain memory trail.",
+        "tr": "Base üzerinde geliştirilmiş zincir üstü bir duygu günlüğü. Günlük ruh hâlini NFT olarak kaydederek kişisel bir on-chain anı geçmişi oluşturur."
+      },
+      "logo": "./assets/images/projects/soulmemory.png",
+      "links": [
+        { "label": "Open App", "url": "https://soul-memory.vercel.app/" },
+        { "label": "Read Article", "url": "#/yazilar/articles/soulmemory-on-chain-mood-diary" }
+      ]
+    }
+  ],
   "mainnet": [
     {
       "id": "redbelly-network",

@@ -1,0 +1,16 @@
+{
+  "platforms": [
+    { "id": "github", "icon": "logo-github", "label": { "en": "GitHub", "tr": "GitHub" } },
+    { "id": "x", "icon": "logo-twitter", "label": { "en": "X", "tr": "X" } },
+    { "id": "farcaster", "icon": "farcaster", "label": { "en": "Farcaster", "tr": "Farcaster" } },
+    { "id": "base", "icon": "base", "label": { "en": "Base", "tr": "Base" } },
+    { "id": "youtube", "icon": "logo-youtube", "label": { "en": "YouTube", "tr": "YouTube" } },
+    { "id": "linkedin", "icon": "logo-linkedin", "label": { "en": "LinkedIn", "tr": "LinkedIn" } },
+    { "id": "instagram", "icon": "logo-instagram", "label": { "en": "Instagram", "tr": "Instagram" } },
+    { "id": "medium", "icon": "newspaper-outline", "label": { "en": "Medium", "tr": "Medium" } },
+    { "id": "discord", "icon": "logo-discord", "label": { "en": "Discord", "tr": "Discord" } },
+    { "id": "telegram", "icon": "paper-plane-outline", "label": { "en": "Telegram", "tr": "Telegram" } },
+    { "id": "website", "icon": "globe-outline", "label": { "en": "Website", "tr": "Website" } },
+    { "id": "custom", "icon": "link-outline", "label": { "en": "Custom / Other", "tr": "Özel / Diğer" } }
+  ]
+}

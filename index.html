@@ -22,7 +22,7 @@
   <link rel="icon" href="./assets/images/common/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="shortcut icon" href="./assets/images/common/favicon-32.png" type="image/png">
   <link rel="apple-touch-icon" href="./assets/images/common/apple-touch-icon.png" sizes="180x180">
-  <link rel="stylesheet" href="./assets/css/style.css?v=prod9">
+  <link rel="stylesheet" href="./assets/css/style.css?v=prod12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -206,9 +206,6 @@
           <h2 class="h2 article-title" data-i18n="pages.blog">Writings</h2>
           <nav class="writings-filter" data-writings-filter aria-label="Writing categories" data-i18n-aria="pages.writingsNav">
             <button type="button" class="writings-filter-btn is-active" data-writings-kind="all" data-i18n="writings.filters.all" aria-pressed="true">All</button>
-            <button type="button" class="writings-filter-btn" data-writings-kind="articles" data-i18n="writings.filters.articles" aria-pressed="false">Articles</button>
-            <button type="button" class="writings-filter-btn" data-writings-kind="notes" data-i18n="writings.filters.notes" aria-pressed="false">Technical Notes</button>
-            <button type="button" class="writings-filter-btn" data-writings-kind="social" data-i18n="writings.filters.social" aria-pressed="false">X Posts</button>
           </nav>
         </header>
         <div data-writings-view>
@@ -240,7 +237,7 @@
               <span data-i18n="guides.back">Back to projects</span>
             </button>
           </div>
-          <h2 class="h2 article-title" data-guide-title data-i18n="pages.guide">Guide</h2>
+          <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
         <div class="guide-body blog-post-content" data-guide-content></div>
       </article>
@@ -250,16 +247,17 @@
   </main>
 
   <script src="./assets/js/i18n.js?v=prod1"></script>
-  <script src="./assets/js/site.js?v=prod5"></script>
+  <script src="./assets/js/site.js?v=prod6"></script>
   <script src="./assets/js/script.js?v=prod4"></script>
   <script src="./assets/js/last-update.js?v=prod1"></script>
-  <script src="./assets/js/blog-parser.js?v=prod1"></script>
-  <script src="./assets/js/projects-parser.js?v=prod3"></script>
-  <script src="./assets/js/guides-parser.js?v=prod1"></script>
+  <script src="./assets/js/blog-parser.js?v=prod7"></script>
+  <script src="./assets/js/projects-parser.js?v=prod6"></script>
+  <script src="./assets/js/guide-markdown.js?v=prod1"></script>
+  <script src="./assets/js/guides-parser.js?v=prod3"></script>
   <script src="./assets/js/videos-parser-new.js?v=prod1"></script>
   <script src="./assets/js/resume-parser.js?v=prod1"></script>
-  <script src="./assets/js/about-parser.js?v=prod1"></script>
-  <script src="./assets/js/contact-parser.js?v=prod1"></script>
+  <script src="./assets/js/about-parser.js?v=prod2"></script>
+  <script src="./assets/js/contact-parser.js?v=prod2"></script>
 
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>

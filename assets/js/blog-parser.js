@@ -8,24 +8,44 @@ class BlogParser {
     this.section = document.querySelector('.blog[data-page="blog"]');
     this.view = this.section?.querySelector('[data-writings-view]');
     this.filterNav = this.section?.querySelector('[data-writings-filter]');
-    this.kinds = {
-      articles: { id: 'articles', icon: 'document-text-outline' },
-      notes: { id: 'notes', icon: 'code-slash-outline' },
-      social: { id: 'social', icon: 'logo-twitter' }
-    };
+    this.typeList = [];
+    this.kinds = {};
   }
 
   t(key, fallback) {
     return window.KolTiginI18n ? window.KolTiginI18n.t(key, null, fallback) : fallback || key;
   }
 
+  loc(value, fallback) {
+    if (window.KolTiginI18n && typeof window.KolTiginI18n.localized === 'function') {
+      const text = window.KolTiginI18n.localized(value);
+      if (text) return text;
+    }
+    return fallback || '';
+  }
+
   applyKindLabels() {
-    this.kinds.articles.label = this.t('writings.filters.articles', 'Articles');
-    this.kinds.articles.card = this.t('writings.card.articles', 'Article');
-    this.kinds.notes.label = this.t('writings.filters.notes', 'Technical Notes');
-    this.kinds.notes.card = this.t('writings.card.notes', 'Technical Note');
-    this.kinds.social.label = this.t('writings.filters.social', 'X Posts');
-    this.kinds.social.card = this.t('writings.card.social', 'X Post');
+    const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
+    this.typeList.forEach((type) => {
+      const id = type.id;
+      const fallbackCard = id === 'articles' ? 'Article' : id === 'notes' ? 'Technical Note' : id === 'social' ? 'X Post' : this.loc(type.label, id);
+      const fallbackFilter = id === 'articles' ? 'Articles' : id === 'notes' ? 'Technical Notes' : id === 'social' ? 'X Posts' : this.loc(type.filter || type.label, id);
+      this.kinds[id] = {
+        ...type,
+        id,
+        icon: type.icon || 'document-text-outline',
+        mode: type.mode || (id === 'social' ? 'external' : 'internal'),
+        label: this.loc(type.filter, this.t(`writings.filters.${id}`, fallbackFilter)),
+        card: this.loc(type.label, this.t(`writings.card.${id}`, fallbackCard)),
+        cta: this.loc(type.cta, id === 'social' ? this.t('writings.viewOnX', 'View on X →') : this.t('writings.read', 'Read →'))
+      };
+    });
+    void lang;
+  }
+
+  isExternal(item) {
+    const meta = this.kindMeta(item && item.kind);
+    return meta.mode === 'external' && Boolean(item && item.externalUrl);
   }
 
   async init() {
@@ -67,7 +87,7 @@ class BlogParser {
   }
 
   openFromHash() {
-    const match = window.location.hash.match(/^#\/yazilar\/(articles|notes|social)\/([^/]+)$/i);
+    const match = window.location.hash.match(/^#\/yazilar\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([^/]+)$/i);
     if (!match) return;
     if (typeof this.activateOriginal === 'function') this.activateOriginal('blog');
     this.showItem(`${match[1]}/${decodeURIComponent(match[2])}`);
@@ -128,17 +148,16 @@ class BlogParser {
 
   replaceBrokenCover(img) {
     const detailCover = img.closest('.writings-detail-cover');
-    if (detailCover) {
-      detailCover.remove();
+    const wrap = img.closest('.writings-cover') || detailCover;
+    const itemId = wrap?.dataset.coverFor;
+    const item = this.items.find((entry) => entry.id === itemId) || this.currentItem;
+    if (!wrap || !item) {
+      img.remove();
       return;
     }
-
-    const wrap = img.closest('.writings-cover');
-    const itemId = wrap?.dataset.coverFor;
-    const item = this.items.find((entry) => entry.id === itemId);
-    if (!wrap || !item) return;
+    const extra = detailCover ? 'writings-detail-cover' : '';
     const holder = document.createElement('div');
-    holder.innerHTML = this.coverFallback(item).trim();
+    holder.innerHTML = this.coverFallback(item, extra).trim();
     const fallback = holder.firstElementChild;
     if (fallback) wrap.replaceWith(fallback);
   }
@@ -288,22 +307,66 @@ class BlogParser {
     const date = this.parseDate(dateString);
     if (!date) return '';
     const locale = window.KolTiginI18n && window.KolTiginI18n.language === 'en' ? 'en-GB' : 'tr-TR';
-    return date.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   parseDate(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
+    const raw = String(value || '').trim();
+    let year;
+    let month;
+    let day;
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const euro = raw.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+    if (iso) {
+      year = Number(iso[1]);
+      month = Number(iso[2]);
+      day = Number(iso[3]);
+    } else if (euro) {
+      day = Number(euro[1]);
+      month = Number(euro[2]);
+      year = Number(euro[3]);
+    } else {
+      return null;
+    }
+    if (!year || month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return new Date(year, month - 1, day, 12, 0, 0);
+  }
+
+  excerptFromBody(markdown) {
+    const chunks = [];
+    let inCode = false;
+    for (const line of String(markdown || '').split('\n')) {
+      const trimmed = line.trim();
+      if (/^```/.test(trimmed)) {
+        inCode = !inCode;
+        continue;
+      }
+      if (inCode) continue;
+      if (!trimmed) {
+        if (chunks.length) break;
+        continue;
+      }
+      if (/^#{1,6}\s/.test(trimmed) || /^!\[/.test(trimmed) || /^<img\b/i.test(trimmed)) {
+        if (chunks.length) break;
+        continue;
+      }
+      const stripped = trimmed.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '').replace(/[*_`>#]+/g, '');
+      if (!stripped) continue;
+      chunks.push(stripped);
+      if (chunks.join(' ').length >= 160) break;
+    }
+    let text = chunks.join(' ').trim();
+    if (text.length > 160) text = `${text.slice(0, 157).trim()}…`;
+    return text;
   }
 
   coverSrc(cover) {
     const value = String(cover || '').trim();
     if (!value) return '';
     if (/^https?:\/\//i.test(value) || value.startsWith('./') || value.startsWith('../') || value.startsWith('assets/')) {
-      return value;
+      return encodeURI(value);
     }
-    return `./assets/images/blog/${value.replace(/^\/+/, '')}`;
+    return encodeURI(`./assets/images/blog/${value.replace(/^\/+/, '')}`);
   }
 
   hasCover(item) {
@@ -313,38 +376,46 @@ class BlogParser {
   }
 
   kindMeta(kind) {
-    return this.kinds[kind] || this.kinds.articles;
+    return this.kinds[kind] || { id: kind, icon: 'document-text-outline', mode: 'internal', label: kind, card: kind, cta: this.t('writings.read', 'Read →') };
   }
 
   categoryLabel(item) {
-    if (item.kind === 'social' && item.thread) return this.t('writings.card.thread', 'X Thread');
+    if (this.isExternal(item) && item.thread) return this.t('writings.card.thread', 'X Thread');
     return this.kindMeta(item.kind).card;
   }
 
   filesFromManifest(entry, lang) {
-    if (Array.isArray(entry)) return entry;
-    if (entry && typeof entry === 'object') {
-      if (Array.isArray(entry[lang])) return entry[lang];
-      if (Array.isArray(entry.en)) return entry.en;
-      if (Array.isArray(entry.tr)) return entry.tr;
+    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+      return Array.isArray(entry[lang]) ? entry[lang] : [];
     }
+    if (Array.isArray(entry)) return entry;
     return [];
   }
 
   async readIndex() {
     const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
+    const fallbackTypes = [
+      { id: 'articles', mode: 'internal', icon: 'document-text-outline' },
+      { id: 'notes', mode: 'internal', icon: 'code-slash-outline' },
+      { id: 'social', mode: 'external', icon: 'logo-twitter' }
+    ];
     try {
       const response = await fetch('./content/index.json', { cache: 'no-store' });
-      if (!response.ok) return { articles: [], notes: [], social: [] };
+      if (!response.ok) return { types: fallbackTypes, files: {}, lang };
       const data = await response.json();
-      return {
-        articles: this.filesFromManifest(data.articles, lang),
-        notes: this.filesFromManifest(data.notes, lang),
-        social: this.filesFromManifest(data.social, lang),
-        lang
-      };
+      const types = Array.isArray(data.types) && data.types.length
+        ? data.types.filter((item) => item && item.id)
+        : fallbackTypes;
+      const files = {};
+      types.forEach((type) => {
+        files[type.id] = this.filesFromManifest(data[type.id], lang);
+      });
+      ['articles', 'notes', 'social'].forEach((kind) => {
+        if (!files[kind]) files[kind] = this.filesFromManifest(data[kind], lang);
+      });
+      return { types, files, lang };
     } catch {
-      return { articles: [], notes: [], social: [], lang };
+      return { types: fallbackTypes, files: {}, lang };
     }
   }
 
@@ -356,28 +427,32 @@ class BlogParser {
     const index = await this.readIndex();
     const loaded = [];
     const lang = index.lang || 'en';
+    this.typeList = index.types || [];
+    this.applyKindLabels();
 
-    for (const kind of Object.keys(this.kinds)) {
-      const files = this.uniqueFiles(index[kind]);
+    for (const kind of Object.keys(index.files || {})) {
+      const files = this.uniqueFiles(index.files[kind]);
       for (const file of files) {
         try {
           const response = await fetch(`./content/${kind}/${lang}/${file}`, { cache: 'no-store' });
           if (!response.ok) continue;
           const raw = await response.text();
           const { metadata, body } = this.parseFrontMatter(raw);
-          const slug = String(metadata.slug || file.replace(/\.md$/i, '')).trim();
+          const slug = String(file.replace(/\.md$/i, '')).trim();
+          const legacySlug = String(metadata.slug || '').trim();
           const cover = String(metadata.cover || metadata.image || '').trim();
           loaded.push({
             id: `${kind}/${slug}`,
             kind,
             file,
             slug,
+            legacySlug,
             title: metadata.title || slug,
             date: metadata.date || '',
-            summary: metadata.summary || metadata.excerpt || '',
+            summary: metadata.summary || metadata.excerpt || this.excerptFromBody(body),
             cover,
             externalUrl: metadata.externalUrl || '',
-            platform: String(metadata.platform || (kind === 'social' ? 'x' : '')).toLowerCase(),
+            platform: String(metadata.platform || (this.kindMeta(kind).mode === 'external' ? 'x' : '')).toLowerCase(),
             thread: metadata.thread === true || metadata.thread === 'true',
             body
           });
@@ -402,21 +477,33 @@ class BlogParser {
     return this.items.filter((item) => item.kind === this.filter);
   }
 
-  updateFilterButtons() {
-    this.filterNav?.querySelectorAll('[data-writings-kind]').forEach((button) => {
-      const active = button.dataset.writingsKind === this.filter;
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
+  renderFilters() {
+    if (!this.filterNav) return;
+    const visible = this.typeList.filter((type) => this.items.some((item) => item.kind === type.id));
+    if (this.filter !== 'all' && !visible.some((type) => type.id === this.filter)) this.filter = 'all';
+    const buttons = [
+      { id: 'all', label: this.t('writings.filters.all', 'All') },
+      ...visible.map((type) => ({ id: type.id, label: this.kindMeta(type.id).label }))
+    ];
+    this.filterNav.innerHTML = buttons.map((button) => {
+      const active = button.id === this.filter;
+      return `<button type="button" class="writings-filter-btn${active ? ' is-active' : ''}" data-writings-kind="${this.escapeHtml(button.id)}" aria-pressed="${active ? 'true' : 'false'}">${this.escapeHtml(button.label)}</button>`;
+    }).join('');
   }
 
-  coverFallback(item) {
+  updateFilterButtons() {
+    this.renderFilters();
+  }
+
+  coverFallback(item, extraClass = '') {
     const kind = this.kindMeta(item.kind);
+    const title = item.title || this.categoryLabel(item);
     return `
-      <div class="blog-banner-box writings-cover writings-cover-fallback" aria-hidden="true">
+      <div class="blog-banner-box writings-cover writings-cover-fallback ${extraClass}" aria-hidden="true">
         <div class="cover-fallback">
           <ion-icon name="${kind.icon}" aria-hidden="true"></ion-icon>
-          <span>${this.escapeHtml(this.categoryLabel(item))}</span>
+          <span class="cover-fallback-title">${this.escapeHtml(title)}</span>
+          <span class="cover-fallback-kind">${this.escapeHtml(this.categoryLabel(item))}</span>
         </div>
       </div>
     `;
@@ -432,13 +519,11 @@ class BlogParser {
   }
 
   cardAction(item) {
-    if (item.kind === 'social' && item.externalUrl) {
-      return `<span class="writings-card-cta">${this.t('writings.viewOnX', 'View on X →')}</span>`;
+    const meta = this.kindMeta(item.kind);
+    if (this.isExternal(item)) {
+      return `<span class="writings-card-cta">${this.escapeHtml(meta.cta || this.t('writings.viewOnX', 'View on X →'))}</span>`;
     }
-    if (item.kind !== 'social') {
-      return `<span class="writings-card-cta">${this.t('writings.read', 'Read →')}</span>`;
-    }
-    return '';
+    return `<span class="writings-card-cta">${this.t('writings.read', 'Read →')}</span>`;
   }
 
   createCard(item) {
@@ -448,7 +533,7 @@ class BlogParser {
       dateLabel
     ].filter(Boolean).join(' · ');
 
-    const isExternal = item.kind === 'social' && item.externalUrl;
+    const isExternal = this.isExternal(item);
     const href = isExternal ? this.escapeHtml(item.externalUrl) : `#/yazilar/${item.kind}/${encodeURIComponent(item.slug)}`;
     const extra = isExternal
       ? ' target="_blank" rel="noopener noreferrer"'
@@ -501,12 +586,22 @@ class BlogParser {
   }
 
   showItem(id) {
-    const item = this.items.find((entry) => entry.id === id);
+    const item = this.items.find((entry) => (
+      entry.id === id
+      || `${entry.kind}/${entry.slug}` === id
+      || (entry.legacySlug && `${entry.kind}/${entry.legacySlug}` === id)
+      || (entry.legacySlug && entry.legacySlug === id)
+      || entry.slug === id
+    )) || this.items.find((entry) => {
+      const parts = String(id || '').split('/');
+      const slug = parts.length > 1 ? parts.slice(1).join('/') : parts[0];
+      return entry.slug === slug || (entry.legacySlug && entry.legacySlug === slug);
+    });
     if (!item) {
       this.showList();
       return;
     }
-    if (item.kind === 'social') {
+    if (this.isExternal(item)) {
       if (item.externalUrl) window.open(item.externalUrl, '_blank', 'noopener,noreferrer');
       return;
     }
@@ -524,7 +619,7 @@ class BlogParser {
       ? `<figure class="writings-detail-cover" data-cover-for="${this.escapeHtml(item.id)}">
            <img src="${this.escapeHtml(this.coverSrc(item.cover))}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
          </figure>`
-      : '';
+      : this.coverFallback(item, 'writings-detail-cover');
 
     this.view.innerHTML = `
       <section class="blog-post-detail">

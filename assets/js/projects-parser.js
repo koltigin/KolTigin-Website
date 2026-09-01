@@ -4,6 +4,7 @@ class ProjectsParser {
   constructor() {
     this.container = document.querySelector('.project-groups');
     this.nav = document.querySelector('.project-section-nav');
+    this.categoryConfig = [];
     this.groups = [];
     this.statusLabels = {};
     this.linkLabels = {};
@@ -35,15 +36,37 @@ class ProjectsParser {
     return window.KolTiginI18n ? window.KolTiginI18n.localized(value) : (typeof value === 'string' ? value : '');
   }
 
-  applyLabels() {
-    this.groups = [
-      { key: 'builtByMe', title: this.t('projects.groups.builtByMe', null, 'Built by Me') },
-      { key: 'mainnet', title: this.t('projects.groups.mainnet', null, 'Mainnet') },
-      { key: 'activeTestnets', title: this.t('projects.groups.activeTestnets', null, 'Active Testnets') },
-      { key: 'depin', title: this.t('projects.groups.depin', null, 'DePIN') },
-      { key: 'defi', title: this.t('projects.groups.defi', null, 'DeFi & Ecosystem') },
-      { key: 'completedTestnets', title: this.t('projects.groups.completedTestnets', null, 'Completed Testnets') }
+  fallbackCategoryConfig() {
+    return [
+      { id: 'builtByMe', order: 1, accordion: false, label: { en: 'Built by Me' } },
+      { id: 'mainnet', order: 2, accordion: false, label: { en: 'Mainnet' } },
+      { id: 'depin', order: 3, accordion: false, label: { en: 'DePIN' } },
+      { id: 'defi', order: 4, accordion: false, label: { en: 'DeFi & Ecosystem' } },
+      { id: 'completedTestnets', order: 5, accordion: true, label: { en: 'Completed Testnets' } },
+      { id: 'completedDefi', order: 6, accordion: true, label: { en: 'Completed DeFi & Ecosystem' } },
+      { id: 'activeTestnets', order: 7, accordion: false, label: { en: 'Active Testnets' } }
     ];
+  }
+
+  async loadCategoryConfig() {
+    try {
+      const response = await fetch('./config/project-categories.json', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not load project-categories.json');
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid project-categories.json');
+      this.categoryConfig = data.slice().sort((left, right) => (left.order || 0) - (right.order || 0));
+    } catch (error) {
+      this.categoryConfig = this.fallbackCategoryConfig();
+    }
+  }
+
+  applyLabels() {
+    const categories = this.categoryConfig.length ? this.categoryConfig : this.fallbackCategoryConfig();
+    this.groups = categories.map((category) => ({
+      key: category.id,
+      title: this.t(`projects.groups.${category.id}`, null, category.label && category.label.en ? category.label.en : category.id),
+      accordion: Boolean(category.accordion)
+    }));
     this.statusLabels = {
       active: this.t('projects.status.active', null, 'Active'),
       completed: this.t('projects.status.completed', null, 'Completed'),
@@ -61,6 +84,10 @@ class ProjectsParser {
   }
 
   displayLinkLabel(label) {
+    if (label && typeof label === 'object') {
+      const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
+      label = label[lang] || label.en || label.tr || '';
+    }
     const map = {
       Website: 'projects.links.website',
       Explorer: 'projects.links.explorer',
@@ -112,14 +139,17 @@ class ProjectsParser {
       if (!link || typeof link !== 'object') return null;
       const url = typeof link.url === 'string' ? link.url.trim() : '';
       if (!url) return null;
-      const label = typeof link.label === 'string' && link.label.trim()
-        ? link.label.trim()
-        : this.t('projects.links.link', null, 'Link');
+      const rawLabel = link.label;
+      const label = rawLabel && typeof rawLabel === 'object'
+        ? (rawLabel.en || rawLabel.tr || this.t('projects.links.link', null, 'Link'))
+        : (typeof rawLabel === 'string' && rawLabel.trim()
+          ? rawLabel.trim()
+          : this.t('projects.links.link', null, 'Link'));
       const icon = this.safeIonIcon(link.icon);
       const guide = typeof link.guide === 'string' && /^[a-z0-9-]+$/i.test(link.guide.trim())
         ? link.guide.trim()
         : '';
-      return { label, url, icon, guide };
+      return { label: rawLabel && typeof rawLabel === 'object' ? rawLabel : label, url, icon, guide };
     };
 
     if (Array.isArray(links)) {
@@ -161,7 +191,10 @@ class ProjectsParser {
       'Open App': 'open-outline',
       'Read Article': 'document-text-outline'
     };
-    const name = custom || fallbacks[link && link.label] || '';
+    const labelText = typeof (link && link.label) === 'object'
+      ? ((link.label && (link.label.en || link.label.tr)) || '')
+      : (link && link.label);
+    const name = custom || fallbacks[labelText] || '';
     return name ? `<ion-icon name="${this.escapeHtml(name)}"></ion-icon>` : '';
   }
 
@@ -296,7 +329,10 @@ class ProjectsParser {
   }
 
   isAccordionGroup(key) {
-    return key === 'completedTestnets';
+    const group = this.groups.find((item) => item.key === key);
+    if (group && typeof group.accordion === 'boolean') return group.accordion;
+    const category = this.categoryConfig.find((item) => item.id === key);
+    return Boolean(category && category.accordion);
   }
 
   withDefinedGroups(data) {
@@ -528,6 +564,7 @@ class ProjectsParser {
       if (window.KolTiginI18n && window.KolTiginI18n.ready) {
         await window.KolTiginI18n.ready;
       }
+      await this.loadCategoryConfig();
       this.applyLabels();
 
       const response = await fetch('./projects/projects.json', { cache: 'no-store' });

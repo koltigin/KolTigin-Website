@@ -22,7 +22,7 @@ class AboutParser {
 
     async loadAbout() {
         try {
-            const response = await fetch(this.contentPath(), { cache: 'no-store' });
+            const response = await fetch(`${this.contentPath()}?t=${Date.now()}`, { cache: 'no-store' });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             this.parseMarkdown(await response.text());
             this.renderAbout();
@@ -94,7 +94,7 @@ class AboutParser {
                     ${this.aboutData.services.map(service => `
                         <li class="service-item">
                             <div class="service-icon-box">
-                                <img src="${service.icon}" alt="" width="40" loading="lazy" decoding="async">
+                                ${this.renderServiceIcon(service.icon)}
                             </div>
                             <div class="service-content-box">
                                 <h4 class="h4 service-item-title">${service.title}</h4>
@@ -109,6 +109,18 @@ class AboutParser {
         const header = this.aboutSection.querySelector('header');
         if (header) header.insertAdjacentHTML('afterend', contentHTML);
         else this.aboutSection.innerHTML = contentHTML;
+    }
+
+    renderServiceIcon(icon) {
+        const value = String(icon || '').trim();
+        if (!value) return '';
+        if (/\.svg(\?|$)/i.test(value) || value.includes('/assets/') || value.startsWith('./')) {
+            return `<img src="${value}" alt="" width="40" loading="lazy" decoding="async">`;
+        }
+        if (/^[a-z0-9-]+$/i.test(value)) {
+            return `<ion-icon name="${value}"></ion-icon>`;
+        }
+        return '';
     }
 
     parseMarkdownText(text) {

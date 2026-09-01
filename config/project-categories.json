@@ -1,0 +1,79 @@
+[
+  {
+    "id": "builtByMe",
+    "folder": "built-by-me",
+    "order": 1,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "Built by Me",
+      "tr": "Benim Yaptıklarım"
+    }
+  },
+  {
+    "id": "mainnet",
+    "folder": "mainnet",
+    "order": 2,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "Mainnet",
+      "tr": "Mainnet"
+    }
+  },
+  {
+    "id": "depin",
+    "folder": "depin",
+    "order": 3,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "DePIN",
+      "tr": "DePIN"
+    }
+  },
+  {
+    "id": "defi",
+    "folder": "defi",
+    "order": 4,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "DeFi & Ecosystem",
+      "tr": "DeFi & Ekosistem"
+    }
+  },
+  {
+    "id": "completedTestnets",
+    "folder": "completed-testnets",
+    "order": 5,
+    "accordion": true,
+    "protected": true,
+    "label": {
+      "en": "Completed Testnets",
+      "tr": "Tamamlanan Testnetler"
+    }
+  },
+  {
+    "id": "completedDefi",
+    "folder": "completed-defi-ecosystem",
+    "order": 6,
+    "accordion": true,
+    "protected": true,
+    "label": {
+      "en": "Completed DeFi & Ecosystem",
+      "tr": "Tamamlanan DeFi & Ekosistem"
+    }
+  },
+  {
+    "id": "activeTestnets",
+    "folder": "active-testnets",
+    "order": 7,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "Active Testnets",
+      "tr": "Aktif Testnetler"
+    }
+  }
+]

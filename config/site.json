@@ -5,7 +5,7 @@
     "en": "Node Operator · Developer · Web3 · Research",
     "tr": "Node Operatörü · Geliştirici · Web3 · Araştırma"
   },
-  "avatar": "./assets/images/profile/profile.jpg",
+  "avatar": "./assets/images/profile/koltigin-at.png",
   "email": "hello@koltigin.xyz",
   "whatsapp": {
     "display": "+1 (365) 345-8473",
@@ -13,7 +13,10 @@
   },
   "location": {
     "en": "Eskişehir, Türkiye",
-    "tr": "Eskişehir, Türkiye"
+    "tr": "Eskişehir, Türkiye",
+    "city": "Eskişehir",
+    "country": "Türkiye",
+    "mapQuery": "Eskişehir, Türkiye"
   },
   "canonicalUrl": "https://koltigin.xyz/",
   "ogImage": "./assets/images/common/og-image.png",
@@ -47,21 +50,22 @@
       "icon": "farcaster"
     },
     {
-      "id": "base",
-      "label": "Base",
-      "url": "https://base.app/profile/0xdE821C1Ae8B6A6dcaECFE58be6F9265804AFc8b6",
-      "icon": "base"
-    },
-    {
       "id": "youtube",
       "label": "YouTube",
       "url": "https://www.youtube.com/@mehmetkoltigin",
       "icon": "logo-youtube"
+    },
+    {
+      "id": "base",
+      "label": "Base",
+      "url": "https://base.app/profile/0xdE821C1Ae8B6A6dcaECFE58be6F9265804AFc8b6",
+      "icon": "base"
     }
   ],
   "contact": {
     "endpoint": "https://koltigin-contact.mehmetkoltigin.workers.dev/",
-    "mapEmbedUrl": "https://maps.google.com/maps?q=Eski%C5%9Fehir%2C%20T%C3%BCrkiye&z=12&hl=tr&output=embed"
+    "mapEmbedUrl": "https://maps.google.com/maps?q=Eski%C5%9Fehir%2C%20T%C3%BCrkiye&z=12&hl=en&output=embed",
+    "formEnabled": true
   },
   "github": {
     "owner": "koltigin",
@@ -69,5 +73,8 @@
     "branch": "main"
   },
   "defaultLanguage": "en",
-  "supportedLanguages": ["en", "tr"]
+  "supportedLanguages": [
+    "en",
+    "tr"
+  ]
 }

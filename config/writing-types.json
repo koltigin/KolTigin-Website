@@ -1,0 +1,51 @@
+{
+  "types": [
+    {
+      "id": "articles",
+      "core": true,
+      "mode": "internal",
+      "icon": "document-text-outline",
+      "label": {
+        "en": "Article",
+        "tr": "Makale"
+      },
+      "filter": {
+        "en": "Articles",
+        "tr": "Makaleler"
+      }
+    },
+    {
+      "id": "notes",
+      "core": true,
+      "mode": "internal",
+      "icon": "code-slash-outline",
+      "label": {
+        "en": "Technical Note",
+        "tr": "Teknik Not"
+      },
+      "filter": {
+        "en": "Technical Notes",
+        "tr": "Teknik Notlar"
+      }
+    },
+    {
+      "id": "social",
+      "core": true,
+      "mode": "external",
+      "icon": "logo-twitter",
+      "urlField": "externalUrl",
+      "cta": {
+        "en": "View on X →",
+        "tr": "X'te Görüntüle →"
+      },
+      "label": {
+        "en": "X Post",
+        "tr": "X Paylaşımı"
+      },
+      "filter": {
+        "en": "X Posts",
+        "tr": "X Paylaşımları"
+      }
+    }
+  ]
+}

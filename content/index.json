@@ -1,4 +1,53 @@
 {
+  "types": [
+    {
+      "id": "articles",
+      "core": true,
+      "mode": "internal",
+      "icon": "document-text-outline",
+      "label": {
+        "en": "Article",
+        "tr": "Makale"
+      },
+      "filter": {
+        "en": "Articles",
+        "tr": "Makaleler"
+      }
+    },
+    {
+      "id": "notes",
+      "core": true,
+      "mode": "internal",
+      "icon": "code-slash-outline",
+      "label": {
+        "en": "Technical Note",
+        "tr": "Teknik Not"
+      },
+      "filter": {
+        "en": "Technical Notes",
+        "tr": "Teknik Notlar"
+      }
+    },
+    {
+      "id": "social",
+      "core": true,
+      "mode": "external",
+      "icon": "logo-twitter",
+      "urlField": "externalUrl",
+      "cta": {
+        "en": "View on X →",
+        "tr": "X'te Görüntüle →"
+      },
+      "label": {
+        "en": "X Post",
+        "tr": "X Paylaşımı"
+      },
+      "filter": {
+        "en": "X Posts",
+        "tr": "X Paylaşımları"
+      }
+    }
+  ],
   "articles": {
     "en": [
       "2026-08-31-soulmemory.md",
@@ -20,45 +69,49 @@
     ]
   },
   "social": {
-    "en": [],
-    "tr": []
+    "en": [
+      "clarity-act-kripto-piyasasi-icin-neden-onemli.md"
+    ],
+    "tr": [
+      "clarity-act-kripto-piyasasi-icin-neden-onemli.md"
+    ]
   },
   "videos": [
-    "akilli-cuzdanlar-smart-wallets.md",
-    "aleo-kontrat-ve-token-olusturma.md",
-    "aleo-leo-contributor-badge-islemleri.md",
-    "ambit-finance-testnet.md",
-    "anatolian-team-intro-2022.md",
-    "anatolian-team-intro.md",
     "ar-io-kapsamli-rehber.md",
-    "asmatch-kullanim-rehberi.md",
-    "base-eth-aktarma-ve-nft-mintleme-islemi.md",
-    "bifrost-and-its-ecosystem.md",
-    "bifrost-nedir.md",
-    "braavos-starkfighter-kampanyasi.md",
-    "c4e-ile-ev-sarji.md",
-    "components-of-the-sei.md",
-    "cross-finance-tesvikli-testnet-rehberi.md",
-    "eigenlayer-testnet-rehberi.md",
     "fuel-kontrat-olusturma.md",
-    "gercek-fayda-saglayan-bir-defi-projesi.md",
-    "mint-fun-nft-sayfasi-hazirlama.md",
     "nubit-light-node-faz-2.md",
     "nubit-tesvikli-testnet-faz-1.md",
-    "readon-kullanim-rehberi.md",
-    "rebusa-giris-turkce-altyazi.md",
-    "rebusa-giris-turkce.md",
-    "rebusa-giris.md",
-    "seekers-alliance-codename-kaydi.md",
-    "sei-bilesenleri-yeni.md",
-    "sei-network-neden-yeni-bir-defi-tasarim-alanidir.md",
-    "starknet-airdrop-rehberi-2023-03.md",
-    "starknet-airdrop-rehberi.md",
-    "starknet-cuzdaniniza-para-aktarma-smart-wallets.md",
-    "starknet-e-para-aktarma-yontemleri.md",
+    "cross-finance-tesvikli-testnet-rehberi.md",
+    "aleo-kontrat-ve-token-olusturma.md",
+    "aleo-leo-contributor-badge-islemleri.md",
+    "eigenlayer-testnet-rehberi.md",
     "subsquid-tech-gorevleri-github-codespaces.md",
+    "mint-fun-nft-sayfasi-hazirlama.md",
+    "readon-kullanim-rehberi.md",
+    "asmatch-kullanim-rehberi.md",
     "thirdweb-superchain-builder-nft-rehberi.md",
+    "ambit-finance-testnet.md",
+    "base-eth-aktarma-ve-nft-mintleme-islemi.md",
+    "c4e-ile-ev-sarji.md",
+    "braavos-starkfighter-kampanyasi.md",
     "venom-network-testnet-rehberi.md",
-    "what-is-project-q.md"
+    "starknet-e-para-aktarma-yontemleri.md",
+    "akilli-cuzdanlar-smart-wallets.md",
+    "starknet-cuzdaniniza-para-aktarma-smart-wallets.md",
+    "what-is-project-q.md",
+    "bifrost-nedir.md",
+    "bifrost-and-its-ecosystem.md",
+    "components-of-the-sei.md",
+    "sei-bilesenleri-yeni.md",
+    "anatolian-team-intro-2022.md",
+    "gercek-fayda-saglayan-bir-defi-projesi.md",
+    "rebusa-giris.md",
+    "rebusa-giris-turkce.md",
+    "rebusa-giris-turkce-altyazi.md",
+    "seekers-alliance-codename-kaydi.md",
+    "sei-network-neden-yeni-bir-defi-tasarim-alanidir.md",
+    "anatolian-team-intro.md",
+    "starknet-airdrop-rehberi-2023-03.md",
+    "starknet-airdrop-rehberi.md"
   ]
 }

@@ -43,7 +43,8 @@
       "activeTestnets": "Active Testnets",
       "depin": "DePIN",
       "defi": "DeFi & Ecosystem",
-      "completedTestnets": "Completed Testnets"
+      "completedTestnets": "Completed Testnets",
+      "completedDefi": "Completed DeFi & Ecosystem"
     },
     "status": {
       "active": "Active",
@@ -104,7 +105,7 @@
     "loading": "Loading guide…",
     "loadError": "The guide could not be loaded.",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied!"
   },
   "contact": {
     "title": "Contact",

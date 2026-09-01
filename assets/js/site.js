@@ -11,7 +11,17 @@ const SOCIAL_BRAND_SVG = {
               </svg>`
 };
 
-let socialApplied = false;
+function escapeSocial(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function isHttpUrl(value) {
+  return /^https:\/\/[^\s]+$/i.test(String(value || '').trim());
+}
 
 function applyText(selector, value) {
   const el = document.querySelector(selector);
@@ -133,17 +143,17 @@ function applySiteConfig() {
   if (address) address.textContent = localized(site.location) || address.textContent;
 
   const socialList = document.querySelector('.social-list');
-  if (!socialApplied && socialList && Array.isArray(site.social) && site.social.length) {
-    socialApplied = true;
+  if (socialList && Array.isArray(site.social)) {
     socialList.innerHTML = site.social.map((item) => {
-      const label = item.label || item.id || '';
-      const url = item.url || '#';
+      const url = String(item.url || '').trim();
+      if (!isHttpUrl(url)) return '';
+      const label = escapeSocial(localized(item.label) || item.id || '');
       const brand = SOCIAL_BRAND_SVG[item.icon] || SOCIAL_BRAND_SVG[item.id];
       const icon = brand
         ? brand
-        : `<ion-icon name="${item.icon || 'link-outline'}"></ion-icon>`;
+        : `<ion-icon name="${escapeSocial(item.icon || 'link-outline')}"></ion-icon>`;
       return `<li class="social-item">
-            <a href="${url}" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="${label}" title="${label}">
+            <a href="${escapeSocial(url)}" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="${label}" title="${label}">
               ${icon}
             </a>
           </li>`;

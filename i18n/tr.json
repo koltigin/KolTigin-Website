@@ -43,7 +43,8 @@
       "activeTestnets": "Aktif Testnetler",
       "depin": "DePIN",
       "defi": "DeFi & Ekosistem",
-      "completedTestnets": "Tamamlanan Testnetler"
+      "completedTestnets": "Tamamlanan Testnetler",
+      "completedDefi": "Tamamlanan DeFi & Ekosistem"
     },
     "status": {
       "active": "Aktif",
@@ -104,7 +105,7 @@
     "loading": "Rehber yükleniyor…",
     "loadError": "Rehber yüklenemedi.",
     "copy": "Kopyala",
-    "copied": "Kopyalandı"
+    "copied": "Kopyalandı!"
   },
   "contact": {
     "title": "İletişim",

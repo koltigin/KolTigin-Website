@@ -105,7 +105,13 @@ class ContactParser {
         const existing = this.contactSection.querySelector('[data-form]');
         const saved = readContactFormValues(existing);
         const mapUrl = localizedMapUrl();
-        const mapTitle = contactT('contact.mapTitle', 'Eskişehir, Türkiye');
+        const site = window.KolTiginI18n && window.KolTiginI18n.site;
+        const loc = site && site.location;
+        const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
+        const mapTitle = (loc && (loc[lang] || loc.en || loc.tr))
+          || [loc && loc.city, loc && loc.country].filter(Boolean).join(', ')
+          || contactT('contact.mapTitle', 'Eskişehir, Türkiye');
+        const formEnabled = !(site && site.contact && site.contact.formEnabled === false);
 
         this.contactSection.innerHTML = `
             <header>
@@ -122,6 +128,7 @@ class ContactParser {
                 </figure>
             </section>
 
+            ${formEnabled ? `
             <section class="contact-form">
                 <h3 class="h3 form-title">${contactT('contact.formTitle', 'Message')}</h3>
                 <form action="#" class="form" data-form>
@@ -145,7 +152,7 @@ class ContactParser {
                     </button>
                     <p class="form-status" data-form-status role="status" aria-live="polite" hidden></p>
                 </form>
-            </section>
+            </section>` : ''}
         `;
 
         const form = this.contactSection.querySelector('[data-form]');

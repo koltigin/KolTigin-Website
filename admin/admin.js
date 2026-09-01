@@ -294,7 +294,13 @@
       error.status = response.status;
       throw error;
     }
-    if (!response.ok || data.ok !== true) throw notConnectedError();
+    if (data && data.ok === true) return data;
+    if (data && data.ok === false && data.error) {
+      const error = new Error(data.error);
+      error.status = response.status;
+      throw error;
+    }
+    if (!response.ok) throw notConnectedError();
     return data;
   }
 

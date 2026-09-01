@@ -389,7 +389,8 @@
   }
 
   function banner() {
-    return `<div class="banner">${escapeHtml(t(isProductionAdmin() ? 'bannerProd' : 'banner'))}</div>`;
+    if (isProductionAdmin()) return '';
+    return `<div class="banner">${escapeHtml(t('banner'))}</div>`;
   }
 
   function uiLangSwitch() {

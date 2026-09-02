@@ -3,7 +3,7 @@ title: "About"
 description: "KolTigin — biologist, node operations, DeFi, and Web3 content"
 ---
 
-# About
+# About test
 
 I prefer to exist anonymously in Web3 under the KolTigin identity. The work here is shaped by what I produce and contribute to the ecosystem, far more than by a personal profile.
 

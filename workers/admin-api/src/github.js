@@ -48,16 +48,37 @@ export class MockGitHub {
     return this.listPaths().filter((path) => path === prefix || path.startsWith(prefix));
   }
 
+  sameBytes(left, right) {
+    if (left === right) return true;
+    if (left == null || right == null) return false;
+    const a = typeof left === "string" ? new TextEncoder().encode(left) : left;
+    const b = typeof right === "string" ? new TextEncoder().encode(right) : right;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i += 1) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
   async commit({ message, upserts = [], deletes = [] }) {
+    let changed = false;
+    for (const item of upserts) {
+      assertSafePath(item.path);
+      const next = item.bytes ? item.bytes : item.text;
+      if (!this.sameBytes(this.files.get(item.path), next)) changed = true;
+    }
+    for (const path of deletes) {
+      assertSafePath(path);
+      if (this.files.has(path)) changed = true;
+    }
+    if (!changed) return { sha: this.sha, message, unchanged: true };
     if (this.failCommit) {
       throw new HttpError(409, "GitHub reported a conflict. Reload and try again.");
     }
     for (const item of upserts) {
-      assertSafePath(item.path);
       this.files.set(item.path, item.bytes ? item.bytes : item.text);
     }
     for (const path of deletes) {
-      assertSafePath(path);
       this.files.delete(path);
     }
     this.sha = `sha${this.commits.length + 1}`;
@@ -124,6 +145,13 @@ export class GitHubClient {
     const treeItems = [];
     for (const item of upserts) {
       assertSafePath(item.path);
+      if (!item.bytes) {
+        try {
+          if ((await this.getText(item.path)) === item.text) continue;
+        } catch (error) {
+          if (!(error instanceof HttpError && error.status === 404)) throw error;
+        }
+      }
       const content = item.bytes ? bytesToBase64(item.bytes) : textToBase64(item.text);
       const blob = await this.api("/git/blobs", {
         method: "POST",
@@ -133,12 +161,14 @@ export class GitHubClient {
     }
     for (const path of deletes) {
       assertSafePath(path);
-      treeItems.push({ path, mode: "100644", type: "blob", sha: null });
+      if (await this.exists(path)) treeItems.push({ path, mode: "100644", type: "blob", sha: null });
     }
+    if (!treeItems.length) return { sha: parent, message, unchanged: true };
     const tree = await this.api("/git/trees", {
       method: "POST",
       body: JSON.stringify({ base_tree: commit.tree.sha, tree: treeItems })
     });
+    if (tree.sha === commit.tree.sha) return { sha: parent, message, unchanged: true };
     const created = await this.api("/git/commits", {
       method: "POST",
       body: JSON.stringify({ message, tree: tree.sha, parents: [parent] })

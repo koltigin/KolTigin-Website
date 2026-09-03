@@ -116,6 +116,13 @@ async function main() {
     res = await json(await post("/api/admin/page", { family: "about", lang: "en", markdown: "# About\n\nUpdated\n" }, env));
     assert(res.status === 200 && res.body.ok, "save about");
     assert(String(github.files.get("content/about/en.md")).includes("Updated"), "about body");
+    const aboutCommits = github.commits.length;
+    const aboutText = String(github.files.get("content/about/en.md"));
+    res = await json(await post("/api/admin/page", { family: "about", lang: "en", markdown: aboutText }, env));
+    assert(res.status === 200 && res.body.ok === true && res.body.unchanged === true, "identical about save is no-change success");
+    assert(github.commits.length === aboutCommits, "identical about save does not create a commit");
+    res = await json(await post("/api/admin/page", { family: "about", lang: "tr", markdown: "# Hakkında\n\nTR body\n" }, env));
+    assert(res.status === 200 && res.body.ok && String(github.files.get("content/about/tr.md")).includes("TR body"), "about tr writes source file");
 
     res = await json(await post("/api/admin/site", { motto: "Think out of the box.", displayName: "KolTigin" }, env));
     assert(res.status === 200 && res.body.site.motto === "Think out of the box.", "save site");
@@ -159,6 +166,17 @@ async function main() {
     delete locked.TEST_MODE;
     res = await json(await post("/api/admin/save", { kind: "articles", lang: "en", id: "nope", title: "x", date: "2026-01-01" }, locked));
     assert(res.status === 401, "missing Access JWT rejected");
+    const beforeAccessBlock = github.commits.length;
+    const b64url = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64url");
+    const fakeJwt = `${b64url({ alg: "RS256", kid: "k" })}.${b64url({
+      iss: "https://team.cloudflareaccess.com", aud: "aud-1", exp: 4102444800
+    })}.sig`;
+    locked.ACCESS_TEAM_DOMAIN = "team.cloudflareaccess.com";
+    res = await json(await post("/api/admin/page", { family: "about", lang: "en", markdown: "# blocked\n" }, locked, {
+      "CF-Access-Jwt-Assertion": fakeJwt
+    }));
+    assert(res.status === 500 && String(res.body.error).includes("Access is not configured"), "missing ACCESS_AUD is rejected");
+    assert(github.commits.length === beforeAccessBlock, "Access failure does not mutate GitHub");
 
     res = await json(await postForm("/api/admin/cover", { name: "shot.png", bytes: png }, {}, env));
     assert(res.status === 200 && res.body.filename.endsWith(".png"), "cover upload");

@@ -47,8 +47,8 @@ export async function assertAccess(request, env) {
   const token = request.headers.get("CF-Access-Jwt-Assertion") || "";
   if (!token) throw new HttpError(401, "Cloudflare Access is required");
   const { header, payload, signed, signature } = decodeJwt(token);
-  const aud = env.ACCESS_AUD;
-  const team = String(env.ACCESS_TEAM_DOMAIN || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const aud = String(env.ACCESS_AUD || "").trim().replace(/^["']|["']$/g, "");
+  const team = String(env.ACCESS_TEAM_DOMAIN || "").trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
   if (!aud || !team) throw new HttpError(500, "Access is not configured");
   const expectedIss = `https://${team}`;
   if (payload.iss !== expectedIss && payload.iss !== `${expectedIss}/`) {

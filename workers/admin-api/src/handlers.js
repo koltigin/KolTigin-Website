@@ -263,14 +263,17 @@ export async function handleSite(body, github) {
 export async function handlePage(body, github) {
   const family = String(body.family || "");
   const lang = String(body.lang || "");
-  const markdown = String(body.markdown || "");
+  if (body.markdown == null || typeof body.markdown !== "string") {
+    throw new HttpError(400, "Markdown is required");
+  }
+  const markdown = body.markdown;
   const path = pagePath(family, lang);
   const text = markdown.endsWith("\n") ? markdown : `${markdown}\n`;
   const result = await github.commit({
     message: commitMsg("save page", `${family}/${lang}`),
     upserts: [{ path, text }]
   });
-  return { path, family, lang, sha: result.sha };
+  return { path, family, lang, sha: result.sha, unchanged: Boolean(result.unchanged) };
 }
 
 export async function handleProjectSave(body, github) {

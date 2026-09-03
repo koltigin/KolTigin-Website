@@ -704,65 +704,11 @@
     </div>`;
   }
 
-  function wrapSelection(textarea, before, after = before) {
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const value = textarea.value;
-    const selected = value.slice(start, end) || 'text';
-    textarea.value = value.slice(0, start) + before + selected + after + value.slice(end);
-    textarea.focus();
-    textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
-    textarea.dispatchEvent(new Event('input'));
-  }
-
-  function lineBounds(value, start, end) {
-    const from = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
-    let to = value.indexOf('\n', end);
-    if (end > start && value.charAt(end - 1) === '\n') to = end - 1;
-    else if (to === -1) to = value.length;
-    return [from, to];
-  }
-
-  function prefixLines(textarea, prefix) {
-    const value = textarea.value;
-    let start = textarea.selectionStart;
-    let end = textarea.selectionEnd;
-    [start, end] = lineBounds(value, start, end);
-    const block = value.slice(start, end);
-    const lines = block.split('\n');
-    let next;
-    if (prefix === '> ') {
-      const nonempty = lines.filter((line) => line.trim() !== '');
-      const quoted = nonempty.length > 0 && nonempty.every((line) => /^\s*> ?/.test(line));
-      next = lines.map((line) => {
-        if (quoted) return line.replace(/^\s*> ?/, '');
-        if (/^\s*> ?/.test(line)) return line.replace(/^\s*> ?/, '> ');
-        if (line.trim() === '') return '>';
-        return `> ${line}`;
-      }).join('\n');
-    } else {
-      const fallback = lines.length === 1 && lines[0] === '' ? ['item'] : lines;
-      next = fallback.map((line, index) => {
-        if (prefix === '1. ') return `${index + 1}. ${line.replace(/^\d+\.\s+/, '')}`;
-        return prefix + line.replace(/^([-*]|>)\s+/, '');
-      }).join('\n');
-    }
-    textarea.value = value.slice(0, start) + next + value.slice(end);
-    textarea.focus();
-    textarea.setSelectionRange(start, start + next.length);
-    textarea.dispatchEvent(new Event('input'));
-  }
-
-  function applyMd(cmd, textarea) {
-    if (cmd === 'h2') return prefixLines(textarea, '## ');
-    if (cmd === 'bold') return wrapSelection(textarea, '**');
-    if (cmd === 'italic') return wrapSelection(textarea, '*');
-    if (cmd === 'link') return wrapSelection(textarea, '[', '](https://)');
-    if (cmd === 'ul') return prefixLines(textarea, '- ');
-    if (cmd === 'ol') return prefixLines(textarea, '1. ');
-    if (cmd === 'quote') return prefixLines(textarea, '> ');
-    if (cmd === 'code') return wrapSelection(textarea, '`');
-  }
+  const Md = window.KTAdminMd;
+  const wrapSelection = Md.wrapSelection;
+  const prefixLines = Md.prefixLines;
+  const applyMd = Md.applyMd;
+  const insertSnippet = Md.insertSnippet;
 
   function coverBlock(draft, kindLabel) {
     if (draft.coverPreview) return `<div class="cover-preview"><img src="${escapeHtml(draft.coverPreview)}" alt=""></div>`;
@@ -1969,6 +1915,7 @@
     wrapSelection,
     prefixLines,
     applyMd,
+    insertSnippet,
     markDirty,
     clearDirty,
     confirmLeave,

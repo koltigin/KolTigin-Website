@@ -933,29 +933,8 @@
       const mdBtn = event.target.closest('[data-md]');
       if (mdBtn && app.querySelector('[data-guide-md], [data-page-md]')) {
         const textarea = app.querySelector('[data-guide-md], [data-page-md]');
-        if (mdBtn.dataset.md === 'codeblock') {
-          const start = textarea.selectionStart;
-          const end = textarea.selectionEnd;
-          const selected = textarea.value.slice(start, end);
-          const insert = selected ? `\`\`\` bash\n${selected}\n\`\`\`\n` : '``` bash\n\n```\n';
-          textarea.value = textarea.value.slice(0, start) + insert + textarea.value.slice(end);
-          textarea.focus();
-          textarea.setSelectionRange(start + 8, start + 8 + (selected ? selected.length : 0));
-          textarea.dispatchEvent(new Event('input'));
-          H().markDirty();
-          return;
-        }
-        if (mdBtn.dataset.md === 'hr') {
-          const start = textarea.selectionStart;
-          const insert = '\n---\n';
-          textarea.value = `${textarea.value.slice(0, start)}${insert}${textarea.value.slice(textarea.selectionEnd)}`;
-          textarea.focus();
-          textarea.setSelectionRange(start + insert.length, start + insert.length);
-          textarea.dispatchEvent(new Event('input'));
-          H().markDirty();
-          return;
-        }
         H().applyMd(mdBtn.dataset.md, textarea);
+        H().markDirty();
         return;
       }
       const cLang = event.target.closest('[data-contact-lang]');
@@ -1017,8 +996,7 @@
           const alt = window.prompt(t('cms.altText'), '') || '';
           const snippet = `![${alt}](${data.path})\n`;
           if (ta) {
-            const start = ta.selectionStart;
-            ta.value = ta.value.slice(0, start) + snippet + ta.value.slice(ta.selectionEnd);
+            H().insertSnippet(ta, snippet);
             g.langs[g.lang] = ta.value;
           }
           H().markDirty();

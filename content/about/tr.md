@@ -5,6 +5,8 @@ description: "KolTigin — biyolog, node operasyonu, DeFi ve Web3 içerik"
 
 # Hakkında
 
+`Test ediyorum`
+
 Web3 dünyasında KolTigin kimliğiyle anonim olarak var olmayı tercih ediyorum. Buradaki çalışmalarım gerçek kimliğimden çok, ürettiklerim ve ekosisteme yaptığım katkılarla şekilleniyor.
 
 Zooloji alanında doktora derecesine sahip bir biyoloğum. Akademik geçmişimden gelen araştırma, analiz ve sistematik çalışma yaklaşımını Web3 dünyasındaki çalışmalarımda da kullanıyorum.

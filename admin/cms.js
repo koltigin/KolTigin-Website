@@ -148,16 +148,16 @@
   }
 
   async function saveOk(message) {
-    H().state.notice = message || t('cms.saved');
+    H().showNotice(message);
     H().clearDirty();
   }
 
   async function saveFail(error) {
     if (error && error.code === 'PUBLISH_NOT_CONNECTED') {
-      H().state.error = error.message;
+      H().showError(error.message);
       return;
     }
-    H().state.error = `${t('cms.failed')} ${error.message || ''}`.trim();
+    H().showError(`${t('cms.failed')} ${error.message || ''}`.trim());
   }
 
   function mdToolbar(extra) {
@@ -236,7 +236,7 @@
         draft.langs.tr = applyServiceIcons(draft.langs.tr, icons);
       }
     }
-    H().state.error = '';
+    H().clearStatus();
     try {
       const langs = draft.family === 'about' ? ['en', 'tr'] : [draft.lang];
       for (const lang of langs) {
@@ -453,7 +453,7 @@
   async function saveProject() {
     collectProjectForm();
     const p = H().state.projectDraft;
-    H().state.error = '';
+    H().clearStatus();
     try {
       const links = (p.links || []).filter((link) => (link.url || '').trim());
       if (p.guideId) {
@@ -648,7 +648,7 @@
       const title = (g.langs.en.match(/^#\s+(.+)$/m) || g.langs.tr.match(/^#\s+(.+)$/m) || [])[1] || '';
       g.id = H().slugify(title);
     }
-    H().state.error = '';
+    H().clearStatus();
     try {
       const result = await H().api('/admin/api/guide-save', {
         method: 'POST',
@@ -730,7 +730,7 @@
     });
     const i18n = H().state.contactData.i18n || { en: {}, tr: {} };
     i18n[lang] = { ...i18n[lang], ...i18nFields };
-    H().state.error = '';
+    H().clearStatus();
     try {
       const result = await H().api('/admin/api/contact', {
         method: 'POST',
@@ -754,6 +754,7 @@
     app.addEventListener('click', async (event) => {
       const pageLang = event.target.closest('[data-page-lang]');
       if (pageLang && H().state.pageDraft) {
+        H().clearStatus();
         const ta = app.querySelector('[data-page-md]');
         if (ta) H().state.pageDraft.langs[H().state.pageDraft.lang] = ta.value;
         H().state.pageDraft.lang = pageLang.dataset.pageLang;
@@ -803,6 +804,7 @@
       }
       if (event.target.closest('[data-pcat-create]')) {
         event.preventDefault();
+        H().clearStatus();
         try {
           await H().api('/admin/api/project-categories', {
             method: 'POST',
@@ -825,6 +827,7 @@
         return;
       }
       if (event.target.closest('[data-pcat-save]')) {
+        H().clearStatus();
         try {
           await H().api('/admin/api/project-categories', {
             method: 'POST',
@@ -848,6 +851,7 @@
         const count = (H().state.projectsData.projects || []).filter((p) => p.category === id).length;
         if (!count) {
           if (!window.confirm(t('types.confirmEmpty'))) return;
+          H().clearStatus();
           try {
             await H().api('/admin/api/project-categories', { method: 'POST', body: JSON.stringify({ action: 'delete', id }) });
             H().state.projectsData = await H().api('/admin/api/projects');
@@ -861,6 +865,7 @@
         return;
       }
       if (event.target.closest('[data-pcat-move-del]')) {
+        H().clearStatus();
         try {
           await H().api('/admin/api/project-categories', {
             method: 'POST',
@@ -898,6 +903,7 @@
       }
       const gLang = event.target.closest('[data-guide-lang]');
       if (gLang && H().state.guideDraft && event.target.closest('.tabs')) {
+        H().clearStatus();
         const ta = app.querySelector('[data-guide-md]');
         if (ta) H().state.guideDraft.langs[H().state.guideDraft.lang] = ta.value;
         H().state.guideDraft.lang = gLang.dataset.guideLang;
@@ -954,6 +960,7 @@
       }
       const cLang = event.target.closest('[data-contact-lang]');
       if (cLang) {
+        H().clearStatus();
         H().state.contactLang = cLang.dataset.contactLang;
         renderContact();
         return;
@@ -1000,7 +1007,7 @@
       if (event.target.id === 'guide-image' && event.target.files && event.target.files[0]) {
         const g = H().state.guideDraft;
         if (!g.id) {
-          H().state.error = t('errors.titleFirst');
+          H().showError(t('errors.titleFirst'));
           renderGuideEditor();
           return;
         }

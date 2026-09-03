@@ -25,6 +25,28 @@
     return !isLocalAdminHost();
   }
 
+  const statusUi = window.KTAdminStatus.createStatusController(window);
+
+  function savedMessage() {
+    return window.KTAdminStatus.savedMessage(isProductionAdmin(), t);
+  }
+
+  function hideNoticeBanner() {
+    app.querySelectorAll('.shell > .ok').forEach((el) => el.remove());
+  }
+
+  function clearStatus() {
+    statusUi.clearStatus(state);
+  }
+
+  function showNotice(message) {
+    statusUi.showNotice(state, message || savedMessage(), hideNoticeBanner);
+  }
+
+  function showError(message) {
+    statusUi.showError(state, message);
+  }
+
   function publishPath(path) {
     const raw = String(path || '');
     if (raw.startsWith('/api/admin')) return raw;
@@ -36,6 +58,7 @@
     server: true,
     error: '',
     notice: '',
+    noticeTimer: 0,
     uiLang: localStorage.getItem(UI_LANG_KEY) === 'tr' ? 'tr' : 'en',
     navOpen: false,
     writingsFilter: 'all',
@@ -1226,21 +1249,20 @@
     const editor = state.editor;
     const lang = editor.lang;
     const draft = editor.langs[lang];
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     if (editor.kindPending) {
-      state.error = isExternalType(editor.kindPending.to) ? t('writings.becomeX') : t('writings.becomeInternal');
+      showError(isExternalType(editor.kindPending.to) ? t('writings.becomeX') : t('writings.becomeInternal'));
       renderWritingEditor();
       return;
     }
     if (isExternalType(editor.kind) && !isXUrl(editor.pair.externalUrl)) {
-      state.error = t('errors.xUrl');
+      showError(t('errors.xUrl'));
       renderWritingEditor();
       return;
     }
     const id = maybeLockSharedId(editor, draft.title);
     if (!id) {
-      state.error = t('errors.titleFirst');
+      showError(t('errors.titleFirst'));
       renderWritingEditor();
       return;
     }
@@ -1276,19 +1298,10 @@
         history.replaceState(null, '', `${location.pathname}${location.search}#/edit/${editor.kind}/${encodeURIComponent(editor.sharedId)}`);
       }
       clearDirty();
-      state.notice = [
-        t('save.locally'),
-        t('save.manifest'),
-        t('save.refresh'),
-        '',
-        `${t('save.language')}: ${lang === 'en' ? t('tabs.contentEn') : t('tabs.contentTr')}`,
-        `${t('save.sharedId')}: ${editor.sharedId}`,
-        `${t('save.path')}: ${result.path}`,
-        draft.cover ? `${t('save.cover')}: ${draft.cover}` : ''
-      ].filter(Boolean).join('\n');
+      showNotice();
       await loadContent();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderWritingEditor();
   }
@@ -1296,10 +1309,9 @@
   async function saveVideo() {
     syncVideoFromForm();
     const draft = state.editor.video;
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     if (!youtubeIdFromUrl(draft.youtubeUrl)) {
-      state.error = t('errors.youtube');
+      showError(t('errors.youtube'));
       renderVideoEditor();
       return;
     }
@@ -1315,19 +1327,18 @@
           id: slugify(draft.titleEn || draft.titleTr)
         })
       });
-      state.notice = [t('save.locally'), t('save.manifest'), t('save.refresh'), '', `${t('save.path')}: ${result.path}`].join('\n');
+      showNotice();
       clearDirty();
       await loadContent();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderVideoEditor();
   }
 
   async function saveProfile() {
     syncProfileFromForm();
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     try {
       if (state.avatarFile) {
         const uploaded = await uploadImage('/admin/api/avatar', state.avatarFile);
@@ -1349,10 +1360,10 @@
       await loadSite();
       if (state.avatarPreview) URL.revokeObjectURL(state.avatarPreview);
       state.avatarPreview = '';
-      state.notice = t('profile.saved');
+      showNotice();
       clearDirty();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderProfile();
   }
@@ -1374,8 +1385,7 @@
 
   async function saveSocial() {
     syncSocialFromForm();
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     const social = (state.site.social || []).map((item) => ({
       id: item.id,
       url: String(item.url || '').trim(),
@@ -1384,17 +1394,17 @@
       platform: item.platform
     }));
     if (social.some((item) => !/^https:\/\/[^\s]+$/i.test(item.url))) {
-      state.error = t('errors.socialUrl');
+      showError(t('errors.socialUrl'));
       renderSocial();
       return;
     }
     try {
       await api('/admin/api/site', { method: 'POST', body: JSON.stringify({ social }) });
       await loadSite();
-      state.notice = t('social.saved');
+      showNotice();
       clearDirty();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderSocial();
   }
@@ -1404,8 +1414,7 @@
     const labelTr = (app.querySelector('[data-type-field="labelTr"]') || {}).value || '';
     const icon = (app.querySelector('[data-type-field="icon"]') || {}).value || 'book-outline';
     state.typeDraft = { labelEn, labelTr, icon };
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     try {
       await api('/admin/api/writing-types', {
         method: 'POST',
@@ -1413,9 +1422,9 @@
       });
       state.typeDraft = { labelEn: '', labelTr: '', icon: 'book-outline' };
       await loadContent();
-      state.notice = t('types.created');
+      showNotice();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderWritingTypes();
   }
@@ -1424,8 +1433,7 @@
     const meta = typeMeta(id);
     if (meta.core || CORE_TYPE_IDS.includes(id)) return;
     const count = kindCount(id);
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     if (count) {
       const targets = moveTargets(id);
       state.typeDialog = { mode: 'delete-move', id, count, moveTo: targets[0] || '' };
@@ -1438,8 +1446,7 @@
   async function confirmDeleteEmpty() {
     const dialog = state.typeDialog;
     if (!dialog || dialog.mode !== 'delete-empty') return;
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     try {
       await api('/admin/api/writing-types', {
         method: 'POST',
@@ -1447,9 +1454,9 @@
       });
       state.typeDialog = null;
       await loadContent();
-      state.notice = t('types.deleted');
+      showNotice();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderWritingTypes();
   }
@@ -1458,8 +1465,7 @@
     const dialog = state.typeDialog;
     if (!dialog || dialog.mode !== 'delete-move') return;
     const moveTo = (app.querySelector('[data-move-to]') || {}).value || dialog.moveTo;
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     try {
       await api('/admin/api/writing-types', {
         method: 'POST',
@@ -1467,9 +1473,9 @@
       });
       state.typeDialog = null;
       await loadContent();
-      state.notice = t('types.movedDeleted');
+      showNotice();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderWritingTypes();
   }
@@ -1480,8 +1486,7 @@
     const labelEn = (app.querySelector('[data-edit-label-en]') || {}).value || '';
     const labelTr = (app.querySelector('[data-edit-label-tr]') || {}).value || '';
     const icon = (app.querySelector('[data-edit-icon]') || {}).value || dialog.icon;
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     try {
       await api('/admin/api/writing-types', {
         method: 'POST',
@@ -1495,9 +1500,9 @@
       });
       state.typeDialog = null;
       await loadContent();
-      state.notice = t('types.updated');
+      showNotice();
     } catch (error) {
-      state.error = error.message;
+      showError(error.message);
     }
     renderWritingTypes();
   }
@@ -1507,8 +1512,7 @@
     state.editor.mode = id ? 'edit' : 'new';
     state.editor.sharedId = id || '';
     state.editor.originalKind = kind;
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     if (!id) return;
     const data = await api(`/admin/api/item?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}`);
     if (kind === 'videos') {
@@ -1618,6 +1622,7 @@
       }
       const tab = event.target.closest('[data-lang]');
       if (tab && state.editor && state.editor.kind !== 'videos') {
+        clearStatus();
         syncDraftFromForm();
         state.editor.lang = tab.dataset.lang;
         renderWritingEditor();
@@ -1625,6 +1630,7 @@
       }
       const pLang = event.target.closest('[data-profile-lang]');
       if (pLang && state.site) {
+        clearStatus();
         syncProfileFromForm();
         state.profileLang = pLang.dataset.profileLang;
         renderProfile();
@@ -1836,7 +1842,7 @@
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         if (!isImageFile(file)) {
-          state.error = t('errors.coverType');
+          showError(t('errors.coverType'));
           renderWritingEditor();
           return;
         }
@@ -1851,7 +1857,7 @@
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         if (!isImageFile(file)) {
-          state.error = t('errors.coverType');
+          showError(t('errors.coverType'));
           renderProfile();
           return;
         }
@@ -1966,7 +1972,11 @@
     markDirty,
     clearDirty,
     confirmLeave,
-    uiLang
+    uiLang,
+    savedMessage,
+    clearStatus,
+    showNotice,
+    showError
   };
   setUiLang(state.uiLang);
   let ignoreHash = false;
@@ -1985,8 +1995,7 @@
     }
     clearDirty();
     state.lastHash = location.hash;
-    state.error = '';
-    state.notice = '';
+    clearStatus();
     draw();
   });
 

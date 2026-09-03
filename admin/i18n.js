@@ -206,7 +206,8 @@ window.ADMIN_I18N = {
       coverPending: '{name} (copied on Save)'
     },
     save: {
-      locally: 'Saved locally',
+      success: 'Saved successfully.',
+      locally: 'Saved locally.',
       manifest: 'Manifest regenerated',
       refresh: 'Public site ready to refresh',
       language: 'Language',
@@ -486,7 +487,8 @@ window.ADMIN_I18N = {
       coverPending: '{name} (kaydetmede kopyalanır)'
     },
     save: {
-      locally: 'Lokalde kaydedildi',
+      success: 'Başarıyla kaydedildi.',
+      locally: 'Lokalde kaydedildi.',
       manifest: 'Manifest yenilendi',
       refresh: 'Public site yenilemeye hazır',
       language: 'Dil',

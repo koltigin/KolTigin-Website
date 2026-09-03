@@ -5,6 +5,8 @@ description: "KolTigin — biologist, node operations, DeFi, and Web3 content"
 
 # About test
 
+>TEST 
+
 I prefer to exist anonymously in Web3 under the KolTigin identity. The work here is shaped by what I produce and contribute to the ecosystem, far more than by a personal profile.
 
 I am a biologist with a doctorate in zoology. I bring the research, analysis, and systematic working habits from that academic background into my Web3 work as well.

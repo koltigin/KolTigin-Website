@@ -370,8 +370,12 @@ textarea {
 .toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
   gap: 6px;
   margin-bottom: 8px;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .toolbar button {

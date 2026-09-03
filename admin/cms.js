@@ -171,7 +171,7 @@
 
   function guideToolbar() {
     return `<div class="toolbar" role="toolbar">
-      ${mdBtn('h2', t('md.heading'), t('md.headingShort'))}
+      ${H().headingButtons(mdBtn)}
       ${mdBtn('bold', t('md.bold'), t('md.boldShort'))}
       ${mdBtn('italic', t('md.italic'), t('md.italicShort'))}
       ${mdBtn('link', t('md.link'))}

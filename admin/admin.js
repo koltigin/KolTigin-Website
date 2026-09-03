@@ -691,9 +691,16 @@
     return `<button type="button" data-md="${escapeHtml(cmd)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${escapeHtml(text)}</button>`;
   }
 
+  function headingButtons(btn) {
+    const make = btn || mdButton;
+    return `${make('h1', t('md.h1'), 'H1')}
+      ${make('h2', t('md.h2'), 'H2')}
+      ${make('h3', t('md.h3'), 'H3')}`;
+  }
+
   function toolbar() {
     return `<div class="toolbar" role="toolbar">
-      ${mdButton('h2', t('md.heading'), t('md.headingShort'))}
+      ${headingButtons()}
       ${mdButton('bold', t('md.bold'), t('md.boldShort'))}
       ${mdButton('italic', t('md.italic'), t('md.italicShort'))}
       ${mdButton('link', t('md.link'))}
@@ -1912,6 +1919,7 @@
     publicAssetUrl,
     slugify,
     toolbar,
+    headingButtons,
     wrapSelection,
     prefixLines,
     applyMd,

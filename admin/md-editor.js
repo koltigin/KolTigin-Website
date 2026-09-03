@@ -40,6 +40,54 @@
     return [from, to];
   }
 
+  const HEADING_RE = /^(#{1,6})(?: +)?/;
+
+  function headingMarker(level) {
+    return `${'#'.repeat(level)} `;
+  }
+
+  function transformHeadingLine(line, level) {
+    const match = line.match(HEADING_RE);
+    const current = match ? match[1].length : 0;
+    const rest = match ? line.slice(match[0].length) : line;
+    if (current === level) return rest;
+    return headingMarker(level) + rest;
+  }
+
+  function mapHeadingOffset(oldLines, newLines, offset) {
+    let oldPos = 0;
+    let newPos = 0;
+    for (let i = 0; i < oldLines.length; i++) {
+      const oldLine = oldLines[i];
+      const newLine = newLines[i];
+      const sep = i < oldLines.length - 1 ? 1 : 0;
+      if (offset <= oldPos + oldLine.length) {
+        const inner = offset - oldPos;
+        const oldPre = (oldLine.match(HEADING_RE) || [''])[0].length;
+        const newPre = (newLine.match(HEADING_RE) || [''])[0].length;
+        if (inner <= oldPre) return newPos + newPre;
+        return newPos + Math.min(newLine.length, newPre + (inner - oldPre));
+      }
+      oldPos += oldLine.length + sep;
+      newPos += newLine.length + sep;
+    }
+    return newPos;
+  }
+
+  function applyHeading(textarea, level) {
+    return applyChange(textarea, (value, selStart, selEnd) => {
+      const [start, end] = lineBounds(value, selStart, selEnd);
+      const oldLines = value.slice(start, end).split('\n');
+      const newLines = oldLines.map((line) => transformHeadingLine(line, level));
+      const next = newLines.join('\n');
+      return {
+        value: value.slice(0, start) + next + value.slice(end),
+        selectionStart: start + mapHeadingOffset(oldLines, newLines, selStart - start),
+        selectionEnd: start + mapHeadingOffset(oldLines, newLines, selEnd - start)
+      };
+    });
+  }
+
   function prefixLines(textarea, prefix) {
     return applyChange(textarea, (value, selStart, selEnd) => {
       const [start, end] = lineBounds(value, selStart, selEnd);
@@ -80,7 +128,9 @@
   }
 
   function applyMd(cmd, textarea) {
-    if (cmd === 'h2') return prefixLines(textarea, '## ');
+    if (cmd === 'h1') return applyHeading(textarea, 1);
+    if (cmd === 'h2') return applyHeading(textarea, 2);
+    if (cmd === 'h3') return applyHeading(textarea, 3);
     if (cmd === 'bold') return wrapSelection(textarea, '**');
     if (cmd === 'italic') return wrapSelection(textarea, '*');
     if (cmd === 'link') return wrapSelection(textarea, '[', '](https://)');
@@ -102,7 +152,7 @@
     }
   }
 
-  const api = { applyChange, wrapSelection, prefixLines, insertSnippet, applyMd, lineBounds };
+  const api = { applyChange, wrapSelection, prefixLines, insertSnippet, applyMd, applyHeading, lineBounds };
   root.KTAdminMd = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -23,6 +23,9 @@ window.ADMIN_I18N = {
     md: {
       heading: 'Heading',
       headingShort: 'H',
+      h1: 'Heading 1',
+      h2: 'Heading 2',
+      h3: 'Heading 3',
       bold: 'Bold',
       boldShort: 'B',
       italic: 'Italic',
@@ -304,6 +307,9 @@ window.ADMIN_I18N = {
     md: {
       heading: 'Başlık',
       headingShort: 'H',
+      h1: 'Başlık 1',
+      h2: 'Başlık 2',
+      h3: 'Başlık 3',
       bold: 'Kalın',
       boldShort: 'B',
       italic: 'İtalik',

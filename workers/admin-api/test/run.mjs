@@ -1,7 +1,7 @@
 import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
-import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames } from "../src/generate.js";
+import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem } from "../src/markdown.js";
 import { HttpError } from "../src/util.js";
 import { readFileSync } from "node:fs";
@@ -89,6 +89,28 @@ async function main() {
     assert(idx.articles.en.includes("hello.md"), "writing index upsert");
     const gidx = applyGuideIndex({ guides: [] }, { id: "aioz-depin" });
     assert(gidx.guides[0] === "aioz-depin", "guide index");
+    assert(discoverGuides({
+      indexIds: ["aioz-depin"],
+      markdownById: { "aioz-depin": { en: "# Guide\n", tr: "# Rehber\n" } }
+    }).includes("aioz-depin"), "bilingual guide is discoverable");
+    assert(!discoverGuides({
+      indexIds: ["aioz-depin"],
+      markdownById: { "aioz-depin": { en: "", tr: "" } }
+    }).includes("aioz-depin"), "orphan slug without sources is not listed");
+    const strippedMd = stripGuideFromProjectMarkdown(`---
+links:
+- label: Website
+  url: https://aioz.network
+- label: Setup Guide
+  url: '#/guides/aioz-depin'
+  guide: aioz-depin
+---
+`, "aioz-depin");
+    assert(strippedMd.includes("https://aioz.network") && !strippedMd.includes("guide: aioz-depin"), "project markdown strip keeps other links");
+    const strippedJson = stripGuideFromProjectsJson({
+      depin: [{ id: "aioz-depin", links: [{ label: "Website", url: "https://aioz.network" }, { guide: "aioz-depin", url: "#/guides/aioz-depin" }] }]
+    }, "aioz-depin");
+    assert(strippedJson.changed && strippedJson.data.depin[0].links.length === 1, "projects.json strip removes only the guide link");
     const pjson = applyProjectJson({ mainnet: [] }, [{ id: "mainnet" }], { id: "ario", category: "mainnet", item: { id: "ario", name: "AR.IO" } });
     assert(pjson.mainnet[0].id === "ario", "project json upsert");
     assert(youtubeIdFromUrl("https://www.youtube.com/watch?v=abcdefghijk") === "abcdefghijk", "youtube id");
@@ -148,6 +170,28 @@ async function main() {
     assert(res.status === 200, "save guide tr");
     github.files.set("guides/aioz-depin/extra.txt", "orphan");
     github.files.set("assets/images/guides/aioz-depin/shot.png", png);
+    github.files.set("content/projects/depin/aioz-depin.md", `---
+name: AIOZ DePIN
+category: depin
+id: aioz-depin
+links:
+- label: Website
+  url: https://aioz.network
+- label: Setup Guide
+  url: '#/guides/aioz-depin'
+  guide: aioz-depin
+---
+`);
+    const currentProjects = JSON.parse(github.files.get("projects/projects.json") || "{}");
+    currentProjects.depin = [{
+      id: "aioz-depin",
+      name: "AIOZ DePIN",
+      links: [
+        { label: "Website", url: "https://aioz.network" },
+        { label: "Setup Guide", url: "#/guides/aioz-depin", guide: "aioz-depin" }
+      ]
+    }];
+    github.files.set("projects/projects.json", JSON.stringify(currentProjects, null, 2) + "\n");
     assert(JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guides index sync");
 
     const guideCommits = github.commits.length;
@@ -157,6 +201,20 @@ async function main() {
     assert(!github.files.has("guides/aioz-depin/extra.txt"), "guide folder extras removed");
     assert(!github.files.has("assets/images/guides/aioz-depin/shot.png"), "guide assets removed");
     assert(!JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guide removed from index");
+    assert(!String(github.files.get("content/projects/depin/aioz-depin.md")).includes("guide: aioz-depin"), "project markdown guide link removed");
+    assert(!String(github.files.get("content/projects/depin/aioz-depin.md")).includes("#/guides/aioz-depin"), "project markdown guide url removed");
+    const afterProjects = JSON.parse(github.files.get("projects/projects.json"));
+    assert(!(afterProjects.depin[0].links || []).some((link) => link.guide === "aioz-depin"), "projects.json guide link removed");
+    const rediscovered = discoverGuides({
+      indexIds: JSON.parse(github.files.get("guides/index.json")).guides,
+      markdownById: {
+        "aioz-depin": {
+          en: github.files.get("guides/aioz-depin/EN.md"),
+          tr: github.files.get("guides/aioz-depin/TR.md")
+        }
+      }
+    });
+    assert(!rediscovered.includes("aioz-depin"), "deleted slug does not reappear on rediscover");
     assert(github.commits.length === guideCommits + 1, "guide delete is one commit");
     assert(github.commits.at(-1).message === "admin: delete guide aioz-depin", "guide delete commit message");
 

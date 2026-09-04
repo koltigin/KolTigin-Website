@@ -10,7 +10,4 @@ summary:
 links:
 - label: Website
   url: https://aioz.network
-- label: Setup Guide
-  url: '#/guides/aioz-depin'
-  guide: aioz-depin
 ---

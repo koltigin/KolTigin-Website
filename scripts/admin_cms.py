@@ -182,6 +182,8 @@ def list_guides() -> list[dict]:
         tr = folder / "TR.md"
         en_text = en.read_text(encoding="utf-8") if en.is_file() else ""
         tr_text = tr.read_text(encoding="utf-8") if tr.is_file() else ""
+        if not en.is_file() and not tr.is_file():
+            continue
         related = [
             {"id": item["id"], "name": item["name"]}
             for item in projects
@@ -349,7 +351,7 @@ def handle_cms_get(handler, parsed, json_ok, json_error) -> bool:
             handler,
             {
                 "id": item_id,
-                "exists": folder.is_dir(),
+                "exists": bool(en.is_file() or tr.is_file()),
                 "en": en.read_text(encoding="utf-8") if en.is_file() else "",
                 "tr": tr.read_text(encoding="utf-8") if tr.is_file() else "",
                 "meta": rec or {},

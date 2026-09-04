@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown } from "./generate.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -429,9 +429,20 @@ export async function handleGuideDelete(body, github) {
   const assets = await github.listPrefix(`assets/images/guides/${id}/`);
   deletes.push(...assets);
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id, remove: true });
+  const upserts = [{ path: "guides/index.json", text: pretty(index) }];
+  const projectsJson = await readJson(github, "projects/projects.json", {});
+  const stripped = stripGuideFromProjectsJson(projectsJson, id);
+  if (stripped.changed) upserts.push({ path: "projects/projects.json", text: pretty(stripped.data) });
+  const projectFiles = await github.listPrefix("content/projects/");
+  for (const path of projectFiles) {
+    if (!path.endsWith(".md")) continue;
+    const text = await github.getText(path);
+    const next = stripGuideFromProjectMarkdown(text, id);
+    if (next !== text) upserts.push({ path, text: next.endsWith("\n") ? next : `${next}\n` });
+  }
   const result = await github.commit({
     message: commitMsg("delete guide", id),
-    upserts: [{ path: "guides/index.json", text: pretty(index) }],
+    upserts,
     deletes
   });
   return { id, sha: result.sha };

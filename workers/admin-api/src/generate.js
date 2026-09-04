@@ -51,6 +51,70 @@ export function applyGuideIndex(index, { id, remove }) {
   return data;
 }
 
+export function isPersistedGuide(en, tr) {
+  return Boolean(en || tr);
+}
+
+export function discoverGuides({ indexIds = [], markdownById = {} }) {
+  return [...new Set(indexIds)].filter((id) => {
+    const files = markdownById[id] || {};
+    return isPersistedGuide(files.en, files.tr);
+  });
+}
+
+function isGuideLink(link, guideId) {
+  if (!link || typeof link !== "object") return false;
+  if (String(link.guide || "") === guideId) return true;
+  const url = String(link.url || "");
+  return url === `#/guides/${guideId}` || url.endsWith(`#/guides/${guideId}`);
+}
+
+export function stripGuideFromProjectsJson(json, guideId) {
+  const data = JSON.parse(JSON.stringify(json || {}));
+  let changed = false;
+  for (const key of Object.keys(data)) {
+    if (!Array.isArray(data[key])) continue;
+    for (const item of data[key]) {
+      if (!item || !Array.isArray(item.links)) continue;
+      const next = item.links.filter((link) => !isGuideLink(link, guideId));
+      if (next.length === item.links.length) continue;
+      changed = true;
+      if (next.length) item.links = next;
+      else delete item.links;
+    }
+  }
+  return { data, changed };
+}
+
+export function stripGuideFromProjectMarkdown(text, guideId) {
+  const id = String(guideId || "");
+  const raw = String(text || "");
+  if (!id) return raw;
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const guideRe = new RegExp(`^\\s*guide:\\s*['"]?${escaped}['"]?\\s*$`);
+  const urlRe = new RegExp(`^\\s*url:\\s*['"]?#/guides/${escaped}['"]?\\s*$`);
+  const lines = raw.split("\n");
+  const out = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^-\s/.test(line)) {
+      const item = [line];
+      i += 1;
+      while (i < lines.length && /^  /.test(lines[i])) {
+        item.push(lines[i]);
+        i += 1;
+      }
+      if (item.some((entry) => guideRe.test(entry) || urlRe.test(entry))) continue;
+      out.push(...item);
+      continue;
+    }
+    out.push(line);
+    i += 1;
+  }
+  return out.join("\n");
+}
+
 export function projectNameSortKey(name) {
   return String(name || "")
     .trim()

@@ -628,6 +628,15 @@
       return;
     }
     const data = await H().api(`/admin/api/guide?id=${encodeURIComponent(id)}`);
+    if (!data.exists) {
+      H().state.guideDraft = null;
+      H().showError(t('cms.guideNotFound'));
+      H().state.keepNoticeOnHash = true;
+      history.replaceState(null, '', `${location.pathname}${location.search}#/guides`);
+      H().state.lastHash = location.hash;
+      renderGuidesList();
+      return;
+    }
     const related = ((data.meta && data.meta.projects) || [])[0];
     H().state.guideDraft = {
       id,

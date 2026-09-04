@@ -41,8 +41,8 @@ assert(tr("en", "cms.delete") === "Delete", "EN delete label");
 assert(tr("tr", "cms.delete") === "Sil", "TR delete label");
 assert(tr("en", "writings.editBtn") === "Edit" && tr("en", "writings.preview") === "Preview", "EN list actions");
 assert(tr("tr", "writings.editBtn") === "Düzenle" && tr("tr", "writings.preview") === "Ön izle", "TR list actions");
-assert(deletedItemMessage("AIOZ DePIN CLI v1.2.6 Installation Guide", (key, vars) => tr("en", key, vars)) === "AIOZ DePIN CLI v1.2.6 Installation Guide deleted.", "EN red notice includes title");
-assert(deletedItemMessage("AIOZ DePIN CLI v1.2.6 Installation Guide", (key, vars) => tr("tr", key, vars)) === "AIOZ DePIN CLI v1.2.6 Installation Guide silindi.", "TR red notice includes title");
+assert(deletedItemMessage("AIOZ DePIN CLI v1.2.6 Setup Guide", (key, vars) => tr("en", key, vars)) === "“AIOZ DePIN CLI v1.2.6 Setup Guide” was deleted successfully.", "EN success notice includes title");
+assert(deletedItemMessage("AIOZ DePIN CLI v1.2.6 Kurulum Rehberi", (key, vars) => tr("tr", key, vars)) === "“AIOZ DePIN CLI v1.2.6 Kurulum Rehberi” başarıyla silindi.", "TR success notice includes title");
 
 assert(allowsEntityDelete("writing") && allowsEntityDelete("video") && allowsEntityDelete("guide") && allowsEntityDelete("project"), "content families allow delete");
 assert(!allowsEntityDelete("about") && !allowsEntityDelete("resume") && !allowsEntityDelete("contact"), "core pages are not delete families");
@@ -115,8 +115,15 @@ assert(!projectEditor.includes("entityDeleteButton") && !guideEditor.includes("e
 assert(!pageFn.includes("data-entity-delete") && !contactFn.includes("data-entity-delete"), "no Delete for About/Resume/Contact");
 assert(!profileFn.includes("data-entity-delete") && !socialFn.includes("data-entity-delete"), "no Delete for Profile/Social Links");
 assert(adminSrc.includes("specFromDataset(entityDelete.dataset)"), "delete uses the clicked card dataset, not editor state");
-assert(adminSrc.includes("ok-destructive") && adminSrc.includes("tone: 'destructive'"), "success notice uses destructive red tone");
-assert(adminSrc.includes("reloadCanonicalList"), "successful delete reloads canonical list");
+const confirmDeleteFn = extractFn(adminSrc, "confirmEntityDelete");
+assert(confirmDeleteFn.includes("const title = pending.title || pending.id"), "delete captures title before list changes");
+assert(confirmDeleteFn.includes("applyConfirmedRemoval(pending)"), "successful delete updates local list state");
+assert(confirmDeleteFn.includes("showNotice(deletedMessage(title))"), "successful delete shows green title notice");
+assert(!confirmDeleteFn.includes("tone: 'destructive'"), "delete success is not a red destructive notice");
+assert(!confirmDeleteFn.includes("reloadCanonicalList") && !confirmDeleteFn.includes("/admin/api/guide?"), "successful delete does not refetch the deleted item");
+assert(confirmDeleteFn.includes("showError(error.message)"), "genuine delete failures stay visible");
+assert(adminSrc.includes("state.deleteBusy"), "in-flight delete is not posted twice");
+assert(!adminSrc.includes("reloadCanonicalList") && adminSrc.includes("clearDeletedSelection"), "post-delete path does not reload the deleted record");
 assert(adminSrc.includes("parseJsonResponse(response)") && adminSrc.includes("data.error === t('errors.api')"), "production API JSON errors are not swallowed as disconnected");
 
 if (failed) {

@@ -79,6 +79,7 @@
     typeDialog: null,
     editor: null,
     deleteConfirm: null,
+    deleteBusy: false,
     keepNoticeOnHash: false,
     dirty: false,
     lastHash: location.hash
@@ -462,7 +463,7 @@
         <p>${escapeHtml(t('cms.deleteBody'))}</p>
         <div class="item-actions">
           <button class="btn btn-ghost" type="button" data-delete-cancel>${escapeHtml(t('cms.deleteCancel'))}</button>
-          <button class="btn btn-danger" type="button" data-delete-confirm>${escapeHtml(t('cms.delete'))}</button>
+          <button class="btn btn-danger" type="button" data-delete-confirm${state.deleteBusy ? ' disabled' : ''}>${escapeHtml(t('cms.delete'))}</button>
         </div>
       </div>
     </div>`;
@@ -521,49 +522,42 @@
     }
   }
 
-  async function reloadCanonicalList(pending) {
-    if (pending.family === 'writing' || pending.family === 'video') {
-      await loadContent();
-      return;
+  function clearDeletedSelection(pending) {
+    if (!pending || !pending.id) return;
+    if (pending.family === 'writing' && state.editor && state.editor.sharedId === pending.id) {
+      state.editor = null;
     }
-    if (pending.family === 'project') {
-      state.projectsData = await api('/admin/api/projects');
-      return;
+    if (pending.family === 'video' && state.editor && state.editor.kind === 'videos' && (state.editor.sharedId === pending.id || (state.editor.video && state.editor.video.id === pending.id))) {
+      state.editor = null;
     }
-    if (pending.family === 'guide') {
-      const pack = await api('/admin/api/guides');
-      state.guidesData = pack.guides || [];
+    if (pending.family === 'guide' && state.guideDraft && state.guideDraft.id === pending.id) {
+      state.guideDraft = null;
     }
-  }
-
-  async function finishEntityDelete(pending) {
-    const title = pending.title || pending.id;
-    state.deleteConfirm = null;
-    clearDirty();
-    try {
-      await reloadCanonicalList(pending);
-    } catch (error) {
-      showError(error.message);
-      applyConfirmedRemoval(pending);
-      refreshListView();
-      return;
+    if (pending.family === 'project' && state.projectDraft && state.projectDraft.id === pending.id) {
+      state.projectDraft = null;
     }
-    applyConfirmedRemoval(pending);
-    showNotice(deletedMessage(title), { tone: 'destructive' });
-    refreshListView();
   }
 
   async function confirmEntityDelete() {
     const pending = state.deleteConfirm;
-    if (!pending || !pending.id) return;
+    if (!pending || !pending.id || state.deleteBusy) return;
+    const title = pending.title || pending.id;
     const req = Delete.deleteRequest(pending);
+    state.deleteBusy = true;
     try {
       await api(req.path, { method: 'POST', body: JSON.stringify(req.body) });
-      await finishEntityDelete(pending);
+      state.deleteConfirm = null;
+      clearDirty();
+      clearDeletedSelection(pending);
+      applyConfirmedRemoval(pending);
+      showNotice(deletedMessage(title));
+      refreshListView();
     } catch (error) {
       state.deleteConfirm = null;
       showError(error.message);
       refreshListView();
+    } finally {
+      state.deleteBusy = false;
     }
   }
 

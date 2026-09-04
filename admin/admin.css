@@ -154,6 +154,12 @@ select {
   border: 1px solid var(--line);
 }
 
+.btn-danger {
+  background: #6b1518;
+  color: #ffe8e8;
+  border: 1px solid #d45b5f;
+}
+
 .btn[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
@@ -595,6 +601,40 @@ textarea {
   .footer-actions .btn {
     width: 100%;
   }
+}
+
+.delete-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.delete-modal-card {
+  width: min(440px, 100%);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.delete-modal-card h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.delete-modal-name {
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.delete-modal-card p {
+  margin: 0 0 16px;
+  color: var(--muted);
 }
 
 .empty {

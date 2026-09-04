@@ -380,6 +380,25 @@ def handle_page_save(handler, body, json_ok, json_error) -> None:
 
 
 def handle_project_save(handler, body, json_ok, json_error) -> None:
+    if str(body.get("action") or "") == "delete":
+        item_id = slugify(str(body.get("id") or ""))
+        if not ID_RE.match(item_id):
+            return json_error(handler, HTTPStatus.BAD_REQUEST, "Invalid project id")
+        rec = next((item for item in list_project_records() if item.get("id") == item_id), None)
+        if not rec:
+            return json_error(handler, HTTPStatus.NOT_FOUND, "Project not found")
+        cat = category_by_id(rec["category"])
+        if not cat:
+            return json_error(handler, HTTPStatus.NOT_FOUND, "Project not found")
+        path = project_path(cat, rec.get("slug") or item_id)
+        if not path.is_file():
+            return json_error(handler, HTTPStatus.NOT_FOUND, "Project not found")
+        path.unlink()
+        try:
+            log = regenerate_projects()
+        except RuntimeError as exc:
+            return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+        return json_ok(handler, {"id": item_id, "generator": log})
     name = str(body.get("name") or "").strip()
     category = str(body.get("category") or "").strip()
     status = str(body.get("status") or "").strip()

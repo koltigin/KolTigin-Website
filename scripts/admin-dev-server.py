@@ -1216,7 +1216,51 @@ class AdminHandler(SimpleHTTPRequestHandler):
 
         return json_error(self, HTTPStatus.BAD_REQUEST, "Unknown writing type action")
 
+    def delete_writing(self, body: dict) -> None:
+        kind = str(body.get("kind") or "")
+        item_id = str(body.get("id") or "").strip()
+        if kind not in writing_kind_ids():
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Unknown type")
+        if not item_id or not ID_RE.match(item_id):
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Invalid shared content ID")
+        deleted = []
+        for lang in ("en", "tr"):
+            path = writing_path(kind, lang, f"{item_id}.md")
+            resolved = path.resolve()
+            root = (ROOT / "content" / kind / lang).resolve()
+            if root not in resolved.parents and resolved.parent != root:
+                return json_error(self, HTTPStatus.BAD_REQUEST, "Invalid path")
+            if path.is_file():
+                path.unlink()
+                deleted.append(str(path.relative_to(ROOT)))
+        if not deleted:
+            return json_error(self, HTTPStatus.NOT_FOUND, "Writing not found")
+        try:
+            generator_log = regenerate_writings_index()
+        except RuntimeError as exc:
+            return json_error(self, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+        return json_ok(self, {"id": item_id, "deleted": deleted, "generator": generator_log})
+
+    def delete_video(self, body: dict) -> None:
+        item_id = str(body.get("id") or "").strip()
+        if not item_id or not ID_RE.match(item_id):
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Invalid id")
+        path = video_path(f"{item_id}.md")
+        if not path.is_file():
+            return json_error(self, HTTPStatus.NOT_FOUND, "Video not found")
+        path.unlink()
+        try:
+            generator_log = regenerate_writings_index()
+        except RuntimeError as exc:
+            return json_error(self, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+        return json_ok(self, {"id": item_id, "generator": generator_log})
+
     def handle_save(self, body: dict) -> None:
+        if str(body.get("action") or "") == "delete":
+            kind = str(body.get("kind") or "")
+            if kind == VIDEO_KIND:
+                return self.delete_video(body)
+            return self.delete_writing(body)
         kind = str(body.get("kind") or "")
         if kind == VIDEO_KIND:
             return self.save_video(body)

@@ -26,9 +26,14 @@
   }
 
   const statusUi = window.KTAdminStatus.createStatusController(window);
+  const Delete = window.KTAdminDelete;
 
   function savedMessage() {
     return window.KTAdminStatus.savedMessage(isProductionAdmin(), t);
+  }
+
+  function deletedMessage() {
+    return Delete.deletedMessage(isProductionAdmin(), t);
   }
 
   function hideNoticeBanner() {
@@ -72,6 +77,8 @@
     typeDraft: { labelEn: '', labelTr: '', icon: 'book-outline' },
     typeDialog: null,
     editor: null,
+    deleteConfirm: null,
+    keepNoticeOnHash: false,
     dirty: false,
     lastHash: location.hash
   };
@@ -429,6 +436,106 @@
     </div>`;
   }
 
+  function entityDeleteButton(existing) {
+    if (!Delete.showEntityDelete(existing)) return '';
+    return `<button class="btn btn-danger" type="button" data-entity-delete>${escapeHtml(t('cms.delete'))}</button>`;
+  }
+
+  function deleteDialogHtml() {
+    const pending = state.deleteConfirm;
+    if (!pending) return '';
+    return `<div class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+      <div class="delete-modal-card">
+        <h2 id="delete-dialog-title">${escapeHtml(t('cms.deleteTitle'))}</h2>
+        <p class="delete-modal-name">${escapeHtml(pending.title || pending.id)}</p>
+        <p>${escapeHtml(t('cms.deleteBody'))}</p>
+        <div class="item-actions">
+          <button class="btn btn-ghost" type="button" data-delete-cancel>${escapeHtml(t('cms.deleteCancel'))}</button>
+          <button class="btn btn-danger" type="button" data-delete-confirm>${escapeHtml(t('cms.delete'))}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function refreshDeleteView() {
+    const { parts } = route();
+    if (state.editor && state.editor.kind === 'videos') {
+      renderVideoEditor();
+      return;
+    }
+    if (state.editor) {
+      renderWritingEditor();
+      return;
+    }
+    if (parts[1] === 'projects' && window.AdminCMS && typeof window.AdminCMS.renderProjectEditor === 'function') {
+      window.AdminCMS.renderProjectEditor();
+      return;
+    }
+    if (parts[1] === 'guides' && window.AdminCMS && typeof window.AdminCMS.renderGuideEditor === 'function') {
+      window.AdminCMS.renderGuideEditor();
+    }
+  }
+
+  function openEntityDelete(spec) {
+    if (!Delete.showEntityDelete(true) || !Delete.allowsEntityDelete(spec.family)) return;
+    state.deleteConfirm = {
+      family: spec.family,
+      id: spec.id,
+      kind: spec.kind || '',
+      title: spec.title || spec.id
+    };
+    refreshDeleteView();
+  }
+
+  function cancelEntityDelete() {
+    state.deleteConfirm = null;
+    refreshDeleteView();
+  }
+
+  async function finishEntityDelete(family) {
+    clearDirty();
+    state.deleteConfirm = null;
+    state.editor = null;
+    if (state.projectDraft) state.projectDraft = null;
+    if (state.guideDraft) state.guideDraft = null;
+    showNotice(deletedMessage());
+    try { await loadContent(); } catch (error) { showError(error.message); return; }
+    if (family === 'project' || family === 'guide') {
+      try {
+        if (family === 'project') {
+          state.projectsData = await api('/admin/api/projects');
+        } else {
+          const pack = await api('/admin/api/guides');
+          state.guidesData = pack.guides || [];
+        }
+      } catch (error) {
+        showError(error.message);
+        return;
+      }
+    }
+    state.keepNoticeOnHash = true;
+    location.hash = Delete.listHashFor(family);
+    if (state.lastHash === location.hash) {
+      state.keepNoticeOnHash = false;
+      await draw();
+    }
+  }
+
+  async function confirmEntityDelete() {
+    const pending = state.deleteConfirm;
+    if (!pending || !pending.id) return;
+    const req = Delete.deleteRequest(pending.family, pending);
+    clearStatus();
+    try {
+      await api(req.path, { method: 'POST', body: JSON.stringify(req.body) });
+      await finishEntityDelete(pending.family);
+    } catch (error) {
+      state.deleteConfirm = null;
+      showError(error.message);
+      refreshDeleteView();
+    }
+  }
+
   function currentNav() {
     const { parts } = route();
     const page = parts[0];
@@ -491,6 +598,7 @@
             ${state.error ? `<div class="error" role="alert">${escapeHtml(state.error)}</div>` : ''}
             ${state.notice ? `<div class="ok">${escapeHtml(state.notice)}</div>` : ''}
             ${inner}
+            ${deleteDialogHtml()}
           </div>
           </div>
         </div>
@@ -862,6 +970,7 @@
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save>${escapeHtml(t('writings.save'))}</button>
+        ${entityDeleteButton(editor.mode === 'edit' && editor.sharedId)}
       </div>
     `);
   }
@@ -915,6 +1024,7 @@
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save-video>${escapeHtml(t('video.save'))}</button>
+        ${entityDeleteButton(state.editor.mode === 'edit' && state.editor.video && state.editor.video.id)}
       </div>
     `);
   }
@@ -1589,6 +1699,59 @@
         renderProfile();
         return;
       }
+      const entityDelete = event.target.closest('[data-entity-delete]');
+      if (entityDelete) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (state.editor && state.editor.kind === 'videos' && state.editor.mode === 'edit' && state.editor.video && state.editor.video.id) {
+          openEntityDelete({
+            family: 'video',
+            id: state.editor.video.id,
+            title: state.editor.video.titleEn || state.editor.video.titleTr || state.editor.video.id
+          });
+          return;
+        }
+        if (state.editor && state.editor.mode === 'edit' && state.editor.sharedId) {
+          const draft = state.editor.langs[state.editor.lang] || {};
+          openEntityDelete({
+            family: 'writing',
+            id: state.editor.sharedId,
+            kind: state.editor.originalKind || state.editor.kind,
+            title: draft.title || state.editor.langs.en.title || state.editor.langs.tr.title || state.editor.sharedId
+          });
+          return;
+        }
+        if (state.projectDraft && state.projectDraft.id && state.projectDraft.fromCategory) {
+          openEntityDelete({
+            family: 'project',
+            id: state.projectDraft.id,
+            title: state.projectDraft.name || state.projectDraft.id
+          });
+          return;
+        }
+        if (state.guideDraft && state.guideDraft.locked && state.guideDraft.id) {
+          const g = state.guideDraft;
+          const heading = ((g.langs.en || '').match(/^#\s+(.+)$/m) || (g.langs.tr || '').match(/^#\s+(.+)$/m) || [])[1];
+          openEntityDelete({
+            family: 'guide',
+            id: g.id,
+            title: heading || g.id
+          });
+        }
+        return;
+      }
+      if (event.target.closest('[data-delete-cancel]')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        cancelEntityDelete();
+        return;
+      }
+      if (event.target.closest('[data-delete-confirm]')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        await confirmEntityDelete();
+        return;
+      }
       const md = event.target.closest('[data-md]');
       if (md) {
         const textarea = app.querySelector('#body');
@@ -1929,6 +2092,9 @@
     confirmLeave,
     uiLang,
     savedMessage,
+    deletedMessage,
+    entityDeleteButton,
+    openEntityDelete,
     clearStatus,
     showNotice,
     showError
@@ -1942,6 +2108,13 @@
   });
   window.addEventListener('hashchange', () => {
     if (ignoreHash) return;
+    if (state.keepNoticeOnHash) {
+      state.keepNoticeOnHash = false;
+      clearDirty();
+      state.lastHash = location.hash;
+      draw();
+      return;
+    }
     if (state.dirty && !window.confirm(t('unsaved.leave'))) {
       ignoreHash = true;
       history.replaceState(null, '', state.lastHash || '#/dashboard');

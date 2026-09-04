@@ -144,6 +144,12 @@ async function handleWritingDelete(body, github) {
   const kind = String(body.kind || "");
   const id = String(body.id || "");
   if (!ID_RE.test(id)) throw new HttpError(400, "Invalid shared content ID");
+  if (kind === "videos" || kind === "about" || kind === "resume") {
+    throw new HttpError(400, "Unknown type");
+  }
+  const types = await readJson(github, "config/writing-types.json", { types: [] });
+  const kindIds = (types.types || []).map((item) => item.id);
+  if (!kindIds.includes(kind) && !CORE_TYPE_IDS.includes(kind)) throw new HttpError(400, "Unknown type");
   const file = `${id}.md`;
   const deletes = [];
   let index = await readJson(github, "content/index.json", {});
@@ -154,7 +160,7 @@ async function handleWritingDelete(body, github) {
   }
   if (!deletes.length) throw new HttpError(404, "Writing not found");
   const upserts = [{ path: "content/index.json", text: pretty(index) }];
-  const result = await github.commit({ message: commitMsg("delete writing", `${kind}/${id}`), upserts, deletes });
+  const result = await github.commit({ message: commitMsg("delete writing", id), upserts, deletes });
   return { id, deleted: deletes, sha: result.sha };
 }
 
@@ -167,7 +173,7 @@ async function handleVideoSave(body, github) {
     if (!(await github.exists(path))) throw new HttpError(404, "Video not found");
     const index = applyVideoIndex(await readJson(github, "content/index.json", {}), { file, remove: true });
     const result = await github.commit({
-      message: commitMsg("delete video", file),
+      message: commitMsg("delete video", id),
       upserts: [{ path: "content/index.json", text: pretty(index) }],
       deletes: [path]
     });
@@ -289,6 +295,7 @@ export async function handleProjectSave(body, github) {
     }
     if (!found) throw new HttpError(404, "Project not found");
     const path = projectMdPath(found.cat.folder, id);
+    if (!(await github.exists(path))) throw new HttpError(404, "Project not found");
     const next = applyProjectJson(json, cats, { id, category: found.cat.id, item: found.item }, { remove: true });
     const deletes = [path];
     const result = await github.commit({
@@ -412,9 +419,15 @@ export async function handleGuideDelete(body, github) {
     const path = guidePath(id, lang);
     if (await github.exists(path)) deletes.push(path);
   }
-  const assets = (await github.listPrefix(`assets/images/guides/${id}/`));
+  if (!deletes.some((path) => path.endsWith("/EN.md") || path.endsWith("/TR.md"))) {
+    throw new HttpError(404, "Guide not found");
+  }
+  const extra = await github.listPrefix(`guides/${id}/`);
+  for (const path of extra) {
+    if (!deletes.includes(path)) deletes.push(path);
+  }
+  const assets = await github.listPrefix(`assets/images/guides/${id}/`);
   deletes.push(...assets);
-  if (!deletes.length) throw new HttpError(404, "Guide not found");
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id, remove: true });
   const result = await github.commit({
     message: commitMsg("delete guide", id),

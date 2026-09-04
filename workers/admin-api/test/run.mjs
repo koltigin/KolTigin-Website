@@ -113,6 +113,12 @@ async function main() {
     const index = JSON.parse(github.files.get("content/index.json"));
     assert(index.articles.en.includes("smoke-note.md"), "index lists writing");
 
+    res = await json(await post("/api/admin/save", {
+      kind: "articles", lang: "tr", id: "smoke-note", title: "Duman", date: "2026-09-01", body: "Merhaba"
+    }, env));
+    assert(res.status === 200, "save writing tr pair");
+    assert(github.files.has("content/articles/tr/smoke-note.md"), "writing tr file written");
+
     res = await json(await post("/api/admin/page", { family: "about", lang: "en", markdown: "# About\n\nUpdated\n" }, env));
     assert(res.status === 200 && res.body.ok, "save about");
     assert(String(github.files.get("content/about/en.md")).includes("Updated"), "about body");
@@ -138,11 +144,21 @@ async function main() {
 
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n" }, env));
     assert(res.status === 200, "save guide");
+    res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "tr", markdown: "# Rehber\n" }, env));
+    assert(res.status === 200, "save guide tr");
+    github.files.set("guides/aioz-depin/extra.txt", "orphan");
+    github.files.set("assets/images/guides/aioz-depin/shot.png", png);
     assert(JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guides index sync");
 
+    const guideCommits = github.commits.length;
     res = await json(await post("/api/admin/guide-delete", { id: "aioz-depin" }, env));
-    assert(res.status === 200, "delete guide");
+    assert(res.status === 200, "delete existing guide");
+    assert(!github.files.has("guides/aioz-depin/EN.md") && !github.files.has("guides/aioz-depin/TR.md"), "guide EN/TR sources removed");
+    assert(!github.files.has("guides/aioz-depin/extra.txt"), "guide folder extras removed");
+    assert(!github.files.has("assets/images/guides/aioz-depin/shot.png"), "guide assets removed");
     assert(!JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guide removed from index");
+    assert(github.commits.length === guideCommits + 1, "guide delete is one commit");
+    assert(github.commits.at(-1).message === "admin: delete guide aioz-depin", "guide delete commit message");
 
     res = await json(await post("/api/admin/contact", {
       location: { city: "Eskişehir", country: "Türkiye" },
@@ -183,8 +199,55 @@ async function main() {
     assert([...github.files.keys()].some((path) => path.startsWith("assets/images/blog/")), "cover stored under blog");
 
     res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "smoke-note" }, env));
-    assert(res.status === 200, "delete writing");
-    assert(!github.files.has("content/articles/en/smoke-note.md"), "writing file removed");
+    assert(res.status === 200, "delete existing writing");
+    assert(!github.files.has("content/articles/en/smoke-note.md") && !github.files.has("content/articles/tr/smoke-note.md"), "writing files removed");
+    assert(!JSON.parse(github.files.get("content/index.json")).articles.en.includes("smoke-note.md"), "writing index updated");
+    assert(!JSON.parse(github.files.get("content/index.json")).articles.tr.includes("smoke-note.md"), "writing tr index updated");
+    assert(github.commits.at(-1).message === "admin: delete writing smoke-note", "writing delete commit message");
+
+    const writingCommits = github.commits.length;
+    res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "smoke-note" }, env));
+    assert(res.status === 404 && String(res.body.error).includes("not found"), "nonexistent writing returns a clear error");
+    assert(github.commits.length === writingCommits, "failed writing delete does not commit");
+
+    res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "../etc" }, env));
+    assert(res.status === 400, "invalid writing identifier rejected");
+
+    res = await json(await post("/api/admin/save", { action: "delete", kind: "about", id: "en" }, env));
+    assert(res.status === 400, "core page cannot be deleted as a writing");
+
+    res = await json(await post("/api/admin/save", { action: "delete", kind: "videos", id: "demo" }, env));
+    assert(res.status === 200, "delete existing video");
+    assert(!github.files.has("content/videos/demo.md"), "video file removed");
+    assert(!JSON.parse(github.files.get("content/index.json")).videos.includes("demo.md"), "video index updated");
+    assert(github.commits.at(-1).message === "admin: delete video demo", "video delete commit message");
+
+    res = await json(await post("/api/admin/save", { action: "delete", kind: "videos", id: "demo" }, env));
+    assert(res.status === 404 && String(res.body.error).includes("not found"), "nonexistent video returns a clear error");
+
+    const projectCommits = github.commits.length;
+    res = await json(await post("/api/admin/project-save", { action: "delete", id: "ario" }, env));
+    assert(res.status === 200, "delete existing project");
+    assert(!github.files.has("content/projects/mainnet/ario.md"), "project markdown removed");
+    assert(!JSON.parse(github.files.get("projects/projects.json")).mainnet.some((item) => item.id === "ario"), "projects.json updated");
+    assert(github.commits.length === projectCommits + 1, "project delete is one commit");
+    assert(github.commits.at(-1).message === "admin: delete project ario", "project delete commit message");
+
+    res = await json(await post("/api/admin/project-save", { action: "delete", id: "ario" }, env));
+    assert(res.status === 404 && String(res.body.error).includes("not found"), "nonexistent project returns a clear error");
+
+    res = await json(await post("/api/admin/guide-delete", { id: "missing-guide" }, env));
+    assert(res.status === 404 && String(res.body.error).includes("not found"), "nonexistent guide returns a clear error");
+
+    res = await json(await post("/api/admin/guide-delete", { id: "---" }, env));
+    assert(res.status === 400, "invalid guide identifier rejected");
+
+    const lockedDelete = envWith(github);
+    delete lockedDelete.TEST_MODE;
+    const beforeUnauthorized = github.commits.length;
+    res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "old" }, lockedDelete));
+    assert(res.status === 401, "unauthorized delete request rejected");
+    assert(github.commits.length === beforeUnauthorized, "unauthorized delete does not mutate GitHub");
 
     const gh = new MockGitHub(seed());
     const env2 = envWith(gh);

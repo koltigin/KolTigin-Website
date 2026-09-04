@@ -408,6 +408,7 @@
       <aside style="margin-top:16px">${preview}</aside>
       <div class="footer-actions">
         <button class="btn btn-gold" type="button" data-save-project>${esc(t('cms.saveProject'))}</button>
+        ${H().entityDeleteButton(p.id && p.fromCategory)}
       </div>
     `);
   }
@@ -611,7 +612,7 @@
       </div>
       <div class="footer-actions">
         <button class="btn btn-gold" type="button" data-save-guide>${esc(t('cms.saveGuide'))}</button>
-        ${g.id ? `<button class="btn btn-ghost" type="button" data-delete-guide>${esc(t('types.delete'))}</button>` : ''}
+        ${H().entityDeleteButton(g.locked && g.id)}
       </div>
     `);
   }
@@ -911,20 +912,6 @@
         return;
       }
       if (event.target.closest('[data-save-guide]')) { event.preventDefault(); await saveGuide(); return; }
-      if (event.target.closest('[data-delete-guide]')) {
-        const g = H().state.guideDraft;
-        const related = (H().state.guidesData || []).find((item) => item.id === g.id);
-        const names = ((related && related.projects) || []).map((p) => p.name).join(', ');
-        let msg = t('cms.deleteGuide');
-        if (names) msg += `\n${t('cms.linkedTo', { name: names })}`;
-        if (!window.confirm(msg)) return;
-        try {
-          await H().api('/admin/api/guide-delete', { method: 'POST', body: JSON.stringify({ id: g.id }) });
-          H().clearDirty();
-          location.hash = '#/guides';
-        } catch (error) { await saveFail(error); renderGuideEditor(); }
-        return;
-      }
       if (event.target.closest('[data-guide-image]')) {
         event.preventDefault();
         document.getElementById('guide-image')?.click();
@@ -1007,6 +994,8 @@
   }
 
   window.AdminCMS = {
+    renderProjectEditor,
+    renderGuideEditor,
     async handleRoute(page, parts) {
       if (page === 'about') { await openPage('about'); return true; }
       if (page === 'resume') { await openPage('resume'); return true; }

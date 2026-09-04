@@ -71,22 +71,6 @@
   ],
   "depin": [
     {
-      "id": "aioz-depin",
-      "name": "AIOZ DePIN",
-      "status": "active",
-      "logo": "./assets/images/projects/aioz.svg",
-      "summary": {
-        "en": "Decentralized infrastructure for storage, streaming and AI computing.",
-        "tr": "Depolama, yayın ve yapay zeka hesaplama için merkeziyetsiz altyapı."
-      },
-      "links": [
-        {
-          "label": "Website",
-          "url": "https://aioz.network"
-        }
-      ]
-    },
-    {
       "id": "aro",
       "name": "ARO",
       "status": "active",

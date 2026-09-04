@@ -23,21 +23,25 @@
       clearStatus(state) {
         stop();
         state.notice = '';
+        state.noticeTone = '';
         state.error = '';
       },
-      showNotice(state, message, onExpire) {
+      showNotice(state, message, onExpire, options) {
         stop();
         state.error = '';
         state.notice = message;
+        state.noticeTone = options && options.tone ? options.tone : '';
         timer = setTimeoutFn(() => {
           timer = 0;
           state.notice = '';
+          state.noticeTone = '';
           if (onExpire) onExpire();
         }, NOTICE_MS);
       },
       showError(state, message) {
         stop();
         state.notice = '';
+        state.noticeTone = '';
         state.error = message || '';
       }
     };

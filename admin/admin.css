@@ -248,6 +248,30 @@ textarea {
   white-space: pre-line;
 }
 
+.ok.ok-destructive {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: #6b1518;
+  color: #fff;
+  border: 1px solid #d45b5f;
+}
+
+.ok .notice-dismiss {
+  flex: 0 0 auto;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .grid {
   display: grid;
   gap: 12px;

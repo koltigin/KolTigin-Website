@@ -69,6 +69,7 @@ export async function handleRequest(request, env) {
   } catch (error) {
     const status = error instanceof HttpError ? error.status : 500;
     const message = error instanceof HttpError ? error.message : "Publish failed";
+    console.error("admin-api", pathnameOf(request.url), status, message);
     return jsonErr(status, message);
   }
 }

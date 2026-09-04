@@ -84,6 +84,11 @@ status.showNotice(state, "two");
 clock.advance(3000);
 assert(state.notice === "", "new save replaces previous notice");
 
+status.showNotice(state, "AIOZ deleted.", undefined, { tone: "destructive" });
+assert(state.notice === "AIOZ deleted." && state.noticeTone === "destructive", "destructive delete notice tone");
+status.clearStatus(state);
+assert(state.noticeTone === "", "clearStatus clears notice tone");
+
 const adminSrc = readFileSync(join(root, "admin.js"), "utf8");
 assert(adminSrc.includes("productionWrite"), "production write path kept");
 assert(adminSrc.includes("/api/admin"), "production API rewrite kept");

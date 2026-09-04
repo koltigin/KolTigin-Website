@@ -273,6 +273,8 @@
           </div>
           <div class="item-actions">
             <button class="btn btn-ghost" data-go="#/edit/projects/${esc(item.id)}">${esc(t('writings.editBtn'))}</button>
+            <a class="btn btn-ghost" href="/#projects" target="_blank" rel="noopener">${esc(t('writings.preview'))}</a>
+            ${H().entityDeleteButton({ family: 'project', id: item.id, title: item.name || item.id })}
           </div>
         </div>
       </article>
@@ -408,7 +410,6 @@
       <aside style="margin-top:16px">${preview}</aside>
       <div class="footer-actions">
         <button class="btn btn-gold" type="button" data-save-project>${esc(t('cms.saveProject'))}</button>
-        ${H().entityDeleteButton(p.id && p.fromCategory)}
       </div>
     `);
   }
@@ -564,6 +565,7 @@
         <div class="item-actions">
           <button class="btn btn-ghost" data-go="#/edit/guides/${esc(item.id)}">${esc(t('writings.editBtn'))}</button>
           <a class="btn btn-ghost" href="/#/guides/${esc(item.id)}" target="_blank" rel="noopener">${esc(t('writings.preview'))}</a>
+          ${H().entityDeleteButton({ family: 'guide', id: item.id, title: (H().uiLang() === 'tr' ? item.titleTr : item.titleEn) || item.id })}
         </div>
       </article>
     `).join('') || `<p class="empty">${esc(t('writings.empty'))}</p>`;
@@ -612,7 +614,6 @@
       </div>
       <div class="footer-actions">
         <button class="btn btn-gold" type="button" data-save-guide>${esc(t('cms.saveGuide'))}</button>
-        ${H().entityDeleteButton(g.locked && g.id)}
       </div>
     `);
   }
@@ -996,6 +997,8 @@
   window.AdminCMS = {
     renderProjectEditor,
     renderGuideEditor,
+    renderProjectsList,
+    renderGuidesList,
     async handleRoute(page, parts) {
       if (page === 'about') { await openPage('about'); return true; }
       if (page === 'resume') { await openPage('resume'); return true; }

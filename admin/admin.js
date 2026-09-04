@@ -32,8 +32,8 @@
     return window.KTAdminStatus.savedMessage(isProductionAdmin(), t);
   }
 
-  function deletedMessage() {
-    return Delete.deletedMessage(isProductionAdmin(), t);
+  function deletedMessage(title) {
+    return Delete.deletedItemMessage(title, (key, vars) => t(key, vars));
   }
 
   function hideNoticeBanner() {
@@ -44,8 +44,8 @@
     statusUi.clearStatus(state);
   }
 
-  function showNotice(message) {
-    statusUi.showNotice(state, message || savedMessage(), hideNoticeBanner);
+  function showNotice(message, options) {
+    statusUi.showNotice(state, message || savedMessage(), hideNoticeBanner, options);
   }
 
   function showError(message) {
@@ -63,6 +63,7 @@
     server: true,
     error: '',
     notice: '',
+    noticeTone: '',
     noticeTimer: 0,
     uiLang: localStorage.getItem(UI_LANG_KEY) === 'tr' ? 'tr' : 'en',
     navOpen: false,
@@ -317,19 +318,22 @@
     } catch {
       throw notConnectedError();
     }
-    if ([404, 405, 501, 502, 503].includes(response.status)) throw notConnectedError();
     const data = await parseJsonResponse(response);
+    if (data && data.ok === true) return data;
     if (response.status === 401 || response.status === 403) {
       const error = new Error(data.error || `HTTP ${response.status}`);
       error.status = response.status;
       throw error;
     }
-    if (data && data.ok === true) return data;
     if (data && data.ok === false && data.error) {
       const error = new Error(data.error);
       error.status = response.status;
+      if ([404, 405, 501, 502, 503].includes(response.status) && data.error === t('errors.api')) {
+        throw notConnectedError();
+      }
       throw error;
     }
+    if ([404, 405, 501, 502, 503].includes(response.status)) throw notConnectedError();
     if (!response.ok) throw notConnectedError();
     return data;
   }
@@ -436,9 +440,16 @@
     </div>`;
   }
 
-  function entityDeleteButton(existing) {
-    if (!Delete.showEntityDelete(existing)) return '';
-    return `<button class="btn btn-danger" type="button" data-entity-delete>${escapeHtml(t('cms.delete'))}</button>`;
+  function entityDeleteButton(spec) {
+    const pending = Delete.specFromDataset({
+      entityDelete: spec && spec.family,
+      deleteId: spec && spec.id,
+      deleteTitle: spec && spec.title,
+      deleteKind: spec && spec.kind
+    });
+    if (!pending) return '';
+    const kindAttr = pending.kind ? ` data-delete-kind="${escapeHtml(pending.kind)}"` : '';
+    return `<button class="btn btn-danger" type="button" data-entity-delete="${escapeHtml(pending.family)}" data-delete-id="${escapeHtml(pending.id)}" data-delete-title="${escapeHtml(pending.title)}"${kindAttr}>${escapeHtml(t('cms.delete'))}</button>`;
   }
 
   function deleteDialogHtml() {
@@ -447,7 +458,7 @@
     return `<div class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
       <div class="delete-modal-card">
         <h2 id="delete-dialog-title">${escapeHtml(t('cms.deleteTitle'))}</h2>
-        <p class="delete-modal-name">${escapeHtml(pending.title || pending.id)}</p>
+        <p class="delete-modal-name">&ldquo;${escapeHtml(pending.title || pending.id)}&rdquo;</p>
         <p>${escapeHtml(t('cms.deleteBody'))}</p>
         <div class="item-actions">
           <button class="btn btn-ghost" type="button" data-delete-cancel>${escapeHtml(t('cms.deleteCancel'))}</button>
@@ -457,82 +468,102 @@
     </div>`;
   }
 
-  function refreshDeleteView() {
+  function refreshListView() {
     const { parts } = route();
-    if (state.editor && state.editor.kind === 'videos') {
-      renderVideoEditor();
+    const page = parts[0];
+    if (page === 'writings' || page === 'articles' || page === 'notes' || page === 'social') {
+      renderWritingsList();
       return;
     }
-    if (state.editor) {
-      renderWritingEditor();
+    if (page === 'videos' && parts.length === 1) {
+      renderVideosList();
       return;
     }
-    if (parts[1] === 'projects' && window.AdminCMS && typeof window.AdminCMS.renderProjectEditor === 'function') {
-      window.AdminCMS.renderProjectEditor();
+    if (page === 'projects' && parts.length === 1 && window.AdminCMS && typeof window.AdminCMS.renderProjectsList === 'function') {
+      window.AdminCMS.renderProjectsList();
       return;
     }
-    if (parts[1] === 'guides' && window.AdminCMS && typeof window.AdminCMS.renderGuideEditor === 'function') {
-      window.AdminCMS.renderGuideEditor();
+    if (page === 'guides' && parts.length === 1 && window.AdminCMS && typeof window.AdminCMS.renderGuidesList === 'function') {
+      window.AdminCMS.renderGuidesList();
     }
   }
 
   function openEntityDelete(spec) {
-    if (!Delete.showEntityDelete(true) || !Delete.allowsEntityDelete(spec.family)) return;
-    state.deleteConfirm = {
-      family: spec.family,
-      id: spec.id,
-      kind: spec.kind || '',
-      title: spec.title || spec.id
-    };
-    refreshDeleteView();
+    const pending = Delete.specFromDataset({
+      entityDelete: spec && (spec.type || spec.family),
+      deleteId: spec && spec.id,
+      deleteTitle: spec && spec.title,
+      deleteKind: spec && spec.kind
+    });
+    if (!pending) return;
+    state.deleteConfirm = pending;
+    refreshListView();
   }
 
   function cancelEntityDelete() {
     state.deleteConfirm = null;
-    refreshDeleteView();
+    refreshListView();
   }
 
-  async function finishEntityDelete(family) {
-    clearDirty();
+  function applyConfirmedRemoval(pending) {
+    if (!pending || !pending.id) return;
+    if (pending.family === 'writing' && pending.kind) {
+      state.content[pending.kind] = (state.content[pending.kind] || []).filter((item) => item.id !== pending.id);
+    }
+    if (pending.family === 'video') {
+      state.content.videos = (state.content.videos || []).filter((item) => item.id !== pending.id);
+    }
+    if (pending.family === 'guide') {
+      state.guidesData = (state.guidesData || []).filter((item) => item.id !== pending.id);
+    }
+    if (pending.family === 'project' && state.projectsData && Array.isArray(state.projectsData.projects)) {
+      state.projectsData.projects = state.projectsData.projects.filter((item) => item.id !== pending.id);
+    }
+  }
+
+  async function reloadCanonicalList(pending) {
+    if (pending.family === 'writing' || pending.family === 'video') {
+      await loadContent();
+      return;
+    }
+    if (pending.family === 'project') {
+      state.projectsData = await api('/admin/api/projects');
+      return;
+    }
+    if (pending.family === 'guide') {
+      const pack = await api('/admin/api/guides');
+      state.guidesData = pack.guides || [];
+    }
+  }
+
+  async function finishEntityDelete(pending) {
+    const title = pending.title || pending.id;
     state.deleteConfirm = null;
-    state.editor = null;
-    if (state.projectDraft) state.projectDraft = null;
-    if (state.guideDraft) state.guideDraft = null;
-    showNotice(deletedMessage());
-    try { await loadContent(); } catch (error) { showError(error.message); return; }
-    if (family === 'project' || family === 'guide') {
-      try {
-        if (family === 'project') {
-          state.projectsData = await api('/admin/api/projects');
-        } else {
-          const pack = await api('/admin/api/guides');
-          state.guidesData = pack.guides || [];
-        }
-      } catch (error) {
-        showError(error.message);
-        return;
-      }
+    clearDirty();
+    try {
+      await reloadCanonicalList(pending);
+    } catch (error) {
+      showError(error.message);
+      applyConfirmedRemoval(pending);
+      refreshListView();
+      return;
     }
-    state.keepNoticeOnHash = true;
-    location.hash = Delete.listHashFor(family);
-    if (state.lastHash === location.hash) {
-      state.keepNoticeOnHash = false;
-      await draw();
-    }
+    applyConfirmedRemoval(pending);
+    showNotice(deletedMessage(title), { tone: 'destructive' });
+    refreshListView();
   }
 
   async function confirmEntityDelete() {
     const pending = state.deleteConfirm;
     if (!pending || !pending.id) return;
-    const req = Delete.deleteRequest(pending.family, pending);
-    clearStatus();
+    const req = Delete.deleteRequest(pending);
     try {
       await api(req.path, { method: 'POST', body: JSON.stringify(req.body) });
-      await finishEntityDelete(pending.family);
+      await finishEntityDelete(pending);
     } catch (error) {
       state.deleteConfirm = null;
       showError(error.message);
-      refreshDeleteView();
+      refreshListView();
     }
   }
 
@@ -596,7 +627,7 @@
               ${lead ? `<p class="page-lead">${escapeHtml(lead)}</p>` : ''}
             </header>
             ${state.error ? `<div class="error" role="alert">${escapeHtml(state.error)}</div>` : ''}
-            ${state.notice ? `<div class="ok">${escapeHtml(state.notice)}</div>` : ''}
+            ${state.notice ? `<div class="ok${state.noticeTone === 'destructive' ? ' ok-destructive' : ''}" role="status">${escapeHtml(state.notice)}${state.noticeTone === 'destructive' ? `<button class="notice-dismiss" type="button" data-notice-dismiss aria-label="${escapeHtml(t('cms.deleteCancel'))}">×</button>` : ''}</div>` : ''}
             ${inner}
             ${deleteDialogHtml()}
           </div>
@@ -732,6 +763,7 @@
             <div class="item-actions">
               <button class="btn btn-ghost" data-go="#/edit/${item.kind}/${encodeURIComponent(item.id)}">${escapeHtml(t('writings.editBtn'))}</button>
               <a class="btn btn-ghost" href="${escapeHtml(previewHref(item))}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('writings.preview'))}</a>
+              ${entityDeleteButton({ family: 'writing', id: item.id, kind: item.kind, title })}
             </div>
           </div>
         </article>
@@ -765,6 +797,7 @@
         <div class="item-actions">
           <button class="btn btn-ghost" data-go="#/edit/videos/${encodeURIComponent(item.id)}">${escapeHtml(t('writings.editBtn'))}</button>
           <a class="btn btn-ghost" href="/#videos" target="_blank" rel="noopener">${escapeHtml(t('writings.preview'))}</a>
+          ${entityDeleteButton({ family: 'video', id: item.id, title: item.titleEn || item.titleTr || item.title || item.id })}
         </div>
       </article>
     `).join('') : `<p class="empty">${escapeHtml(t('video.empty'))}</p>`;
@@ -970,7 +1003,6 @@
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save>${escapeHtml(t('writings.save'))}</button>
-        ${entityDeleteButton(editor.mode === 'edit' && editor.sharedId)}
       </div>
     `);
   }
@@ -1024,7 +1056,6 @@
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save-video>${escapeHtml(t('video.save'))}</button>
-        ${entityDeleteButton(state.editor.mode === 'edit' && state.editor.video && state.editor.video.id)}
       </div>
     `);
   }
@@ -1703,41 +1734,7 @@
       if (entityDelete) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (state.editor && state.editor.kind === 'videos' && state.editor.mode === 'edit' && state.editor.video && state.editor.video.id) {
-          openEntityDelete({
-            family: 'video',
-            id: state.editor.video.id,
-            title: state.editor.video.titleEn || state.editor.video.titleTr || state.editor.video.id
-          });
-          return;
-        }
-        if (state.editor && state.editor.mode === 'edit' && state.editor.sharedId) {
-          const draft = state.editor.langs[state.editor.lang] || {};
-          openEntityDelete({
-            family: 'writing',
-            id: state.editor.sharedId,
-            kind: state.editor.originalKind || state.editor.kind,
-            title: draft.title || state.editor.langs.en.title || state.editor.langs.tr.title || state.editor.sharedId
-          });
-          return;
-        }
-        if (state.projectDraft && state.projectDraft.id && state.projectDraft.fromCategory) {
-          openEntityDelete({
-            family: 'project',
-            id: state.projectDraft.id,
-            title: state.projectDraft.name || state.projectDraft.id
-          });
-          return;
-        }
-        if (state.guideDraft && state.guideDraft.locked && state.guideDraft.id) {
-          const g = state.guideDraft;
-          const heading = ((g.langs.en || '').match(/^#\s+(.+)$/m) || (g.langs.tr || '').match(/^#\s+(.+)$/m) || [])[1];
-          openEntityDelete({
-            family: 'guide',
-            id: g.id,
-            title: heading || g.id
-          });
-        }
+        openEntityDelete(Delete.specFromDataset(entityDelete.dataset));
         return;
       }
       if (event.target.closest('[data-delete-cancel]')) {
@@ -1750,6 +1747,12 @@
         event.preventDefault();
         event.stopImmediatePropagation();
         await confirmEntityDelete();
+        return;
+      }
+      if (event.target.closest('[data-notice-dismiss]')) {
+        event.preventDefault();
+        clearStatus();
+        hideNoticeBanner();
         return;
       }
       const md = event.target.closest('[data-md]');

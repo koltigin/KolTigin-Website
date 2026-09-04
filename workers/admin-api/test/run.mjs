@@ -124,6 +124,7 @@ links:
     assert(youtubeIdFromUrl("https://www.youtube.com/channel/UCabcdefghijk") === "", "channel url is rejected");
     assert(youtubeIdFromUrl("https://example.com/live/abcdefghijk") === "", "non-youtube live path is rejected");
     assert(buildWritingMarkdown({ title: "Hi", date: "2026-01-01", kind: "articles", body: "x" }).includes("title: Hi"), "writing markdown");
+    assert(buildWritingMarkdown({ title: "Test Article Title", date: "2026-01-01", kind: "articles", body: "x" }).includes('title: "Test Article Title"'), "multi-word writing title is quoted");
 
     const github = new MockGitHub(seed());
     const env = envWith(github);

@@ -5,8 +5,33 @@
     return window.KTAdmin;
   }
 
+  function Sync() {
+    return window.KTContentSync;
+  }
+
   function t(key, vars) {
     return H().t(key, vars);
+  }
+
+  function adoptProjects(pack) {
+    const previous = H().state.projectsData || {};
+    const remote = pack || {};
+    H().state.projectsData = {
+      ...remote,
+      categories: remote.categories || previous.categories || [],
+      projects: Sync().mergeRemoteList(remote.projects || [], previous.projects || [])
+    };
+    return H().state.projectsData;
+  }
+
+  function adoptGuides(guides) {
+    H().state.guidesData = Sync().mergeRemoteList(guides || [], H().state.guidesData || []);
+    return H().state.guidesData;
+  }
+
+  function guideHeading(markdown) {
+    const match = String(markdown || '').match(/^#\s+(.+)$/m);
+    return match ? match[1].trim() : '';
   }
 
   function esc(value) {
@@ -297,7 +322,7 @@
   }
 
   async function openProjects() {
-    H().state.projectsData = await H().api('/admin/api/projects');
+    adoptProjects(await H().api('/admin/api/projects'));
     renderProjectsList();
   }
 
@@ -415,10 +440,9 @@
   }
 
   async function openProject(id) {
-    const pack = await H().api('/admin/api/projects');
-    H().state.projectsData = pack;
+    const pack = adoptProjects(await H().api('/admin/api/projects'));
     const gpack = await H().api('/admin/api/guides');
-    H().state.guidesData = gpack.guides || [];
+    adoptGuides(gpack.guides || []);
     if (!id) {
       H().state.projectDraft = emptyProject();
       H().state.projectDraft.category = (pack.categories[0] || {}).id || '';
@@ -485,6 +509,22 @@
       });
       p.id = result.id || p.id;
       p.fromCategory = p.category;
+      const data = H().state.projectsData || { projects: [], categories: [] };
+      data.projects = Sync().upsertById(data.projects || [], {
+        id: p.id,
+        slug: p.slug || p.id,
+        name: p.name,
+        category: p.category,
+        status: p.status,
+        role: { en: p.roleEn, tr: p.roleTr },
+        former_name: p.former_name,
+        logo: p.logo,
+        summary: { en: p.summaryEn, tr: p.summaryTr },
+        links: p.links,
+        referral_url: p.referral_url,
+        referral_code: p.referral_code
+      });
+      H().state.projectsData = data;
       await saveOk();
       history.replaceState(null, '', `${location.pathname}${location.search}#/edit/projects/${encodeURIComponent(p.id)}`);
     } catch (error) {
@@ -555,7 +595,7 @@
     if (q) items = items.filter((item) => `${item.titleEn} ${item.titleTr} ${item.id}`.toLowerCase().includes(q));
     const rows = items.map((item) => `
       <article class="item">
-        <h3>${esc(H().uiLang() === 'tr' ? item.titleTr : item.titleEn)}</h3>
+        <h3>${esc(Sync().guideListTitle(item, H().uiLang()))}</h3>
         <div class="meta">
           <span class="pill gold">${esc(item.id)}</span>
           <span class="pill">EN ${item.existsEn ? '✓' : t('writings.missing')}</span>
@@ -565,7 +605,7 @@
         <div class="item-actions">
           <button class="btn btn-ghost" data-go="#/edit/guides/${esc(item.id)}">${esc(t('writings.editBtn'))}</button>
           <a class="btn btn-ghost" href="/#/guides/${esc(item.id)}" target="_blank" rel="noopener">${esc(t('writings.preview'))}</a>
-          ${H().entityDeleteButton({ family: 'guide', id: item.id, title: (H().uiLang() === 'tr' ? item.titleTr : item.titleEn) || item.id })}
+          ${H().entityDeleteButton({ family: 'guide', id: item.id, title: Sync().guideListTitle(item, H().uiLang()) })}
         </div>
       </article>
     `).join('') || `<p class="empty">${esc(t('writings.empty'))}</p>`;
@@ -620,8 +660,12 @@
 
   async function openGuide(id) {
     const pack = await H().api('/admin/api/guides');
-    H().state.guidesData = pack.guides || [];
-    H().state.projectsData = { categories: [], projects: pack.projects || [] };
+    adoptGuides(pack.guides || []);
+    const prevProjects = H().state.projectsData || {};
+    H().state.projectsData = {
+      categories: prevProjects.categories || [],
+      projects: Sync().mergeRemoteList(pack.projects || [], prevProjects.projects || [])
+    };
     if (!id) {
       H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '' };
       renderGuideEditor();
@@ -672,6 +716,15 @@
       });
       g.id = result.id || g.id;
       g.locked = true;
+      const prev = (H().state.guidesData || []).find((item) => item.id === g.id) || {};
+      H().state.guidesData = Sync().upsertById(H().state.guidesData || [], {
+        id: g.id,
+        titleEn: guideHeading(g.langs.en) || prev.titleEn || g.id,
+        titleTr: guideHeading(g.langs.tr) || prev.titleTr || g.id,
+        existsEn: Boolean(String(g.langs.en || '').trim()) || Boolean(prev.existsEn),
+        existsTr: Boolean(String(g.langs.tr || '').trim()) || Boolean(prev.existsTr),
+        projects: prev.projects || []
+      });
       await saveOk();
       history.replaceState(null, '', `${location.pathname}${location.search}#/edit/guides/${encodeURIComponent(g.id)}`);
     } catch (error) {
@@ -824,7 +877,7 @@
               label: { en: app.querySelector('[data-npcat-en]').value, tr: app.querySelector('[data-npcat-tr]').value }
             })
           });
-          H().state.projectsData = await H().api('/admin/api/projects');
+          H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
           await saveOk();
         } catch (error) { await saveFail(error); }
         renderProjectCategories();
@@ -849,7 +902,7 @@
             })
           });
           H().state.catDialog = null;
-          H().state.projectsData = await H().api('/admin/api/projects');
+          H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
           await saveOk();
         } catch (error) { await saveFail(error); }
         renderProjectCategories();
@@ -865,7 +918,7 @@
           H().clearStatus();
           try {
             await H().api('/admin/api/project-categories', { method: 'POST', body: JSON.stringify({ action: 'delete', id }) });
-            H().state.projectsData = await H().api('/admin/api/projects');
+            H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
             await saveOk();
           } catch (error) { await saveFail(error); }
           renderProjectCategories();
@@ -887,7 +940,7 @@
             })
           });
           H().state.catDialog = null;
-          H().state.projectsData = await H().api('/admin/api/projects');
+          H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
           await saveOk();
         } catch (error) { await saveFail(error); }
         renderProjectCategories();
@@ -906,7 +959,7 @@
               method: 'POST',
               body: JSON.stringify({ action: 'reorder', ids: cats.map((c) => c.id) })
             });
-            H().state.projectsData = await H().api('/admin/api/projects');
+            H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
           } catch (error) { await saveFail(error); }
           renderProjectCategories();
         }
@@ -1013,7 +1066,7 @@
       if (page === 'resume') { await openPage('resume'); return true; }
       if (page === 'projects' && parts.length === 1) { await openProjects(); return true; }
       if (page === 'project-categories') {
-        H().state.projectsData = await H().api('/admin/api/projects');
+        H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
         renderProjectCategories();
         return true;
       }
@@ -1021,7 +1074,7 @@
       if (page === 'edit' && parts[1] === 'projects' && parts[2]) { await openProject(decodeURIComponent(parts[2])); return true; }
       if (page === 'guides' && parts.length === 1) {
         const pack = await H().api('/admin/api/guides');
-        H().state.guidesData = pack.guides || [];
+        adoptGuides(pack.guides || []);
         renderGuidesList();
         return true;
       }

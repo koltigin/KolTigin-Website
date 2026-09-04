@@ -41,7 +41,7 @@ export function slugify(value) {
 
 export function yamlQuote(value) {
   const text = String(value ?? "");
-  if (text === "" || /[:#{}[\],&*?|<>=!%@`'"\\\n]/.test(text) || /^(true|false|null|yes|no)$/i.test(text)) {
+  if (text === "" || /[:#{}[\],&*?|<>=!%@`'"\\\n\s]/.test(text) || /^(true|false|null|yes|no)$/i.test(text)) {
     return JSON.stringify(text);
   }
   return text;

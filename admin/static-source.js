@@ -26,7 +26,14 @@
     return data;
   }
 
+  function invalidate() {
+    cache.clear();
+  }
+
   function parseFrontMatter(text) {
+    if (window.KTContentSync && typeof window.KTContentSync.parseFrontMatter === 'function') {
+      return window.KTContentSync.parseFrontMatter(text);
+    }
     const raw = String(text || '').replace(/\r\n/g, '\n');
     if (!raw.startsWith('---')) return { meta: {}, body: raw };
     const parts = raw.split('---', 3);
@@ -325,5 +332,5 @@
     throw new Error(`Unknown admin read: ${pathname}`);
   }
 
-  window.KTAdminStatic = { read, siteUrl };
+  window.KTAdminStatic = { read, siteUrl, invalidate };
 })();

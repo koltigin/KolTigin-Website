@@ -27,6 +27,7 @@
 
   const statusUi = window.KTAdminStatus.createStatusController(window);
   const Delete = window.KTAdminDelete;
+  const Sync = window.KTContentSync;
 
   function savedMessage() {
     return window.KTAdminStatus.savedMessage(isProductionAdmin(), t);
@@ -175,9 +176,7 @@
   }
 
   function pickLoc(value, fallback) {
-    if (value && typeof value === 'object') return value[uiLang()] || value.en || value.tr || fallback || '';
-    if (typeof value === 'string' && value) return value;
-    return fallback || '';
+    return Sync.localizedText(value, uiLang(), fallback);
   }
 
   function typeLabel(id) {
@@ -191,11 +190,7 @@
   }
 
   function writingListTitle(item) {
-    const lang = uiLang();
-    const pack = item.languages && item.languages[lang];
-    const title = pack && String(pack.title || '').trim();
-    if (title) return title;
-    return item.id;
+    return Sync.writingListTitle(item, uiLang());
   }
 
   function publicAssetUrl(value) {
@@ -438,12 +433,31 @@
     }
   }
 
+  function upsertWritingInState(item, previousKind) {
+    if (!item || !item.id) return;
+    if (previousKind && previousKind !== item.kind && state.content[previousKind]) {
+      state.content[previousKind] = (state.content[previousKind] || []).filter((row) => row.id !== item.id);
+    }
+    const kind = item.kind;
+    if (!state.content[kind]) state.content[kind] = [];
+    state.content[kind] = Sync.upsertById(state.content[kind], item);
+  }
+
+  function upsertVideoInState(item) {
+    if (!item || !item.id) return;
+    state.content.videos = Sync.upsertById(state.content.videos || [], item);
+  }
+
   async function loadContent() {
+    if (window.KTAdminStatic && typeof window.KTAdminStatic.invalidate === 'function') {
+      window.KTAdminStatic.invalidate();
+    }
+    const previous = state.content || {};
     const data = await api('/admin/api/content');
     state.types = Array.isArray(data.types) ? data.types : [];
-    const next = { videos: data.videos || [] };
+    const next = { videos: Sync.mergeRemoteList(data.videos || [], previous.videos || []) };
     writingKindIds().forEach((kind) => {
-      next[kind] = data[kind] || [];
+      next[kind] = Sync.mergeRemoteList(data[kind] || [], previous[kind] || []);
     });
     state.content = next;
   }
@@ -811,7 +825,7 @@
     const items = state.content.videos || [];
     const rows = items.length ? items.map((item) => `
       <article class="item">
-        <h3>${escapeHtml(item.titleEn || item.titleTr || item.title)}</h3>
+        <h3>${escapeHtml(Sync.videoListTitle(item, uiLang()))}</h3>
         <div class="meta">
           <span class="pill gold">${escapeHtml(t('nav.videos'))}</span>
           <span class="pill">${escapeHtml(item.date || '')}</span>
@@ -820,7 +834,7 @@
         <div class="item-actions">
           <button class="btn btn-ghost" data-go="#/edit/videos/${encodeURIComponent(item.id)}">${escapeHtml(t('writings.editBtn'))}</button>
           <a class="btn btn-ghost" href="/#videos" target="_blank" rel="noopener">${escapeHtml(t('writings.preview'))}</a>
-          ${entityDeleteButton({ family: 'video', id: item.id, title: item.titleEn || item.titleTr || item.title || item.id })}
+          ${entityDeleteButton({ family: 'video', id: item.id, title: Sync.videoListTitle(item, uiLang()) })}
         </div>
       </article>
     `).join('') : `<p class="empty">${escapeHtml(t('video.empty'))}</p>`;
@@ -1418,7 +1432,7 @@
       }
       clearDirty();
       showNotice();
-      await loadContent();
+      upsertWritingInState(Sync.writingFromEditor(editor, editor.sharedId), previousKind);
     } catch (error) {
       showError(error.message);
     }
@@ -1448,7 +1462,12 @@
       });
       showNotice();
       clearDirty();
-      await loadContent();
+      const id = result.id || slugify(draft.titleEn || draft.titleTr);
+      draft.id = id;
+      upsertVideoInState(Sync.videoFromEditor({
+        ...draft,
+        youtubeId: youtubeIdFromUrl(draft.youtubeUrl)
+      }, id));
     } catch (error) {
       showError(error.message);
     }

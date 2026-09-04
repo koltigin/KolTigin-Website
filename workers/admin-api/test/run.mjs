@@ -113,7 +113,16 @@ links:
     assert(strippedJson.changed && strippedJson.data.depin[0].links.length === 1, "projects.json strip removes only the guide link");
     const pjson = applyProjectJson({ mainnet: [] }, [{ id: "mainnet" }], { id: "ario", category: "mainnet", item: { id: "ario", name: "AR.IO" } });
     assert(pjson.mainnet[0].id === "ario", "project json upsert");
-    assert(youtubeIdFromUrl("https://www.youtube.com/watch?v=abcdefghijk") === "abcdefghijk", "youtube id");
+    assert(youtubeIdFromUrl("https://www.youtube.com/watch?v=abcdefghijk") === "abcdefghijk", "youtube watch url");
+    assert(youtubeIdFromUrl("https://youtu.be/abcdefghijk") === "abcdefghijk", "youtube short url");
+    assert(youtubeIdFromUrl("https://www.youtube.com/shorts/abcdefghijk") === "abcdefghijk", "youtube shorts url");
+    assert(youtubeIdFromUrl("https://www.youtube.com/embed/abcdefghijk") === "abcdefghijk", "youtube embed url");
+    assert(youtubeIdFromUrl("https://www.youtube.com/live/abcdefghijk") === "abcdefghijk", "youtube live url");
+    assert(youtubeIdFromUrl("https://www.youtube.com/live/abcdefghijk?si=xyz") === "abcdefghijk", "youtube live url with query");
+    assert(youtubeIdFromUrl("https://youtube.com/live/abcdefghijk") === "abcdefghijk", "youtube live url without www");
+    assert(youtubeIdFromUrl("https://www.youtube.com/playlist?list=PLabcdefghijk") === "", "playlist url is rejected");
+    assert(youtubeIdFromUrl("https://www.youtube.com/channel/UCabcdefghijk") === "", "channel url is rejected");
+    assert(youtubeIdFromUrl("https://example.com/live/abcdefghijk") === "", "non-youtube live path is rejected");
     assert(buildWritingMarkdown({ title: "Hi", date: "2026-01-01", kind: "articles", body: "x" }).includes("title: Hi"), "writing markdown");
 
     const github = new MockGitHub(seed());

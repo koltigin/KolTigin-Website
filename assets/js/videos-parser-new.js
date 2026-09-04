@@ -111,15 +111,23 @@ function isValidYoutubeId(id) {
 
 function youtubeIdFromUrl(url) {
   if (!url || typeof url !== 'string') return '';
-  const trimmed = url.trim();
-  const patterns = [
-    /youtu\.be\/([A-Za-z0-9_-]{6,20})/i,
-    /[?&]v=([A-Za-z0-9_-]{6,20})/i,
-    /youtube\.com\/embed\/([A-Za-z0-9_-]{6,20})/i
-  ];
-  for (const pattern of patterns) {
-    const match = trimmed.match(pattern);
-    if (match) return match[1];
+  const value = url.trim();
+  if (!value) return '';
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return '';
+  }
+  const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+  if (!['youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com'].includes(host)) return '';
+  const idOk = (id) => (/^[A-Za-z0-9_-]{11}$/.test(id) ? id : '');
+  if (host === 'youtu.be') return idOk(parsed.pathname.split('/').filter(Boolean)[0] || '');
+  const parts = parsed.pathname.split('/').filter(Boolean);
+  const first = (parts[0] || '').toLowerCase();
+  if (first === 'watch') return idOk(parsed.searchParams.get('v') || '');
+  if (first === 'embed' || first === 'shorts' || first === 'live' || first === 'v') {
+    return idOk(parts[1] || '');
   }
   return '';
 }

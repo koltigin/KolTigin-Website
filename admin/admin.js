@@ -219,17 +219,29 @@
   }
 
   function youtubeIdFromUrl(url) {
-    const raw = String(url || '').trim();
-    const patterns = [
-      /youtu\.be\/([A-Za-z0-9_-]{6,20})/i,
-      /[?&]v=([A-Za-z0-9_-]{6,20})/i,
-      /youtube\.com\/embed\/([A-Za-z0-9_-]{6,20})/i
-    ];
-    for (const pattern of patterns) {
-      const match = raw.match(pattern);
-      if (match) return match[1];
+    const value = String(url || '').trim();
+    if (!value) return '';
+    let parsed;
+    try {
+      parsed = new URL(value);
+    } catch {
+      return '';
+    }
+    const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+    if (!['youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com'].includes(host)) return '';
+    const idOk = (id) => (/^[A-Za-z0-9_-]{11}$/.test(id) ? id : '');
+    if (host === 'youtu.be') return idOk((parsed.pathname.split('/').filter(Boolean)[0] || ''));
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    const first = (parts[0] || '').toLowerCase();
+    if (first === 'watch') return idOk(parsed.searchParams.get('v') || '');
+    if (first === 'embed' || first === 'shorts' || first === 'live' || first === 'v') {
+      return idOk(parts[1] || '');
     }
     return '';
+  }
+
+  function saveActionLabel(localKey) {
+    return isProductionAdmin() ? t('save.action') : t(localKey);
   }
 
   function isXUrl(url) {
@@ -808,10 +820,12 @@
   }
 
   function emptyEditor(kind) {
+    const isVideo = kind === 'videos';
+    const writingKind = writingKindIds().includes(kind) ? kind : 'articles';
     return {
       mode: 'new',
-      kind: writingKindIds().includes(kind) ? kind : 'articles',
-      originalKind: writingKindIds().includes(kind) ? kind : 'articles',
+      kind: isVideo ? 'videos' : writingKind,
+      originalKind: isVideo ? 'videos' : writingKind,
       sharedId: '',
       lang: 'en',
       pair: { date: today(), externalUrl: '' },
@@ -996,7 +1010,7 @@
       </div>
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
-        <button class="btn btn-gold" type="button" data-save>${escapeHtml(t('writings.save'))}</button>
+        <button class="btn btn-gold" type="button" data-save>${escapeHtml(saveActionLabel('writings.save'))}</button>
       </div>
     `);
   }
@@ -1049,7 +1063,7 @@
       </div>
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
-        <button class="btn btn-gold" type="button" data-save-video>${escapeHtml(t('video.save'))}</button>
+        <button class="btn btn-gold" type="button" data-save-video>${escapeHtml(saveActionLabel('video.save'))}</button>
       </div>
     `);
   }
@@ -1116,7 +1130,7 @@
         </div>
       </form>
       <div class="footer-actions">
-        <button class="btn btn-gold" type="button" data-save-profile>${escapeHtml(t('profile.save'))}</button>
+        <button class="btn btn-gold" type="button" data-save-profile>${escapeHtml(saveActionLabel('profile.save'))}</button>
       </div>
     `);
   }
@@ -1277,7 +1291,7 @@
       </div>
       <form data-social>${rows}</form>
       <div class="footer-actions">
-        <button class="btn btn-gold" type="button" data-save-social>${escapeHtml(t('social.save'))}</button>
+        <button class="btn btn-gold" type="button" data-save-social>${escapeHtml(saveActionLabel('social.save'))}</button>
       </div>
     `);
   }
@@ -1599,7 +1613,8 @@
     state.editor = emptyEditor(kind);
     state.editor.mode = id ? 'edit' : 'new';
     state.editor.sharedId = id || '';
-    state.editor.originalKind = kind;
+    state.editor.originalKind = kind === 'videos' ? 'videos' : kind;
+    if (kind === 'videos') state.editor.kind = 'videos';
     clearStatus();
     if (!id) return;
     const data = await api(`/admin/api/item?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}`);
@@ -1758,7 +1773,10 @@
         }
       }
       if (event.target.closest('[data-preview-md]')) {
-        if (state.editor && state.editor.kind === 'videos') {
+        event.preventDefault();
+        const videoPreview = state.editor && (state.editor.kind === 'videos' || Boolean(app.querySelector('form[data-video]')));
+        if (videoPreview) {
+          if (state.editor.kind !== 'videos') state.editor.kind = 'videos';
           syncVideoFromForm();
           renderVideoEditor();
         } else {
@@ -2089,6 +2107,7 @@
     confirmLeave,
     uiLang,
     savedMessage,
+    saveActionLabel,
     deletedMessage,
     entityDeleteButton,
     openEntityDelete,

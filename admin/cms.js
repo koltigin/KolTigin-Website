@@ -212,7 +212,7 @@
       </div>
       ${family === 'about' ? renderAboutIconPicker(md) : ''}
       <div class="footer-actions">
-        <button class="btn btn-gold" type="button" data-save-page>${esc(family === 'about' ? t('cms.saveAbout') : t('writings.save'))}</button>
+        <button class="btn btn-gold" type="button" data-save-page>${esc(family === 'about' ? H().saveActionLabel('cms.saveAbout') : H().saveActionLabel('writings.save'))}</button>
       </div>
     `);
   }
@@ -409,7 +409,7 @@
       </form>
       <aside style="margin-top:16px">${preview}</aside>
       <div class="footer-actions">
-        <button class="btn btn-gold" type="button" data-save-project>${esc(t('cms.saveProject'))}</button>
+        <button class="btn btn-gold" type="button" data-save-project>${esc(H().saveActionLabel('cms.saveProject'))}</button>
       </div>
     `);
   }
@@ -613,7 +613,7 @@
         </aside>
       </div>
       <div class="footer-actions">
-        <button class="btn btn-gold" type="button" data-save-guide>${esc(t('cms.saveGuide'))}</button>
+        <button class="btn btn-gold" type="button" data-save-guide>${esc(H().saveActionLabel('cms.saveGuide'))}</button>
       </div>
     `);
   }
@@ -714,7 +714,7 @@
       </form>
       <div class="footer-actions">
         <a class="btn btn-ghost" href="/#contact" target="_blank" rel="noopener">${esc(t('cms.previewContact'))}</a>
-        <button class="btn btn-gold" type="button" data-save-contact>${esc(t('writings.save'))}</button>
+        <button class="btn btn-gold" type="button" data-save-contact>${esc(H().saveActionLabel('writings.save'))}</button>
       </div>
     `);
   }

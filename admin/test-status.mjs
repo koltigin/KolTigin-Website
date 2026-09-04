@@ -25,6 +25,8 @@ function tr(lang, key) {
 }
 
 assert(tr("en", "save.success") === "Saved successfully.", "production EN success copy");
+assert(tr("en", "save.action") === "Save", "production EN save button");
+assert(tr("tr", "save.action") === "Kaydet", "production TR save button");
 assert(tr("en", "save.deleted") === "Deleted successfully.", "production EN delete copy");
 assert(tr("tr", "save.deleted") === "Başarıyla silindi.", "production TR delete copy");
 assert(tr("tr", "save.success") === "Başarıyla kaydedildi.", "production TR success copy");

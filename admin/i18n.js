@@ -210,6 +210,7 @@ window.ADMIN_I18N = {
     },
     save: {
       success: 'Saved successfully.',
+      action: 'Save',
       locally: 'Saved locally.',
       deleted: 'Deleted successfully.',
       deletedLocally: 'Deleted locally.',
@@ -502,6 +503,7 @@ window.ADMIN_I18N = {
     },
     save: {
       success: 'Başarıyla kaydedildi.',
+      action: 'Kaydet',
       locally: 'Lokalde kaydedildi.',
       deleted: 'Başarıyla silindi.',
       deletedLocally: 'Lokalde silindi.',

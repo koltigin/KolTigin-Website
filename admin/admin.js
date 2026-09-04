@@ -37,19 +37,37 @@
   }
 
   function hideNoticeBanner() {
-    app.querySelectorAll('.shell > .ok').forEach((el) => el.remove());
+    app.querySelectorAll('.status-toast').forEach((el) => el.remove());
+  }
+
+  function statusToastHtml() {
+    if (state.error) {
+      return `<div class="status-toast" role="status" aria-live="polite"><div class="error status-toast-card" role="alert">${escapeHtml(state.error)}</div></div>`;
+    }
+    if (!state.notice) return '';
+    const destructive = state.noticeTone === 'destructive';
+    return `<div class="status-toast" role="status" aria-live="polite"><div class="ok status-toast-card${destructive ? ' ok-destructive' : ''}">${escapeHtml(state.notice)}${destructive ? `<button class="notice-dismiss" type="button" data-notice-dismiss aria-label="${escapeHtml(t('cms.deleteCancel'))}">×</button>` : ''}</div></div>`;
   }
 
   function clearStatus() {
     statusUi.clearStatus(state);
+    hideNoticeBanner();
   }
 
   function showNotice(message, options) {
     statusUi.showNotice(state, message || savedMessage(), hideNoticeBanner, options);
+    paintStatusToast();
   }
 
   function showError(message) {
     statusUi.showError(state, message);
+    paintStatusToast();
+  }
+
+  function paintStatusToast() {
+    hideNoticeBanner();
+    if (!state.error && !state.notice) return;
+    app.insertAdjacentHTML('beforeend', statusToastHtml());
   }
 
   function publishPath(path) {
@@ -632,13 +650,12 @@
               <h1>${escapeHtml(title)}</h1>
               ${lead ? `<p class="page-lead">${escapeHtml(lead)}</p>` : ''}
             </header>
-            ${state.error ? `<div class="error" role="alert">${escapeHtml(state.error)}</div>` : ''}
-            ${state.notice ? `<div class="ok${state.noticeTone === 'destructive' ? ' ok-destructive' : ''}" role="status">${escapeHtml(state.notice)}${state.noticeTone === 'destructive' ? `<button class="notice-dismiss" type="button" data-notice-dismiss aria-label="${escapeHtml(t('cms.deleteCancel'))}">×</button>` : ''}</div>` : ''}
             ${inner}
             ${deleteDialogHtml()}
           </div>
           </div>
         </div>
+        ${statusToastHtml()}
       </div>
     `;
   }

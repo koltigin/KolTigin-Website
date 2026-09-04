@@ -92,9 +92,15 @@ status.clearStatus(state);
 assert(state.noticeTone === "", "clearStatus clears notice tone");
 
 const adminSrc = readFileSync(join(root, "admin.js"), "utf8");
+const cssSrc = readFileSync(join(root, "admin.css"), "utf8");
 assert(adminSrc.includes("productionWrite"), "production write path kept");
 assert(adminSrc.includes("/api/admin"), "production API rewrite kept");
 assert(adminSrc.includes("showNotice") && adminSrc.includes("clearStatus"), "central status helpers wired");
+assert(adminSrc.includes("statusToastHtml") && adminSrc.includes("paintStatusToast"), "status uses a shared toast renderer");
+assert(adminSrc.includes("class=\"status-toast\"") && !adminSrc.includes(".shell > .ok"), "toast is not the old in-flow banner");
+assert(cssSrc.includes("position: fixed") && cssSrc.includes(".status-toast") && cssSrc.includes("bottom: 24px") && cssSrc.includes("right: 24px"), "desktop toast is fixed bottom-right");
+assert(cssSrc.includes("z-index: 70") && cssSrc.includes(".delete-modal") && cssSrc.includes("z-index: 80"), "toast sits above content and below the delete modal");
+assert(cssSrc.includes("@media (max-width: 640px)") && cssSrc.includes("left: 16px"), "mobile toast stays inside the viewport");
 
 if (failed) {
   console.error(`\n${failed} failure(s)`);

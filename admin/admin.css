@@ -272,6 +272,32 @@ textarea {
   cursor: pointer;
 }
 
+.status-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+  width: min(360px, calc(100vw - 48px));
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.status-toast-card {
+  pointer-events: auto;
+  margin: 0;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 640px) {
+  .status-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    max-width: none;
+  }
+}
+
 .grid {
   display: grid;
   gap: 12px;

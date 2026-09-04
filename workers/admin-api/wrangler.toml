@@ -1,6 +1,8 @@
 name = "koltigin-admin-api"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
+# Dashboard-managed runtime variables/secrets must survive Git-triggered deploys.
+keep_vars = true
 
 # Public/config identifiers only. Never put GITHUB_TOKEN here.
 [vars]

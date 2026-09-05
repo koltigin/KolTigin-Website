@@ -495,6 +495,30 @@ class BlogParser {
     this.renderFilters();
   }
 
+  coverAuthorName() {
+    const site = window.KolTiginI18n && window.KolTiginI18n.site;
+    return String((site && site.displayName) || 'KolTigin').trim() || 'KolTigin';
+  }
+
+  coverAuthorAvatarSrc() {
+    const site = window.KolTiginI18n && window.KolTiginI18n.site;
+    const raw = String((site && site.avatar) || './assets/images/profile/koltigin-at.png').trim();
+    if (!raw) return './assets/images/profile/koltigin-at.png';
+    if (/^(https?:|data:)/i.test(raw)) return raw;
+    if (raw.startsWith('/')) return `.${raw}`;
+    return raw.startsWith('./') ? raw : `./${raw.replace(/^\/+/, '')}`;
+  }
+
+  coverFallbackSignature() {
+    return `
+      <div class="cover-fallback-signature">
+        <img class="cover-fallback-avatar" src="${this.escapeHtml(this.coverAuthorAvatarSrc())}" alt="" width="42" height="42">
+        <span class="cover-fallback-divider" aria-hidden="true"></span>
+        <span class="cover-fallback-author">${this.escapeHtml(this.coverAuthorName())}</span>
+      </div>
+    `;
+  }
+
   coverFallback(item, extraClass = '') {
     const kind = this.kindMeta(item.kind);
     const title = item.title || this.categoryLabel(item);
@@ -505,6 +529,7 @@ class BlogParser {
           <span class="cover-fallback-title">${this.escapeHtml(title)}</span>
           <span class="cover-fallback-kind">${this.escapeHtml(this.categoryLabel(item))}</span>
         </div>
+        ${this.coverFallbackSignature()}
       </div>
     `;
   }

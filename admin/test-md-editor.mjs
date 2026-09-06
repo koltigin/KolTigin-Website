@@ -190,6 +190,24 @@ const guideToolbar = cmsSrc.slice(cmsSrc.indexOf("function guideToolbar"), cmsSr
 assert(guideToolbar.includes("headingButtons") && guideToolbar.indexOf("headingButtons") < guideToolbar.indexOf("'bold'"), "guides toolbar starts with shared H1 H2 H3 buttons");
 assert(adminSrc.includes("headingButtons") && cmsSrc.includes("headingButtons"), "shared heading buttons helper is used");
 
+const guideEditor = cmsSrc.slice(cmsSrc.indexOf("function renderGuideEditor"), cmsSrc.indexOf("async function openGuide"));
+assert(!guideEditor.includes("editor-layout"), "guide editor is not a two-column editor/preview grid");
+assert(guideEditor.includes("editor-preview"), "guide preview uses the shared stacked preview class");
+assert(guideEditor.indexOf("data-save-guide") < guideEditor.indexOf("admin-md-preview"), "guide preview sits below Save");
+assert(guideEditor.includes("data-guide-md") && guideEditor.includes("data-gfield=\"projectId\"") && guideEditor.includes("guideCoverPicker"), "guide Linked Project, cover, and markdown fields remain");
+
+const writingEditor = adminSrc.slice(adminSrc.indexOf("function renderWritingEditor"), adminSrc.indexOf("function renderVideoEditor"));
+assert(!writingEditor.includes("editor-layout"), "writing editor is not a two-column editor/preview grid");
+assert(writingEditor.includes("editor-preview"), "writing preview uses the shared stacked preview class");
+assert(writingEditor.indexOf("data-save") < writingEditor.indexOf("preview.markdown"), "writing preview sits below Save");
+assert(writingEditor.includes("data-kind-select") && writingEditor.includes("data-field=\"title\"") && writingEditor.includes("data-field=\"body\""), "writing type, title, and markdown fields remain");
+
+const videoEditor = adminSrc.slice(adminSrc.indexOf("function renderVideoEditor"), adminSrc.indexOf("function loc("));
+assert(videoEditor.includes("editor-layout"), "video editor still uses the existing side preview layout");
+
+assert(css.includes(".editor-preview"), "shared stacked preview CSS exists");
+assert(/textarea,\s*select \{\s*width:\s*100%;/.test(css.replace(/\n/g, " ")), "textarea still uses full field width");
+
 if (failed) {
   console.error(`${failed} failed`);
   process.exit(1);

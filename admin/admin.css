@@ -642,6 +642,13 @@ textarea {
   background: linear-gradient(to top, var(--bg) 70%, transparent);
 }
 
+.editor-preview {
+  width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
 .footer-actions .btn {
   width: auto;
   flex: 0 0 auto;

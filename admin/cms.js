@@ -671,21 +671,19 @@
         </select>
       </div>
       ${guideCoverPicker(g)}
-      <div class="editor-layout">
-        <form>
-          <div class="field">
-            ${guideToolbar()}
-            <textarea data-guide-md>${esc(md)}</textarea>
-            <input id="guide-image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
-          </div>
-        </form>
-        <aside>
-          <div class="guide-body admin-md-preview">${preview}</div>
-        </aside>
-      </div>
+      <form>
+        <div class="field">
+          ${guideToolbar()}
+          <textarea data-guide-md>${esc(md)}</textarea>
+          <input id="guide-image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
+      </form>
       <div class="footer-actions">
         <button class="btn btn-gold" type="button" data-save-guide>${esc(H().saveActionLabel('cms.saveGuide'))}</button>
       </div>
+      <aside class="editor-preview">
+        <div class="guide-body admin-md-preview">${preview}</div>
+      </aside>
     `);
   }
 

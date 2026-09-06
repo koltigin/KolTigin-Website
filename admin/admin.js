@@ -993,8 +993,7 @@
         <button type="button" class="tab ${lang === 'en' ? 'is-active' : ''}" data-lang="en">${escapeHtml(t('tabs.contentEn'))}</button>
         <button type="button" class="tab ${lang === 'tr' ? 'is-active' : ''}" data-lang="tr">${escapeHtml(t('tabs.contentTr'))}</button>
       </div>
-      <div class="editor-layout">
-        <form data-editor>
+      <form data-editor>
           <div class="field">
             <label for="kind">${escapeHtml(t('writings.type'))}</label>
             <select id="kind" data-kind-select>
@@ -1021,38 +1020,37 @@
             <textarea id="body" data-field="body">${escapeHtml(draft.body)}</textarea>
           </div>
         </form>
-        <aside>
-          <details class="advanced" open>
-            <summary>${escapeHtml(t('preview.advanced'))}</summary>
-            <div class="auto-card">
-              <h3>${escapeHtml(t('preview.title'))}</h3>
-              <dl>
-                <dt>${escapeHtml(t('preview.sharedId'))}</dt><dd>${escapeHtml(auto.id)}</dd>
-                <dt>${escapeHtml(t('preview.filename'))}</dt><dd>${escapeHtml(auto.filename)}</dd>
-                <dt>${escapeHtml(t('preview.language'))}</dt><dd>${escapeHtml(auto.language)}</dd>
-                <dt>${escapeHtml(t('preview.kind'))}</dt><dd>${escapeHtml(auto.kind)}</dd>
-                <dt>${escapeHtml(t('preview.internal'))}</dt><dd>${escapeHtml(auto.slug)}</dd>
-                <dt>${escapeHtml(t('preview.excerpt'))}</dt><dd>${escapeHtml(auto.excerpt)}</dd>
-                <dt>${escapeHtml(t('preview.reading'))}</dt><dd>${escapeHtml(auto.readingTime)}</dd>
-                <dt>${escapeHtml(t('preview.cover'))}</dt><dd>${escapeHtml(auto.cover)}</dd>
-                <dt>${escapeHtml(t('preview.path'))}</dt><dd>${escapeHtml(auto.path)}</dd>
-              </dl>
-            </div>
-            <div class="auto-card" style="margin-top:12px">
-              <h3>${escapeHtml(t('preview.fallback'))}</h3>
-              ${coverBlock(draft, typeLabel(kind))}
-            </div>
-            <div class="md-card" style="margin-top:12px">
-              <h3>${escapeHtml(t('preview.markdown'))}</h3>
-              <pre>${escapeHtml(auto.markdown)}</pre>
-            </div>
-          </details>
-        </aside>
-      </div>
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save>${escapeHtml(saveActionLabel('writings.save'))}</button>
       </div>
+      <aside class="editor-preview">
+        <details class="advanced" open>
+          <summary>${escapeHtml(t('preview.advanced'))}</summary>
+          <div class="auto-card">
+            <h3>${escapeHtml(t('preview.title'))}</h3>
+            <dl>
+              <dt>${escapeHtml(t('preview.sharedId'))}</dt><dd>${escapeHtml(auto.id)}</dd>
+              <dt>${escapeHtml(t('preview.filename'))}</dt><dd>${escapeHtml(auto.filename)}</dd>
+              <dt>${escapeHtml(t('preview.language'))}</dt><dd>${escapeHtml(auto.language)}</dd>
+              <dt>${escapeHtml(t('preview.kind'))}</dt><dd>${escapeHtml(auto.kind)}</dd>
+              <dt>${escapeHtml(t('preview.internal'))}</dt><dd>${escapeHtml(auto.slug)}</dd>
+              <dt>${escapeHtml(t('preview.excerpt'))}</dt><dd>${escapeHtml(auto.excerpt)}</dd>
+              <dt>${escapeHtml(t('preview.reading'))}</dt><dd>${escapeHtml(auto.readingTime)}</dd>
+              <dt>${escapeHtml(t('preview.cover'))}</dt><dd>${escapeHtml(auto.cover)}</dd>
+              <dt>${escapeHtml(t('preview.path'))}</dt><dd>${escapeHtml(auto.path)}</dd>
+            </dl>
+          </div>
+          <div class="auto-card" style="margin-top:12px">
+            <h3>${escapeHtml(t('preview.fallback'))}</h3>
+            ${coverBlock(draft, typeLabel(kind))}
+          </div>
+          <div class="md-card" style="margin-top:12px">
+            <h3>${escapeHtml(t('preview.markdown'))}</h3>
+            <pre>${escapeHtml(auto.markdown)}</pre>
+          </div>
+        </details>
+      </aside>
     `);
   }
 

@@ -14,12 +14,16 @@ const ALLOWED_PREFIXES = [
   "content/index.json",
   "projects/projects.json",
   "guides/",
+  "guide/",
+  "writings/",
+  "sitemap.xml",
   "i18n/en.json",
   "i18n/tr.json",
   "assets/images/blog/",
   "assets/images/profile/",
   "assets/images/projects/",
-  "assets/images/guides/"
+  "assets/images/guides/",
+  "assets/images/og/"
 ];
 
 const BLOCKED = new Set([

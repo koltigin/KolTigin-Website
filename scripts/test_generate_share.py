@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""Regression tests for generate-share.py."""
+from __future__ import annotations
+
+import importlib.util
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+
+from PIL import Image
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location("generate_share", ROOT / "scripts" / "generate-share.py")
+generate_share = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(generate_share)
+
+
+def fail(msg: str) -> None:
+    raise SystemExit(f"FAIL {msg}")
+
+
+def ok(msg: str) -> None:
+    print("ok", msg)
+
+
+def write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def tiny_png(path: Path, color=(40, 80, 180)) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (400, 240), color).save(path, "PNG")
+
+
+def setup_root(tmp: Path) -> Path:
+    shutil.copytree(ROOT / "assets" / "fonts", tmp / "assets" / "fonts")
+    avatar_src = ROOT / "assets" / "images" / "profile" / "koltigin-at.png"
+    dest_avatar = tmp / "assets" / "images" / "profile" / "koltigin-at.png"
+    dest_avatar.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(avatar_src, dest_avatar)
+    write(
+        tmp / "config" / "site.json",
+        '{"displayName":"KolTigin","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/koltigin-at.png"}\n',
+    )
+    write(
+        tmp / "config" / "writing-types.json",
+        """{"types":[
+          {"id":"articles","mode":"internal","label":{"en":"Article","tr":"Makale"}},
+          {"id":"notes","mode":"internal","label":{"en":"Technical Note","tr":"Teknik Not"}},
+          {"id":"social","mode":"external","label":{"en":"X Post","tr":"X Paylaşımı"}}
+        ]}\n""",
+    )
+    write(
+        tmp / "content" / "notes" / "en" / "no-cover.md",
+        '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\nBody.\n',
+    )
+    write(
+        tmp / "content" / "notes" / "tr" / "no-cover.md",
+        '---\ntitle: "Doğrulayıcı notları"\ndate: "2026-08-29"\nsummary: "Uptime ve anahtarlar."\n---\n\nGövde.\n',
+    )
+    write(
+        tmp / "content" / "articles" / "en" / "with-cover.md",
+        '---\ntitle: "SoulMemory"\ndate: "2026-08-31"\nsummary: "On-chain mood diary."\ncover: "soul.png"\n---\n\nHello.\n',
+    )
+    write(
+        tmp / "content" / "social" / "en" / "tweet.md",
+        '---\ntitle: "A tweet"\ndate: "2026-01-01"\nexternalUrl: "https://x.com/x/status/1"\n---\n\n',
+    )
+    tiny_png(tmp / "assets" / "images" / "blog" / "soul.png")
+    write(tmp / "guides" / "demo-guide" / "EN.md", "# Demo Guide\n\nInstall the node.\n")
+    write(tmp / "guides" / "demo-guide" / "TR.md", "# Demo Rehber\n\nDüğümü kurun.\n")
+    write(
+        tmp / "guides" / "covered-guide" / "EN.md",
+        "---\ncover: hero.png\n---\n\n# Covered Guide\n\nWith art.\n",
+    )
+    tiny_png(tmp / "assets" / "images" / "guides" / "covered-guide" / "hero.png", (180, 60, 40))
+    write(tmp / "sitemap.xml", "old")
+    return tmp
+
+
+def read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def main() -> None:
+    with tempfile.TemporaryDirectory() as raw:
+        tmp = Path(raw)
+        setup_root(tmp)
+        generate_share.generate(tmp)
+
+        note_html = tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"
+        note_og = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png"
+        if not note_html.is_file():
+            fail("no-cover writing share html")
+        html = read(note_html)
+        for needle in (
+            "Validator notes",
+            "Uptime and keys.",
+            'og:type" content="article"',
+            'og:image:width" content="1200"',
+            'twitter:card" content="summary_large_image"',
+            "https://koltigin.xyz/assets/images/og/writings/en/notes/no-cover.png",
+            "https://koltigin.xyz/writings/en/notes/no-cover/",
+            "#/yazilar/notes/no-cover",
+            'hreflang="tr"',
+            'hreflang="x-default"',
+        ):
+            if needle not in html:
+                fail(f"writing html missing {needle}")
+        ok("writing without cover share html")
+        if Image.open(note_og).size != (1200, 630):
+            fail("fallback og size")
+        ok("writing without cover 1200x630 png")
+
+        tr_html = read(tmp / "writings" / "tr" / "notes" / "no-cover" / "index.html")
+        if "Doğrulayıcı notları" not in tr_html or 'lang="tr"' not in tr_html:
+            fail("tr metadata")
+        ok("bilingual writing metadata")
+
+        cover_og = tmp / "assets" / "images" / "og" / "writings" / "en" / "articles" / "with-cover.png"
+        if Image.open(cover_og).size != (1200, 630):
+            fail("custom cover og size")
+        pixels = list(Image.open(cover_og).getdata())
+        if (40, 80, 180) not in pixels[:50] and not any(p[2] > 150 for p in pixels[::100]):
+            fail("custom cover raster should come from uploaded blue png")
+        ok("writing with custom cover raster")
+        cover_html = read(tmp / "writings" / "en" / "articles" / "with-cover" / "index.html")
+        if "SoulMemory" not in cover_html or "with-cover.png" not in cover_html:
+            fail("custom cover html")
+        ok("writing with custom cover html")
+
+        if (tmp / "writings" / "en" / "social" / "tweet" / "index.html").exists():
+            fail("external x posts must not get share pages")
+        ok("external writings skipped")
+
+        guide_html = tmp / "guide" / "en" / "demo-guide" / "index.html"
+        guide_og = tmp / "assets" / "images" / "og" / "guides" / "en" / "demo-guide.png"
+        ghtml = read(guide_html)
+        if "Demo Guide" not in ghtml or "#/guides/demo-guide/EN" not in ghtml:
+            fail("guide share html")
+        if Image.open(guide_og).size != (1200, 630):
+            fail("guide fallback size")
+        ok("guide without cover")
+
+        covered_og = tmp / "assets" / "images" / "og" / "guides" / "en" / "covered-guide.png"
+        if Image.open(covered_og).size != (1200, 630):
+            fail("guide custom cover size")
+        ok("guide with cover")
+
+        sitemap = read(tmp / "sitemap.xml")
+        if "https://koltigin.xyz/" not in sitemap:
+            fail("homepage sitemap")
+        if "#/" in sitemap:
+            fail("hash url in sitemap")
+        if "/writings/en/notes/no-cover/" not in sitemap:
+            fail("writing url sitemap")
+        if "/guide/en/demo-guide/" not in sitemap:
+            fail("guide url sitemap")
+        if "tweet" in sitemap:
+            fail("external writing in sitemap")
+        ok("sitemap")
+
+        write(
+            tmp / "content" / "notes" / "en" / "no-cover.md",
+            '---\ntitle: "Updated title"\ndate: "2026-08-29"\nsummary: "Changed."\n---\n\nBody.\n',
+        )
+        generate_share.generate(tmp)
+        if "Updated title" not in read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"):
+            fail("update did not regenerate html")
+        ok("update regenerates metadata")
+
+        shutil.rmtree(tmp / "content" / "notes")
+        shutil.rmtree(tmp / "guides" / "demo-guide")
+        generate_share.generate(tmp)
+        if (tmp / "writings" / "en" / "notes" / "no-cover" / "index.html").exists():
+            fail("deleted writing share html remains")
+        if (tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png").exists():
+            fail("deleted writing og remains")
+        if (tmp / "guide" / "en" / "demo-guide" / "index.html").exists():
+            fail("deleted guide share html remains")
+        sitemap2 = read(tmp / "sitemap.xml")
+        if "/writings/en/notes/no-cover/" in sitemap2 or "/guide/en/demo-guide/" in sitemap2:
+            fail("deleted urls remain in sitemap")
+        if (tmp / "writings" / "en" / "articles" / "with-cover" / "index.html").exists() is False:
+            fail("unrelated writing share should remain")
+        ok("delete removes html, og, sitemap entries")
+
+        src = (ROOT / "scripts" / "generate-share.py").read_text(encoding="utf-8")
+        if 'or "KolTigin"' in src or "koltigin-at.png" in src:
+            fail("generator must not hardcode KolTigin identity fallbacks")
+        if "max_text = int(round(0.68 * og_w))" not in src:
+            fail("approved title max width 816px / 68% must remain")
+        ok("generator identity and title width stay config-driven")
+
+        if generate_share.display_name(tmp) != "KolTigin":
+            fail("current KolTigin displayName should still be used")
+        avatar = generate_share.avatar_path(tmp)
+        if avatar.name != "koltigin-at.png":
+            fail("current KolTigin avatar should still be used")
+        ok("KolTigin config still supplies approved identity")
+
+        fallback_png = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png"
+        # Recreate the deleted note so identity raster tests have a fallback PNG.
+        write(
+            tmp / "content" / "notes" / "en" / "no-cover.md",
+            '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\nBody.\n',
+        )
+        write(
+            tmp / "content" / "notes" / "tr" / "no-cover.md",
+            '---\ntitle: "Doğrulayıcı notları"\ndate: "2026-08-29"\nsummary: "Uptime ve anahtarlar."\n---\n\nGövde.\n',
+        )
+        generate_share.generate(tmp)
+        if Image.open(fallback_png).size != (1200, 630):
+            fail("fallback png must remain 1200x630")
+        html = read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html")
+        if "Continue to KolTigin" not in html:
+            fail("share html should use configured displayName")
+        ok("fallback raster size and configured name")
+
+        tiny_png(tmp / "assets" / "images" / "profile" / "other-author.png", (220, 30, 30))
+        write(
+            tmp / "config" / "site.json",
+            '{"displayName":"Ada Lovelace","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/other-author.png"}\n',
+        )
+        if generate_share.display_name(tmp) != "Ada Lovelace":
+            fail("displayName changes should flow into the generator")
+        if generate_share.avatar_path(tmp).name != "other-author.png":
+            fail("avatar path changes should flow into the generator")
+        generate_share.generate(tmp)
+        html = read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html")
+        if "Ada Lovelace" not in html or "KolTigin" in html:
+            fail("share html should follow the new displayName")
+        fallback = Image.open(fallback_png)
+        if fallback.size != (1200, 630):
+            fail("renamed author fallback size")
+        if not any(px[:3] == (220, 30, 30) for px in fallback.getdata()):
+            fail("changed avatar should appear in the fallback raster")
+        cover = Image.open(tmp / "assets" / "images" / "og" / "writings" / "en" / "articles" / "with-cover.png")
+        if (40, 80, 180) not in list(cover.getdata())[:80] and not any(p[2] > 150 for p in list(cover.getdata())[::80]):
+            fail("custom cover raster must stay independent of fallback avatar")
+        ok("config identity changes the fallback signature only")
+
+        write(
+            tmp / "config" / "site.json",
+            '{"displayName":"   ","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/other-author.png"}\n',
+        )
+        try:
+            generate_share.display_name(tmp)
+            fail("blank displayName must fail")
+        except RuntimeError as exc:
+            if "displayName" not in str(exc):
+                fail("blank displayName error should mention displayName")
+        ok("blank displayName fails clearly")
+
+        write(
+            tmp / "config" / "site.json",
+            '{"displayName":"Ada Lovelace","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/missing-face.png"}\n',
+        )
+        try:
+            generate_share.avatar_path(tmp)
+            fail("missing avatar must fail")
+        except RuntimeError as exc:
+            if "not found" not in str(exc).lower() and "avatar" not in str(exc).lower():
+                fail("missing avatar error should mention the file")
+        try:
+            generate_share.generate(tmp)
+            fail("generate must not succeed without an avatar file")
+        except RuntimeError:
+            pass
+        ok("missing avatar fails clearly")
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    ofl = ROOT / "assets" / "fonts" / "OFL.txt"
+    if "displayName" not in readme or "SIL Open Font License" not in readme:
+        fail("README must document identity config and Poppins OFL")
+    if not ofl.is_file() or "SIL OPEN FONT LICENSE" not in ofl.read_text(encoding="utf-8"):
+        fail("assets/fonts/OFL.txt is required")
+    ok("README and OFL notice")
+
+    hash_src = (ROOT / "assets" / "js" / "blog-parser.js").read_text(encoding="utf-8")
+    if r"^#\/yazilar\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([^/]+)$" not in hash_src and "#/yazilar/" not in hash_src:
+        fail("writing hashes")
+    guide_src = (ROOT / "assets" / "js" / "guides-parser.js").read_text(encoding="utf-8")
+    if "#/guides/" not in guide_src:
+        fail("guide hashes")
+    ok("backward compatible hashes still present")
+    print("all generate-share tests passed")
+
+
+if __name__ == "__main__":
+    main()

@@ -155,8 +155,11 @@ def write_guides_index() -> None:
     ids = []
     if GUIDES_ROOT.is_dir():
         for folder in sorted(GUIDES_ROOT.iterdir()):
-            if folder.is_dir() and ID_RE.match(folder.name):
-                ids.append(folder.name)
+            if not folder.is_dir() or folder.name in {"en", "tr"} or not ID_RE.match(folder.name):
+                continue
+            if not (folder / "EN.md").is_file() and not (folder / "TR.md").is_file():
+                continue
+            ids.append(folder.name)
     (GUIDES_ROOT / "index.json").write_text(
         json.dumps({"guides": ids}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -164,10 +167,74 @@ def write_guides_index() -> None:
 
 
 def first_heading(markdown: str) -> str:
-    for line in (markdown or "").splitlines():
+    text = markdown or ""
+    if text.startswith("---"):
+        close = text.find("\n---", 3)
+        if close != -1:
+            text = text[close + 4 :]
+    for line in text.splitlines():
         if line.startswith("# "):
             return line[2:].strip()
     return ""
+
+
+def parse_simple_front_matter(text: str) -> tuple[dict, str]:
+    raw = (text or "").replace("\r\n", "\n")
+    if not raw.startswith("---"):
+        return {}, raw
+    close = raw.find("\n---", 3)
+    if close == -1:
+        return {}, raw
+    meta: dict[str, str] = {}
+    for line in raw[4:close].split("\n"):
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key:
+            meta[key] = value
+    return meta, raw[close + 4 :].lstrip("\n")
+
+
+def apply_guide_cover(text: str, cover) -> str:
+    if cover is None:
+        return text or ""
+    raw = (text or "").replace("\r\n", "\n")
+    value = str(cover).strip()
+    if not raw.startswith("---"):
+        if not value:
+            return raw
+        body = raw.lstrip("\n")
+        return f"---\ncover: {value}\n---\n\n{body}"
+    if not value:
+        return re.sub(r"^\s*cover:\s*.*$", "", raw, count=1, flags=re.M).replace("\n\n\n", "\n\n")
+    if re.search(r"^cover:\s*.*$", raw, flags=re.M):
+        return re.sub(r"^cover:\s*.*$", f"cover: {value}", raw, count=1, flags=re.M)
+    return raw.replace("---\n", f"---\ncover: {value}\n", 1)
+
+
+def guide_cover_from_markdown(*texts: str) -> str:
+    for text in texts:
+        meta, _body = parse_simple_front_matter(text)
+        cover = str(meta.get("cover") or meta.get("image") or "").strip()
+        if cover:
+            return cover
+    return ""
+
+
+def regenerate_share() -> str:
+    script = ROOT / "scripts" / "generate-share.py"
+    completed = subprocess.run(
+        [sys.executable, str(script)],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        err = (completed.stderr or completed.stdout or "share generator error").strip()
+        raise RuntimeError(err)
+    return (completed.stdout or "").strip()
 
 
 def list_guides() -> list[dict]:
@@ -176,7 +243,7 @@ def list_guides() -> list[dict]:
     if not GUIDES_ROOT.is_dir():
         return guides
     for folder in sorted(GUIDES_ROOT.iterdir()):
-        if not folder.is_dir() or not ID_RE.match(folder.name):
+        if not folder.is_dir() or folder.name in {"en", "tr"} or not ID_RE.match(folder.name):
             continue
         en = folder / "EN.md"
         tr = folder / "TR.md"
@@ -199,6 +266,7 @@ def list_guides() -> list[dict]:
                 "titleTr": first_heading(tr_text) or folder.name,
                 "existsEn": en.is_file(),
                 "existsTr": tr.is_file(),
+                "cover": guide_cover_from_markdown(en_text, tr_text),
                 "projects": related,
             }
         )
@@ -621,17 +689,26 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
     project_id = str(body.get("projectId") or "").strip()
     if not item_id or not ID_RE.match(item_id):
         return json_error(handler, HTTPStatus.BAD_REQUEST, "Could not derive a guide id")
+    if item_id in {"en", "tr", "guide", "writings", "assets", "content"}:
+        return json_error(handler, HTTPStatus.BAD_REQUEST, "That guide id is reserved")
     if lang not in {"en", "tr"}:
         return json_error(handler, HTTPStatus.BAD_REQUEST, "Language must be en or tr")
+    if "cover" in body:
+        markdown = apply_guide_cover(markdown, body.get("cover"))
     folder = safe_under(GUIDES_ROOT, item_id)
     folder.mkdir(parents=True, exist_ok=True)
     filename = "EN.md" if lang == "en" else "TR.md"
     path = safe_under(folder, filename)
     path.write_text(markdown if markdown.endswith("\n") else markdown + "\n", encoding="utf-8")
     sibling = folder / ("TR.md" if lang == "en" else "EN.md")
+    if sibling.exists() and "cover" in body:
+        sibling.write_text(apply_guide_cover(sibling.read_text(encoding="utf-8"), body.get("cover")), encoding="utf-8")
     if not sibling.exists():
         title = first_heading(markdown) or item_id
-        sibling.write_text(f"# {title}\n\n", encoding="utf-8")
+        stub = f"# {title}\n\n"
+        if "cover" in body:
+            stub = apply_guide_cover(stub, body.get("cover"))
+        sibling.write_text(stub if stub.endswith("\n") else stub + "\n", encoding="utf-8")
     if project_id:
         try:
             set_project_guide(project_id, item_id)
@@ -648,7 +725,11 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
         except RuntimeError as exc:
             return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
     write_guides_index()
-    return json_ok(handler, {"id": item_id, "path": str(path.relative_to(ROOT)), "generator": log})
+    try:
+        share_log = regenerate_share()
+    except RuntimeError as exc:
+        return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+    return json_ok(handler, {"id": item_id, "path": str(path.relative_to(ROOT)), "generator": log, "share": share_log})
 
 
 def handle_guide_delete(handler, body, json_ok, json_error) -> None:
@@ -668,7 +749,11 @@ def handle_guide_delete(handler, body, json_ok, json_error) -> None:
     except RuntimeError as exc:
         return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
     write_guides_index()
-    return json_ok(handler, {"id": item_id, "cleared": changed, "generator": log})
+    try:
+        share_log = regenerate_share()
+    except RuntimeError as exc:
+        return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+    return json_ok(handler, {"id": item_id, "cleared": changed, "generator": log, "share": share_log})
 
 
 def handle_contact_save(handler, body, json_ok, json_error) -> None:

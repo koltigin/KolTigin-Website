@@ -497,13 +497,13 @@ class BlogParser {
 
   coverAuthorName() {
     const site = window.KolTiginI18n && window.KolTiginI18n.site;
-    return String((site && site.displayName) || 'KolTigin').trim() || 'KolTigin';
+    return String((site && site.displayName) || '').trim();
   }
 
   coverAuthorAvatarSrc() {
     const site = window.KolTiginI18n && window.KolTiginI18n.site;
-    const raw = String((site && site.avatar) || './assets/images/profile/koltigin-at.png').trim();
-    if (!raw) return './assets/images/profile/koltigin-at.png';
+    const raw = String((site && site.avatar) || '').trim();
+    if (!raw) return '';
     if (/^(https?:|data:)/i.test(raw)) return raw;
     if (raw.startsWith('/')) return `.${raw}`;
     return raw.startsWith('./') ? raw : `./${raw.replace(/^\/+/, '')}`;

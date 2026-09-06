@@ -93,6 +93,7 @@ window.ADMIN_I18N = {
       empty: 'No writings on disk yet.',
       editBtn: 'Edit',
       preview: 'Preview',
+      sharePage: 'Share page',
       en: 'EN',
       tr: 'TR',
       missing: '—'
@@ -244,6 +245,7 @@ window.ADMIN_I18N = {
       manageProjectCats: 'Manage Project Categories',
       newGuide: '+ New Guide',
       relatedProject: 'Related Project',
+      guideCoverHint: 'Optional PNG, JPEG, or WebP. Saved into assets/images/guides/{id}/ on Save. If omitted, a KolTigin fallback share image is generated.',
       none: 'None',
       addLink: '+ Add link',
       labelEn: 'Label EN',
@@ -386,6 +388,7 @@ window.ADMIN_I18N = {
       empty: 'Henüz yazı yok.',
       editBtn: 'Düzenle',
       preview: 'Ön izle',
+      sharePage: 'Paylaşım sayfası',
       en: 'EN',
       tr: 'TR',
       missing: '—'
@@ -537,6 +540,7 @@ window.ADMIN_I18N = {
       manageProjectCats: 'Proje Kategorilerini Yönet',
       newGuide: '+ Yeni Rehber',
       relatedProject: 'Bağlı Proje',
+      guideCoverHint: 'İsteğe bağlı PNG, JPEG veya WebP. Kaydetmede assets/images/guides/{id}/ altına yazılır. Yoksa KolTigin yedek paylaşım görseli üretilir.',
       none: 'Yok',
       addLink: '+ Bağlantı ekle',
       labelEn: 'Etiket EN',

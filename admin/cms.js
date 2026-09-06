@@ -605,6 +605,7 @@
         <div class="item-actions">
           <button class="btn btn-ghost" data-go="#/edit/guides/${esc(item.id)}">${esc(t('writings.editBtn'))}</button>
           <a class="btn btn-ghost" href="/#/guides/${esc(item.id)}" target="_blank" rel="noopener">${esc(t('writings.preview'))}</a>
+          <a class="btn btn-ghost" href="/guide/${H().uiLang() === 'tr' && item.existsTr ? 'tr' : 'en'}/${esc(item.id)}/" target="_blank" rel="noopener">${esc(t('writings.sharePage'))}</a>
           ${H().entityDeleteButton({ family: 'guide', id: item.id, title: Sync().guideListTitle(item, H().uiLang()) })}
         </div>
       </article>
@@ -619,6 +620,34 @@
       </div>
       <div class="list">${rows}</div>
     `);
+  }
+
+  function guideCoverSrc(id, name) {
+    if (!name) return '';
+    if (/^https?:/i.test(name) || name.startsWith('/') || name.startsWith('./')) return name;
+    return `/assets/images/guides/${encodeURIComponent(id)}/${encodeURIComponent(name)}`;
+  }
+
+  function guideCoverPicker(g) {
+    const hasImage = Boolean(g.coverPreview || g.cover);
+    return `
+      <div class="field">
+        <label>${esc(t('writings.cover'))}</label>
+        <input id="guide-cover-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        ${hasImage ? `
+          <div class="cover-picker">
+            <div class="cover-preview"><img src="${esc(g.coverPreview || guideCoverSrc(g.id, g.cover))}" alt=""></div>
+            <div class="cover-actions">
+              <button class="btn btn-ghost" type="button" data-guide-cover-pick>${esc(t('writings.replace'))}</button>
+              <button class="btn btn-ghost" type="button" data-guide-cover-remove>${esc(t('writings.remove'))}</button>
+            </div>
+          </div>
+        ` : `
+          <button class="btn btn-ghost" type="button" data-guide-cover-pick>${esc(t('writings.chooseImage'))}</button>
+          <span class="hint">${esc(t('cms.guideCoverHint'))}</span>
+        `}
+      </div>
+    `;
   }
 
   function renderGuideEditor() {
@@ -640,6 +669,7 @@
           ${projects.map((p) => `<option value="${esc(p.id)}" ${g.projectId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
         </select>
       </div>
+      ${guideCoverPicker(g)}
       <div class="editor-layout">
         <form>
           <div class="field">
@@ -667,7 +697,7 @@
       projects: Sync().mergeRemoteList(pack.projects || [], prevProjects.projects || [])
     };
     if (!id) {
-      H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '' };
+      H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '', cover: '', coverFile: null, coverPreview: '' };
       renderGuideEditor();
       return;
     }
@@ -687,7 +717,10 @@
       locked: true,
       lang: data.en ? 'en' : 'tr',
       langs: { en: data.en || '', tr: data.tr || '' },
-      projectId: related ? related.id : ''
+      projectId: related ? related.id : '',
+      cover: (data.meta && data.meta.cover) || '',
+      coverFile: null,
+      coverPreview: ''
     };
     H().clearDirty();
     renderGuideEditor();
@@ -703,6 +736,13 @@
       const title = (g.langs.en.match(/^#\s+(.+)$/m) || g.langs.tr.match(/^#\s+(.+)$/m) || [])[1] || '';
       g.id = H().slugify(title);
     }
+    if (g.coverFile) {
+      const uploaded = await H().uploadImage('/admin/api/guide-image', g.coverFile, { id: g.id });
+      g.cover = uploaded.filename;
+      g.coverFile = null;
+      if (g.coverPreview) URL.revokeObjectURL(g.coverPreview);
+      g.coverPreview = '';
+    }
     H().clearStatus();
     try {
       const result = await H().api('/admin/api/guide-save', {
@@ -711,7 +751,8 @@
           id: g.id,
           lang: g.lang,
           markdown: g.langs[g.lang],
-          projectId: g.projectId
+          projectId: g.projectId,
+          cover: g.cover || ''
         })
       });
       g.id = result.id || g.id;
@@ -975,6 +1016,24 @@
         return;
       }
       if (event.target.closest('[data-save-guide]')) { event.preventDefault(); await saveGuide(); return; }
+      if (event.target.closest('[data-guide-cover-pick]')) {
+        event.preventDefault();
+        document.getElementById('guide-cover-file')?.click();
+        return;
+      }
+      if (event.target.closest('[data-guide-cover-remove]')) {
+        event.preventDefault();
+        const draft = H().state.guideDraft;
+        if (draft) {
+          if (draft.coverPreview) URL.revokeObjectURL(draft.coverPreview);
+          draft.cover = '';
+          draft.coverFile = null;
+          draft.coverPreview = '';
+          H().markDirty();
+          renderGuideEditor();
+        }
+        return;
+      }
       if (event.target.closest('[data-guide-image]')) {
         event.preventDefault();
         document.getElementById('guide-image')?.click();
@@ -1031,6 +1090,17 @@
         draft.langs.en = applyServiceIcons(draft.langs.en, icons);
         draft.langs.tr = applyServiceIcons(draft.langs.tr, icons);
         renderPageEditor('about', 'nav.about');
+        return;
+      }
+      if (event.target.id === 'guide-cover-file' && event.target.files && event.target.files[0]) {
+        const g = H().state.guideDraft;
+        const file = event.target.files[0];
+        if (!g) return;
+        g.coverFile = file;
+        if (g.coverPreview) URL.revokeObjectURL(g.coverPreview);
+        g.coverPreview = URL.createObjectURL(file);
+        H().markDirty();
+        renderGuideEditor();
         return;
       }
       if (event.target.id === 'guide-image' && event.target.files && event.target.files[0]) {

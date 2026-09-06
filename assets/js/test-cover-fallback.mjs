@@ -37,8 +37,9 @@ assert(!cssSrc.includes(".writings-cover img {") && !cssSrc.includes(".writings-
 assert(cssSrc.includes("border-radius: 50%"), "avatar is circular");
 assert(cssSrc.includes(".cover-fallback-divider"), "divider is styled");
 assert(cssSrc.includes("width: 42px"), "card avatar is large enough to read as a portrait");
-assert(blogSrc.includes("koltigin-at.png"), "reuses existing profile avatar asset");
-assert(blogSrc.includes("coverAuthorAvatarSrc"), "avatar comes from site config with existing asset fallback");
+assert(blogSrc.includes("site.displayName"), "author name comes from config/site.json displayName");
+assert(blogSrc.includes("site.avatar"), "avatar comes from config/site.json avatar");
+assert(!signatureFn.includes("KolTigin") && !blogSrc.slice(blogSrc.indexOf("coverAuthorName()"), blogSrc.indexOf("coverFallbackSignature()")).includes("koltigin-at.png"), "fallback identity has no hardcoded KolTigin defaults");
 assert(markupFn.includes("if (!this.hasCover(item)) return this.coverFallback(item)"), "items without a cover use the fallback");
 assert(markupFn.includes("<figure") && markupFn.includes("<img src="), "custom covers still render as images");
 assert(!markupFn.includes("coverFallbackSignature"), "uploaded covers do not inject the signature");

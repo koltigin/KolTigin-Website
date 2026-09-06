@@ -60,7 +60,12 @@ window.KolTiginGuideMarkdown = {
   render(markdown, options) {
     const guideId = (options && options.guideId) || '';
     const copyLabel = (options && options.copyLabel) || 'Copy';
-    const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+    let source = String(markdown || '').replace(/\r\n/g, '\n');
+    if (source.startsWith('---')) {
+      const close = source.indexOf('\n---', 3);
+      if (close !== -1) source = source.slice(close + 4).replace(/^\n/, '');
+    }
+    const lines = source.split('\n');
     const html = [];
     let i = 0;
     while (i < lines.length) {

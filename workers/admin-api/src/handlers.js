@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, assertSafePath } from "./paths.js";
-import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown } from "./generate.js";
+import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -60,6 +60,14 @@ function rewriteWritingText(text, destKind, types, externalUrl) {
 function mdText(text) {
   return text.endsWith("\n") ? text : `${text}\n`;
 }
+
+async function collectExisting(github, paths, deletes) {
+  for (const path of paths) {
+    if (await github.exists(path)) deletes.push(path);
+  }
+}
+
+const RESERVED_GUIDE_IDS = new Set(["en", "tr", "guide", "writings", "assets", "content"]);
 
 export async function handleSave(body, github) {
   if (body.kind === "videos") return handleVideoSave(body, github);
@@ -126,6 +134,7 @@ export async function handleSave(body, github) {
       }
       index = applyWritingIndex(index, { kind, lang: item.lang, file, fromKind });
     }
+    await collectExisting(github, writingShareArtifacts(fromKind, id), deletes);
     if (!sources.some((item) => item.lang === lang)) {
       upserts.push({ path: destCurrent, text: mdText(markdown) });
       index = applyWritingIndex(index, { kind, lang, file, fromKind });
@@ -159,6 +168,7 @@ async function handleWritingDelete(body, github) {
     index = applyWritingIndex(index, { kind, lang, file, remove: true });
   }
   if (!deletes.length) throw new HttpError(404, "Writing not found");
+  await collectExisting(github, writingShareArtifacts(kind, id), deletes);
   const upserts = [{ path: "content/index.json", text: pretty(index) }];
   const result = await github.commit({ message: commitMsg("delete writing", id), upserts, deletes });
   return { id, deleted: deletes, sha: result.sha };
@@ -395,18 +405,27 @@ export async function handleProjectSave(body, github) {
 export async function handleGuideSave(body, github) {
   const id = slugify(body.id);
   const lang = String(body.lang || "");
-  const markdown = String(body.markdown || "");
+  let markdown = String(body.markdown || "");
   if (!ID_RE.test(id)) throw new HttpError(400, "Could not derive a guide id");
+  if (RESERVED_GUIDE_IDS.has(id)) throw new HttpError(400, "That guide id is reserved");
   if (lang !== "en" && lang !== "tr") throw new HttpError(400, "Language must be en or tr");
+  if ("cover" in body) markdown = applyGuideCover(markdown, body.cover);
   const path = guidePath(id, lang);
   const text = markdown.endsWith("\n") ? markdown : `${markdown}\n`;
+  const upserts = [{ path, text }];
+  if ("cover" in body) {
+    const otherLang = lang === "en" ? "tr" : "en";
+    const sibling = guidePath(id, otherLang);
+    if (await github.exists(sibling)) {
+      const next = applyGuideCover(await github.getText(sibling), body.cover);
+      upserts.push({ path: sibling, text: next.endsWith("\n") ? next : `${next}\n` });
+    }
+  }
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id });
+  upserts.push({ path: "guides/index.json", text: pretty(index) });
   const result = await github.commit({
     message: commitMsg("save guide", `${id}/${lang}`),
-    upserts: [
-      { path, text },
-      { path: "guides/index.json", text: pretty(index) }
-    ]
+    upserts
   });
   return { id, path, sha: result.sha };
 }
@@ -428,6 +447,7 @@ export async function handleGuideDelete(body, github) {
   }
   const assets = await github.listPrefix(`assets/images/guides/${id}/`);
   deletes.push(...assets);
+  await collectExisting(github, guideShareArtifacts(id), deletes);
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id, remove: true });
   const upserts = [{ path: "guides/index.json", text: pretty(index) }];
   const projectsJson = await readJson(github, "projects/projects.json", {});

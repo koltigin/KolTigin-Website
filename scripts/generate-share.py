@@ -1,0 +1,705 @@
+#!/usr/bin/env python3
+"""Generate crawler-readable Writing/Guide share pages, OG rasters, and sitemap.
+
+Markdown remains the source of truth. Generated HTML/PNG/sitemap are derived.
+"""
+from __future__ import annotations
+
+import argparse
+import html
+import json
+import re
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+ROOT = Path(__file__).resolve().parents[1]
+CANONICAL_ORIGIN = "https://koltigin.xyz"
+ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+RESERVED_GUIDE_DIRS = {"en", "tr", "index.json"}
+RASTER_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+OG_SIZE = (1200, 630)
+GOLD = (255, 216, 111, 255)
+WHITE = (250, 250, 250, 255)
+WHITE2 = (214, 214, 214, 255)
+DIVIDER = (255, 216, 111, 107)
+
+WRITINGS_MARKER = "koltigin-share-writing"
+GUIDES_MARKER = "koltigin-share-guide"
+
+
+def parse_front_matter(text: str) -> tuple[dict, str]:
+    raw = (text or "").replace("\r\n", "\n")
+    if not raw.startswith("---"):
+        return {}, raw
+    close = raw.find("\n---", 3)
+    if close == -1:
+        return {}, raw
+    meta: dict[str, str] = {}
+    for line in raw[4:close].split("\n"):
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+        if (value.startswith('"') and value.endswith('"')) or (
+            value.startswith("'") and value.endswith("'")
+        ):
+            value = value[1:-1].replace('\\"', '"')
+        if key:
+            meta[key] = value
+    return meta, raw[close + 4 :].lstrip("\n")
+
+
+def load_json(path: Path, fallback):
+    if not path.is_file():
+        return fallback
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return fallback
+
+
+def origin(root: Path) -> str:
+    site = load_json(root / "config" / "site.json", {})
+    raw = str((site or {}).get("canonicalUrl") or CANONICAL_ORIGIN).strip()
+    if not raw:
+        raw = CANONICAL_ORIGIN
+    return raw.rstrip("/")
+
+
+def site_config(root: Path) -> dict:
+    path = root / "config" / "site.json"
+    if not path.is_file():
+        raise RuntimeError(
+            "config/site.json is missing. Set displayName and avatar there before generating share images."
+        )
+    data = load_json(path, None)
+    if not isinstance(data, dict):
+        raise RuntimeError("config/site.json is not valid JSON.")
+    return data
+
+
+def display_name(root: Path) -> str:
+    name = str(site_config(root).get("displayName") or "").strip()
+    if not name:
+        raise RuntimeError(
+            "config/site.json is missing a usable displayName. "
+            "Set displayName to the author/site name shown on fallback covers. "
+            "Do not leave it blank."
+        )
+    return name
+
+
+def avatar_path(root: Path) -> Path:
+    raw = str(site_config(root).get("avatar") or "").strip()
+    if not raw:
+        raise RuntimeError(
+            "config/site.json is missing avatar. "
+            "Set avatar to a local file such as ./assets/images/profile/your-photo.png"
+        )
+    if raw.startswith("http://") or raw.startswith("https://"):
+        raise RuntimeError("config/site.json avatar must be a local file path, not a URL.")
+    rel = raw[2:] if raw.startswith("./") else raw.lstrip("/")
+    path = root / rel
+    if not path.is_file():
+        raise RuntimeError(
+            f"Fallback avatar file not found: {rel} "
+            "(from config/site.json avatar). Place a square PNG, JPEG, or WebP at that path."
+        )
+    if path.suffix.lower() not in RASTER_EXTS:
+        raise RuntimeError(
+            f"Fallback avatar must be PNG, JPEG, or WebP: {rel}"
+        )
+    return path
+
+
+def writing_types(root: Path) -> list[dict]:
+    pack = load_json(root / "config" / "writing-types.json", {"types": []})
+    types = pack.get("types") if isinstance(pack, dict) else []
+    return [item for item in types if isinstance(item, dict) and item.get("id")]
+
+
+def type_by_id(root: Path, kind: str) -> dict:
+    for item in writing_types(root):
+        if item.get("id") == kind:
+            return item
+    return {"id": kind, "mode": "internal", "label": {"en": kind, "tr": kind}}
+
+
+def is_external(root: Path, kind: str) -> bool:
+    return str(type_by_id(root, kind).get("mode") or "") == "external"
+
+
+def kind_label(root: Path, kind: str, lang: str) -> str:
+    labels = type_by_id(root, kind).get("label") or {}
+    if isinstance(labels, dict):
+        return str(labels.get(lang) or labels.get("en") or kind)
+    return str(labels or kind)
+
+
+def excerpt(body: str, limit: int = 160) -> str:
+    chunks: list[str] = []
+    for line in (body or "").split("\n"):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or stripped.startswith("```"):
+            if chunks:
+                break
+            continue
+        stripped = re.sub(r"[*_`>#]+", "", stripped)
+        stripped = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", stripped)
+        chunks.append(stripped)
+        text = " ".join(chunks)
+        if len(text) >= limit:
+            return text[: limit - 1].rstrip() + "…"
+    return " ".join(chunks)[:limit].strip()
+
+
+def first_heading(markdown: str) -> str:
+    _meta, body = parse_front_matter(markdown)
+    for line in body.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return ""
+
+
+def first_paragraph(markdown: str) -> str:
+    _meta, body = parse_front_matter(markdown)
+    return excerpt(body)
+
+
+def has_cover(value: str) -> bool:
+    raw = str(value or "").strip().lower()
+    return bool(raw) and raw not in {"null", "none", "false"}
+
+
+def resolve_cover(root: Path, cover: str, *, guide_id: str = "") -> Path | None:
+    value = str(cover or "").strip()
+    if not has_cover(value):
+        return None
+    if value.startswith("http://") or value.startswith("https://"):
+        return None
+    rel = value.replace("./", "").lstrip("/")
+    candidates = []
+    if guide_id:
+        candidates.append(root / "assets/images/guides" / guide_id / Path(rel).name)
+        candidates.append(root / rel)
+    candidates.extend(
+        [
+            root / "assets/images/blog" / Path(rel).name,
+            root / rel,
+        ]
+    )
+    for path in candidates:
+        if path.is_file():
+            return path
+    return None
+
+
+def load_font(root: Path, weight: str, size: int) -> ImageFont.FreeTypeFont:
+    name = "Poppins-SemiBold.ttf" if weight == "semibold" else "Poppins-Regular.ttf"
+    path = root / "assets/fonts" / name
+    if not path.is_file():
+        raise RuntimeError("Poppins fonts are missing under assets/fonts/")
+    return ImageFont.truetype(str(path), max(8, int(round(size))))
+
+
+def wrap_lines(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_width: int, max_lines: int) -> list[str]:
+    words = str(text or "").split()
+    if not words:
+        return [""]
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        trial = f"{current} {word}".strip()
+        if draw.textlength(trial, font=font) <= max_width:
+            current = trial
+            continue
+        if current:
+            lines.append(current)
+        current = word
+        if len(lines) == max_lines - 1:
+            break
+    if current and len(lines) < max_lines:
+        lines.append(current)
+    if len(lines) == max_lines:
+        while lines[-1] and draw.textlength(lines[-1] + "…", font=font) > max_width:
+            lines[-1] = lines[-1][:-1]
+        if not lines[-1].endswith("…"):
+            lines[-1] = (lines[-1].rstrip() + "…") if lines[-1] else "…"
+    return lines[:max_lines]
+
+
+def _scale_pt(x: float, y: float, size: float, left: float, top: float) -> tuple[int, int]:
+    s = size / 512.0
+    return int(round(left + x * s)), int(round(top + y * s))
+
+
+def _stroke_poly(draw: ImageDraw.ImageDraw, points: list[tuple[int, int]], color, width: int) -> None:
+    if len(points) < 2:
+        return
+    draw.line(points, fill=color, width=width, joint="curve")
+    rad = max(1, width // 2)
+    for x, y in points:
+        draw.ellipse((x - rad, y - rad, x + rad, y + rad), fill=color)
+
+
+def paste_ionicon(img: Image.Image, kind: str, cx: int, top: int, size: int) -> None:
+    """Rasterize the same Ionicon 5 outline paths vendored in assets/icons/."""
+    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    left = cx - size / 2
+    width = max(2, int(round(32 / 512 * size)))
+    color = (*GOLD[:3], 255)
+    # assets/icons/code-slash-outline.svg  (notes + guides)
+    # M160 368L32 256l128-112 M352 368l128-112-128-112 M304 96l-96 320
+    if kind in {"notes", "guide"}:
+        paths = [
+            [(160, 368), (32, 256), (160, 144)],
+            [(352, 368), (480, 256), (352, 144)],
+            [(304, 96), (208, 416)],
+        ]
+    else:
+        # assets/icons/document-text-outline.svg — outline + two text strokes
+        paths = [
+            [(144, 48), (242, 48), (400, 206), (400, 416), (144, 416), (112, 96), (144, 48)],
+            [(256, 56), (256, 176), (376, 176)],
+            [(176, 288), (336, 288)],
+            [(176, 368), (336, 368)],
+        ]
+    for path in paths:
+        _stroke_poly(draw, [_scale_pt(x, y, size, left, top) for x, y in path], color, width)
+    img.paste(Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB"))
+
+
+def circular_avatar(path: Path, size: int) -> Image.Image:
+    src = Image.open(path).convert("RGBA")
+    fitted = ImageOps.fit(src, (size, size), method=Image.Resampling.LANCZOS)
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.paste(fitted, (0, 0), mask)
+    ring = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    ImageDraw.Draw(ring).ellipse((1, 1, size - 2, size - 2), outline=(255, 216, 111, 115), width=max(1, round(size / 42)))
+    out.alpha_composite(ring)
+    return out
+
+
+def paint_card_background(img: Image.Image) -> None:
+    pixels = img.load()
+    width, height = img.size
+    start = (42, 38, 24)
+    end = (18, 18, 18)
+    denom = max(width + height - 2, 1)
+    for y in range(height):
+        for x in range(width):
+            t = (x + y) / denom
+            pixels[x, y] = (
+                int(start[0] + (end[0] - start[0]) * t),
+                int(start[1] + (end[1] - start[1]) * t),
+                int(start[2] + (end[2] - start[2]) * t),
+            )
+
+
+def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str) -> None:
+    # Live Writings 2-col fallback COVER (1440×900, validator note), cover area only:
+    # 404 × 227.25. Scale X from cover width, Y from cover height. Do not invent sizes.
+    ref_w, ref_h = 404.0, 227.25
+    og_w, og_h = OG_SIZE
+    sx = og_w / ref_w
+    sy = og_h / ref_h
+    img = Image.new("RGB", OG_SIZE, "#121212")
+    paint_card_background(img)
+    draw = ImageDraw.Draw(img)
+    cx = og_w // 2
+
+    icon_size = int(round(28 * sy))
+    title_size = 20 * sy
+    title_lead = 26 * sy
+    kicker_size = 15 * sy
+    kind_box_h = 23 * sy
+    author_size = 15.2 * sy
+    avatar_size = int(round(42 * sy))
+    divider_h = int(round(30 * sy))
+    gap = 10 * sy
+    sig_gap = int(round(10 * sy))
+    divider_w = max(1, int(round(1 * sx)))
+    max_text = int(round(0.68 * og_w))
+    content_h = 169.25 * sy
+    pad_top = 16 * sy
+    pad_bottom = 8 * sy
+    sig_bottom = 14 * sy
+
+    title_font = load_font(root, "semibold", title_size)
+    kicker_font = load_font(root, "regular", kicker_size)
+    name_font = load_font(root, "regular", author_size)
+    lines = wrap_lines(draw, title, title_font, max_text, 4)
+    title_h = title_lead * len(lines)
+    flex_h = icon_size + gap + title_h + gap + kind_box_h
+    y = pad_top + max(0.0, (content_h - pad_top - pad_bottom - flex_h) / 2)
+
+    paste_ionicon(img, kind, cx, int(round(y)), icon_size)
+    draw = ImageDraw.Draw(img)
+    y += icon_size + gap
+    for line in lines:
+        draw.text((cx, int(round(y + title_lead / 2))), line, font=title_font, fill=WHITE, anchor="mm")
+        y += title_lead
+    y += gap
+    draw.text((cx, int(round(y + kind_box_h / 2))), kicker.upper(), font=kicker_font, fill=GOLD[:3], anchor="mm")
+
+    sig_y = int(round(og_h - sig_bottom - avatar_size))
+    avatar = circular_avatar(avatar_path(root), avatar_size)
+    name = display_name(root)
+    name_w = int(draw.textlength(name, font=name_font))
+    row_w = avatar_size + sig_gap + divider_w + sig_gap + name_w
+    row_x = cx - row_w // 2
+    img.paste(avatar, (row_x, sig_y), avatar)
+    dx = row_x + avatar_size + sig_gap
+    dy = int(round(sig_y + (avatar_size - divider_h) / 2))
+    draw.line((dx, dy, dx, dy + divider_h), fill=DIVIDER, width=divider_w)
+    draw.text((dx + sig_gap + divider_w, int(round(sig_y + avatar_size / 2))), name, font=name_font, fill=(250, 250, 250), anchor="lm")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    img.save(dest, format="PNG", optimize=True)
+
+
+def render_cover_png(src: Path, dest: Path) -> bool:
+    suffix = src.suffix.lower()
+    if suffix not in RASTER_EXTS:
+        return False
+    try:
+        image = Image.open(src)
+        image.load()
+    except OSError:
+        return False
+    fitted = ImageOps.fit(image.convert("RGB"), OG_SIZE, method=Image.Resampling.LANCZOS)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fitted.save(dest, format="PNG", optimize=True)
+    return True
+
+
+def png_size(path: Path) -> tuple[int, int]:
+    with Image.open(path) as image:
+        return image.size
+
+
+def writing_share_path(lang: str, kind: str, item_id: str) -> str:
+    return f"writings/{lang}/{kind}/{item_id}/index.html"
+
+
+def writing_og_path(lang: str, kind: str, item_id: str) -> str:
+    return f"assets/images/og/writings/{lang}/{kind}/{item_id}.png"
+
+
+def guide_share_path(lang: str, item_id: str) -> str:
+    return f"guide/{lang}/{item_id}/index.html"
+
+
+def guide_og_path(lang: str, item_id: str) -> str:
+    return f"assets/images/og/guides/{lang}/{item_id}.png"
+
+
+def abs_url(base: str, rel: str) -> str:
+    return f"{base}/{rel.lstrip('/')}"
+
+
+def share_html(
+    *,
+    lang: str,
+    title: str,
+    description: str,
+    canonical: str,
+    image: str,
+    spa_hash: str,
+    alternates: dict[str, str],
+    marker: str,
+    brand: str,
+) -> str:
+    hreflang = []
+    for code, url in alternates.items():
+        hreflang.append(f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">')
+    if "en" in alternates:
+        hreflang.append(f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">')
+    elif alternates:
+        first = next(iter(alternates.values()))
+        hreflang.append(f'  <link rel="alternate" hreflang="x-default" href="{html.escape(first)}">')
+    continue_href = f"/{spa_hash}" if spa_hash.startswith("#") else spa_hash
+    return f"""<!DOCTYPE html>
+<html lang="{html.escape(lang)}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="{html.escape(marker)}" content="1">
+  <title>{html.escape(title)}</title>
+  <meta name="description" content="{html.escape(description)}">
+  <link rel="canonical" href="{html.escape(canonical)}">
+{chr(10).join(hreflang)}
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="{html.escape(title)}">
+  <meta property="og:description" content="{html.escape(description)}">
+  <meta property="og:url" content="{html.escape(canonical)}">
+  <meta property="og:image" content="{html.escape(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="{'tr_TR' if lang == 'tr' else 'en_US'}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{html.escape(title)}">
+  <meta name="twitter:description" content="{html.escape(description)}">
+  <meta name="twitter:image" content="{html.escape(image)}">
+  <meta http-equiv="refresh" content="0;url={html.escape(continue_href)}">
+  <style>
+    body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111113; color: #d6d6d6; font-family: Poppins, system-ui, sans-serif; }}
+    a {{ color: #ffd86f; }}
+  </style>
+</head>
+<body>
+  <p><a href="{html.escape(continue_href)}">Continue to {html.escape(brand)}</a></p>
+  <script>
+    try {{ localStorage.setItem("siteLang", "{html.escape(lang)}"); }} catch (e) {{}}
+    location.replace({json.dumps(continue_href)});
+  </script>
+</body>
+</html>
+"""
+
+
+def discover_writings(root: Path) -> list[dict]:
+    items: dict[tuple[str, str], dict] = {}
+    for kind_meta in writing_types(root):
+        kind = str(kind_meta.get("id") or "")
+        if not kind or is_external(root, kind):
+            continue
+        for lang in ("en", "tr"):
+            folder = root / "content" / kind / lang
+            if not folder.is_dir():
+                continue
+            for path in sorted(folder.glob("*.md")):
+                item_id = path.stem
+                if not ID_RE.match(item_id):
+                    continue
+                meta, body = parse_front_matter(path.read_text(encoding="utf-8"))
+                key = (kind, item_id)
+                rec = items.setdefault(
+                    key,
+                    {"kind": kind, "id": item_id, "langs": {}},
+                )
+                rec["langs"][lang] = {
+                    "title": str(meta.get("title") or item_id).strip(),
+                    "description": str(meta.get("summary") or meta.get("excerpt") or excerpt(body)).strip(),
+                    "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
+                }
+    return [items[key] for key in sorted(items)]
+
+
+def discover_guides(root: Path) -> list[dict]:
+    guides_root = root / "guides"
+    items = []
+    if not guides_root.is_dir():
+        return items
+    for folder in sorted(guides_root.iterdir()):
+        if not folder.is_dir() or folder.name in RESERVED_GUIDE_DIRS or not ID_RE.match(folder.name):
+            continue
+        rec = {"id": folder.name, "langs": {}}
+        for lang, filename in (("en", "EN.md"), ("tr", "TR.md")):
+            path = folder / filename
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            meta, _body = parse_front_matter(text)
+            title = first_heading(text) or folder.name
+            if not title.strip() or title.strip() == "#":
+                continue
+            rec["langs"][lang] = {
+                "title": title,
+                "description": first_paragraph(text),
+                "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
+            }
+        if rec["langs"]:
+            items.append(rec)
+    return items
+
+
+def write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def prune_generated(root: Path, keep: set[Path], bases: list[Path]) -> list[str]:
+    removed = []
+    for base in bases:
+        if not base.exists():
+            continue
+        if base.is_file():
+            if base.resolve() not in keep:
+                base.unlink()
+                removed.append(str(base.relative_to(root)))
+            continue
+        for path in sorted(base.rglob("*"), reverse=True):
+            resolved = path.resolve()
+            if path.is_file() and resolved not in keep:
+                if path.name == "index.html" or path.suffix.lower() == ".png":
+                    path.unlink()
+                    removed.append(str(path.relative_to(root)))
+            elif path.is_dir():
+                try:
+                    next(path.iterdir())
+                except StopIteration:
+                    path.rmdir()
+    return removed
+
+
+def sitemap_xml(base: str, urls: list[dict]) -> str:
+    chunks = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+        '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    ]
+    for entry in urls:
+        loc = entry["loc"]
+        chunks.append("  <url>")
+        chunks.append(f"    <loc>{html.escape(loc)}</loc>")
+        for code, href in (entry.get("alternates") or {}).items():
+            chunks.append(
+                f'    <xhtml:link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(href)}" />'
+            )
+        if entry.get("alternates"):
+            default = entry["alternates"].get("en") or next(iter(entry["alternates"].values()))
+            chunks.append(
+                f'    <xhtml:link rel="alternate" hreflang="x-default" href="{html.escape(default)}" />'
+            )
+        chunks.append("  </url>")
+    chunks.append("</urlset>")
+    chunks.append("")
+    return "\n".join(chunks)
+
+
+def generate(root: Path) -> dict:
+    base = origin(root)
+    brand = display_name(root)
+    avatar_path(root)
+    keep: set[Path] = set()
+    sitemap_entries = [
+        {"loc": f"{base}/", "alternates": {}},
+    ]
+    created = []
+
+    for item in discover_writings(root):
+        kind = item["kind"]
+        item_id = item["id"]
+        langs = item["langs"]
+        alternates = {
+            lang: abs_url(base, f"writings/{lang}/{kind}/{item_id}/")
+            for lang in langs
+        }
+        for lang, data in langs.items():
+            html_rel = writing_share_path(lang, kind, item_id)
+            og_rel = writing_og_path(lang, kind, item_id)
+            html_path = root / html_rel
+            og_path = root / og_rel
+            cover = resolve_cover(root, data["cover"])
+            used_cover = bool(cover and render_cover_png(cover, og_path))
+            if not used_cover:
+                render_fallback_png(
+                    root,
+                    og_path,
+                    title=data["title"],
+                    kicker=kind_label(root, kind, lang),
+                    kind=kind,
+                )
+            canonical = alternates[lang]
+            image = abs_url(base, og_rel)
+            spa = f"#/yazilar/{kind}/{item_id}"
+            write_text(
+                html_path,
+                share_html(
+                    lang=lang,
+                    title=data["title"],
+                    description=data["description"] or data["title"],
+                    canonical=canonical,
+                    image=image,
+                    spa_hash=spa,
+                    alternates=alternates,
+                    marker=WRITINGS_MARKER,
+                    brand=brand,
+                ),
+            )
+            keep.add(html_path.resolve())
+            keep.add(og_path.resolve())
+            created.append(html_rel)
+            sitemap_entries.append({"loc": canonical, "alternates": alternates})
+
+    for item in discover_guides(root):
+        item_id = item["id"]
+        langs = item["langs"]
+        alternates = {lang: abs_url(base, f"guide/{lang}/{item_id}/") for lang in langs}
+        for lang, data in langs.items():
+            html_rel = guide_share_path(lang, item_id)
+            og_rel = guide_og_path(lang, item_id)
+            html_path = root / html_rel
+            og_path = root / og_rel
+            cover = resolve_cover(root, data["cover"], guide_id=item_id)
+            used_cover = bool(cover and render_cover_png(cover, og_path))
+            if not used_cover:
+                kicker = "Guide" if lang == "en" else "Rehber"
+                render_fallback_png(
+                    root,
+                    og_path,
+                    title=data["title"],
+                    kicker=kicker,
+                    kind="guide",
+                )
+            canonical = alternates[lang]
+            image = abs_url(base, og_rel)
+            spa = f"#/guides/{item_id}/{'EN' if lang == 'en' else 'TR'}"
+            write_text(
+                html_path,
+                share_html(
+                    lang=lang,
+                    title=data["title"],
+                    description=data["description"] or data["title"],
+                    canonical=canonical,
+                    image=image,
+                    spa_hash=spa,
+                    alternates=alternates,
+                    marker=GUIDES_MARKER,
+                    brand=brand,
+                ),
+            )
+            keep.add(html_path.resolve())
+            keep.add(og_path.resolve())
+            created.append(html_rel)
+            sitemap_entries.append({"loc": canonical, "alternates": alternates})
+
+    sitemap_path = root / "sitemap.xml"
+    write_text(sitemap_path, sitemap_xml(base, sitemap_entries))
+    keep.add(sitemap_path.resolve())
+    removed = prune_generated(
+        root,
+        keep,
+        [
+            root / "writings",
+            root / "guide",
+            root / "assets/images/og",
+        ],
+    )
+    return {"created": created, "removed": removed, "sitemap": str(sitemap_path.relative_to(root))}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default=str(ROOT))
+    args = parser.parse_args()
+    root = Path(args.root).resolve()
+    try:
+        result = generate(root)
+    except Exception as exc:  # noqa: BLE001
+        sys.stderr.write(f"generate-share failed: {exc}\n")
+        return 1
+    sys.stdout.write(
+        f"generate-share wrote {len(result['created'])} pages, removed {len(result['removed'])} stale files\n"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

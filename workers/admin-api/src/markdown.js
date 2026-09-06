@@ -66,6 +66,29 @@ export function parseFrontMatter(text) {
   return { meta, body: raw.slice(close + 4).replace(/^\n/, "") };
 }
 
+export function applyGuideCover(text, cover) {
+  const raw = String(text || "").replace(/\r\n/g, "\n");
+  if (cover == null) return raw;
+  const value = String(cover).trim();
+  if (!raw.startsWith("---")) {
+    if (!value) return raw;
+    const body = raw.replace(/^\n+/, "");
+    return `---\ncover: ${yamlQuote(value)}\n---\n\n${body}`;
+  }
+  if (!value) {
+    return raw.replace(/^\s*cover:\s*.*$/m, "").replace(/\n{3,}/g, "\n\n");
+  }
+  return setYamlScalar(raw, "cover", yamlQuote(value));
+}
+
+export function stripFrontMatter(text) {
+  const raw = String(text || "").replace(/\r\n/g, "\n");
+  if (!raw.startsWith("---")) return raw;
+  const close = raw.indexOf("\n---", 3);
+  if (close === -1) return raw;
+  return raw.slice(close + 4).replace(/^\n/, "");
+}
+
 export function setYamlScalar(text, key, value) {
   const raw = String(text || "");
   const line = `${key}: ${value}`;

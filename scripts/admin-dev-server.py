@@ -575,7 +575,9 @@ def regenerate_writings_index() -> str:
     if completed.returncode != 0:
         err = (completed.stderr or completed.stdout or "unknown generator error").strip()
         raise RuntimeError(err)
-    return (completed.stdout or "").strip()
+    writings = (completed.stdout or "").strip()
+    share = admin_cms.regenerate_share()
+    return f"{writings}\n{share}".strip()
 
 
 def dump_yaml_value(value: str) -> str:

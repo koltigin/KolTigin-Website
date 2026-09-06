@@ -770,6 +770,15 @@
     return `/#/yazilar/${item.kind}/${encodeURIComponent(item.id)}`;
   }
 
+  function shareHref(item) {
+    const lang = uiLang() === 'tr' && item.languages && item.languages.tr ? 'tr' : 'en';
+    if (!item.languages || !item.languages[lang]) {
+      const fallback = item.languages && item.languages.en ? 'en' : 'tr';
+      return `/writings/${fallback}/${item.kind}/${encodeURIComponent(item.id)}/`;
+    }
+    return `/writings/${lang}/${item.kind}/${encodeURIComponent(item.id)}/`;
+  }
+
   function allWritings() {
     return writingKindIds().flatMap((kind) => (state.content[kind] || []).map((item) => ({ ...item, kind })))
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(a.id).localeCompare(String(b.id)));
@@ -800,6 +809,7 @@
             <div class="item-actions">
               <button class="btn btn-ghost" data-go="#/edit/${item.kind}/${encodeURIComponent(item.id)}">${escapeHtml(t('writings.editBtn'))}</button>
               <a class="btn btn-ghost" href="${escapeHtml(previewHref(item))}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('writings.preview'))}</a>
+              ${isExternalType(item.kind) ? '' : `<a class="btn btn-ghost" href="${escapeHtml(shareHref(item))}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('writings.sharePage'))}</a>`}
               ${entityDeleteButton({ family: 'writing', id: item.id, kind: item.kind, title })}
             </div>
           </div>

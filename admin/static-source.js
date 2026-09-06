@@ -53,7 +53,8 @@
   }
 
   function firstHeading(markdown) {
-    const line = String(markdown || '').split('\n').find((item) => item.startsWith('# '));
+    const parsed = parseFrontMatter(markdown);
+    const line = String(parsed.body || markdown || '').split('\n').find((item) => item.startsWith('# '));
     return line ? line.slice(2).trim() : '';
   }
 
@@ -249,6 +250,7 @@
         titleTr: firstHeading(tr) || id,
         existsEn: Boolean(en),
         existsTr: Boolean(tr),
+        cover: (parseFrontMatter(en).meta.cover || parseFrontMatter(tr).meta.cover || parseFrontMatter(en).meta.image || parseFrontMatter(tr).meta.image || '').trim(),
         projects: related
       });
     }

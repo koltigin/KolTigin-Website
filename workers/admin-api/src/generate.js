@@ -1,3 +1,23 @@
+export const SHARE_LANGS = ["en", "tr"];
+
+export function writingShareArtifacts(kind, id) {
+  const paths = [];
+  for (const lang of SHARE_LANGS) {
+    paths.push(`writings/${lang}/${kind}/${id}/index.html`);
+    paths.push(`assets/images/og/writings/${lang}/${kind}/${id}.png`);
+  }
+  return paths;
+}
+
+export function guideShareArtifacts(id) {
+  const paths = [];
+  for (const lang of SHARE_LANGS) {
+    paths.push(`guide/${lang}/${id}/index.html`);
+    paths.push(`assets/images/og/guides/${lang}/${id}.png`);
+  }
+  return paths;
+}
+
 export function pretty(data) {
   return `${JSON.stringify(data, null, 2)}\n`;
 }

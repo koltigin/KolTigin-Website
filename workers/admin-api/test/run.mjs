@@ -1,8 +1,8 @@
 import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
-import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown } from "../src/generate.js";
-import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem } from "../src/markdown.js";
+import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, writingShareArtifacts } from "../src/generate.js";
+import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover } from "../src/markdown.js";
 import { HttpError } from "../src/util.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -82,6 +82,10 @@ async function json(response) {
 async function main() {
   try {
     assertSafePath("content/about/en.md");
+    assertSafePath("writings/en/articles/hello/index.html");
+    assertSafePath("guide/tr/hello/index.html");
+    assertSafePath("sitemap.xml");
+    assertSafePath("assets/images/og/writings/en/notes/hello.png");
     try { assertSafePath("../etc/passwd"); assert(false, "traversal"); } catch (error) { assert(error instanceof HttpError, "path traversal blocked"); }
     try { assertSafePath("scripts/admin_cms.py"); assert(false, "scripts"); } catch (error) { assert(error instanceof HttpError, "scripts blocked"); }
 
@@ -125,6 +129,9 @@ links:
     assert(youtubeIdFromUrl("https://example.com/live/abcdefghijk") === "", "non-youtube live path is rejected");
     assert(buildWritingMarkdown({ title: "Hi", date: "2026-01-01", kind: "articles", body: "x" }).includes("title: Hi"), "writing markdown");
     assert(buildWritingMarkdown({ title: "Test Article Title", date: "2026-01-01", kind: "articles", body: "x" }).includes('title: "Test Article Title"'), "multi-word writing title is quoted");
+    assert(applyGuideCover("# Hello\n", "hero.png").includes("cover:"), "guide cover is stored in front matter");
+    assert(!applyGuideCover("---\ncover: hero.png\n---\n\n# Hello\n", "").includes("hero.png"), "empty cover removes guide cover");
+    assert(writingShareArtifacts("notes", "hello").includes("writings/en/notes/hello/index.html"), "writing share artifact paths");
 
     const github = new MockGitHub(seed());
     const env = envWith(github);
@@ -178,8 +185,15 @@ links:
     assert(res.status === 200, "save guide");
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "tr", markdown: "# Rehber\n" }, env));
     assert(res.status === 200, "save guide tr");
+    res = await json(await post("/api/admin/guide-save", { id: "en", lang: "en", markdown: "# Nope\n" }, env));
+    assert(res.status === 400, "reserved guide id rejected");
+    res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n", cover: "hero.png" }, env));
+    assert(res.status === 200 && String(github.files.get("guides/aioz-depin/EN.md")).includes("cover:"), "guide cover saved on EN");
+    assert(String(github.files.get("guides/aioz-depin/TR.md")).includes("cover:"), "guide cover copied to TR sibling");
     github.files.set("guides/aioz-depin/extra.txt", "orphan");
     github.files.set("assets/images/guides/aioz-depin/shot.png", png);
+    github.files.set("guide/en/aioz-depin/index.html", "<html></html>");
+    github.files.set("assets/images/og/guides/en/aioz-depin.png", png);
     github.files.set("content/projects/depin/aioz-depin.md", `---
 name: AIOZ DePIN
 category: depin
@@ -210,6 +224,8 @@ links:
     assert(!github.files.has("guides/aioz-depin/EN.md") && !github.files.has("guides/aioz-depin/TR.md"), "guide EN/TR sources removed");
     assert(!github.files.has("guides/aioz-depin/extra.txt"), "guide folder extras removed");
     assert(!github.files.has("assets/images/guides/aioz-depin/shot.png"), "guide assets removed");
+    assert(!github.files.has("guide/en/aioz-depin/index.html"), "guide share html removed");
+    assert(!github.files.has("assets/images/og/guides/en/aioz-depin.png"), "guide og image removed");
     assert(!JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guide removed from index");
     assert(!String(github.files.get("content/projects/depin/aioz-depin.md")).includes("guide: aioz-depin"), "project markdown guide link removed");
     assert(!String(github.files.get("content/projects/depin/aioz-depin.md")).includes("#/guides/aioz-depin"), "project markdown guide url removed");
@@ -266,9 +282,13 @@ links:
     assert(res.status === 200 && res.body.filename.endsWith(".png"), "cover upload");
     assert([...github.files.keys()].some((path) => path.startsWith("assets/images/blog/")), "cover stored under blog");
 
+    github.files.set("writings/en/articles/smoke-note/index.html", "<html></html>");
+    github.files.set("assets/images/og/writings/en/articles/smoke-note.png", png);
     res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "smoke-note" }, env));
     assert(res.status === 200, "delete existing writing");
     assert(!github.files.has("content/articles/en/smoke-note.md") && !github.files.has("content/articles/tr/smoke-note.md"), "writing files removed");
+    assert(!github.files.has("writings/en/articles/smoke-note/index.html"), "writing share html removed");
+    assert(!github.files.has("assets/images/og/writings/en/articles/smoke-note.png"), "writing og image removed");
     assert(!JSON.parse(github.files.get("content/index.json")).articles.en.includes("smoke-note.md"), "writing index updated");
     assert(!JSON.parse(github.files.get("content/index.json")).articles.tr.includes("smoke-note.md"), "writing tr index updated");
     assert(github.commits.at(-1).message === "admin: delete writing smoke-note", "writing delete commit message");

@@ -10,6 +10,7 @@ import html
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -548,29 +549,27 @@ def prune_generated(root: Path, keep: set[Path], bases: list[Path]) -> list[str]
     return removed
 
 
-def sitemap_xml(base: str, urls: list[dict]) -> str:
-    chunks = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
-        '        xmlns:xhtml="http://www.w3.org/1999/xhtml">',
-    ]
+SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
+
+
+def sitemap_xml(_base: str, urls: list[dict]) -> str:
+    """Google-compatible urlset sitemap. No xhtml:link — that namespace makes
+    Chrome (and some crawlers) treat the file as HTML and show concatenated URLs.
+    """
+    ET.register_namespace("", SITEMAP_NS)
+    urlset = ET.Element(f"{{{SITEMAP_NS}}}urlset")
+    seen: set[str] = set()
     for entry in urls:
-        loc = entry["loc"]
-        chunks.append("  <url>")
-        chunks.append(f"    <loc>{html.escape(loc)}</loc>")
-        for code, href in (entry.get("alternates") or {}).items():
-            chunks.append(
-                f'    <xhtml:link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(href)}" />'
-            )
-        if entry.get("alternates"):
-            default = entry["alternates"].get("en") or next(iter(entry["alternates"].values()))
-            chunks.append(
-                f'    <xhtml:link rel="alternate" hreflang="x-default" href="{html.escape(default)}" />'
-            )
-        chunks.append("  </url>")
-    chunks.append("</urlset>")
-    chunks.append("")
-    return "\n".join(chunks)
+        loc = str((entry or {}).get("loc") or "").strip()
+        if not loc or loc in seen:
+            continue
+        seen.add(loc)
+        url_el = ET.SubElement(urlset, f"{{{SITEMAP_NS}}}url")
+        loc_el = ET.SubElement(url_el, f"{{{SITEMAP_NS}}}loc")
+        loc_el.text = loc
+    ET.indent(urlset, space="  ")
+    body = ET.tostring(urlset, encoding="unicode")
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + body + "\n"
 
 
 def generate(root: Path) -> dict:

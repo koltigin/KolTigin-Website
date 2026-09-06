@@ -6,6 +6,7 @@ import importlib.util
 import shutil
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from PIL import Image
@@ -86,6 +87,25 @@ def read(path: Path) -> str:
 
 
 def main() -> None:
+    escaped = generate_share.sitemap_xml(
+        "https://koltigin.xyz",
+        [{"loc": "https://koltigin.xyz/a&b/"}, {"loc": "https://koltigin.xyz/a&b/"}],
+    )
+    if not escaped.startswith('<?xml version="1.0" encoding="UTF-8"?>'):
+        fail("sitemap declaration")
+    if "&amp;" not in escaped or "&b/" in escaped.replace("&amp;", ""):
+        fail("sitemap loc xml escaping")
+    escaped_root = ET.fromstring(escaped)
+    escaped_locs = [
+        el.text
+        for el in escaped_root.findall(
+            "{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc"
+        )
+    ]
+    if escaped_locs != ["https://koltigin.xyz/a&b/"]:
+        fail(f"sitemap loc parse/dedupe: {escaped_locs}")
+    ok("sitemap xml escaping and well-formedness")
+
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
         setup_root(tmp)
@@ -151,14 +171,36 @@ def main() -> None:
         ok("guide with cover")
 
         sitemap = read(tmp / "sitemap.xml")
-        if "https://koltigin.xyz/" not in sitemap:
+        if not sitemap.startswith('<?xml version="1.0" encoding="UTF-8"?>'):
+            fail("sitemap xml declaration")
+        if 'xmlns:xhtml' in sitemap or "<xhtml:" in sitemap:
+            fail("sitemap must not use xhtml namespace")
+        try:
+            root = ET.fromstring(sitemap)
+        except ET.ParseError as exc:
+            fail(f"sitemap not well-formed XML: {exc}")
+        if root.tag != "{http://www.sitemaps.org/schemas/sitemap/0.9}urlset":
+            fail(f"sitemap urlset namespace: {root.tag}")
+        locs = [
+            el.text
+            for el in root.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url/{http://www.sitemaps.org/schemas/sitemap/0.9}loc")
+        ]
+        if any(not loc for loc in locs):
+            fail("empty loc")
+        if "https://koltigin.xyz/" not in locs:
             fail("homepage sitemap")
-        if "#/" in sitemap:
+        if any("#/" in (loc or "") for loc in locs):
             fail("hash url in sitemap")
-        if "/writings/en/notes/no-cover/" not in sitemap:
+        if not any(loc.endswith("/writings/en/notes/no-cover/") for loc in locs):
             fail("writing url sitemap")
-        if "/guide/en/demo-guide/" not in sitemap:
+        if not any(loc.endswith("/writings/tr/notes/no-cover/") for loc in locs):
+            fail("writing tr url sitemap")
+        if not any(loc.endswith("/guide/en/demo-guide/") for loc in locs):
             fail("guide url sitemap")
+        if not any(loc.endswith("/guide/tr/demo-guide/") for loc in locs):
+            fail("guide tr url sitemap")
+        if any("tweet" in (loc or "") or "/admin" in (loc or "") for loc in locs):
+            fail("external or admin url in sitemap")
         if "tweet" in sitemap:
             fail("external writing in sitemap")
         ok("sitemap")

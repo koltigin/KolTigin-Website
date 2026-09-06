@@ -36,6 +36,8 @@ Docker sürümü görüntüleniyorsa **2. OptimAI CLI Kurulumu** bölümüne ge�
 
 ### Docker Yüklü Değilse
 
+Docker'ı kurun:
+
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
@@ -46,10 +48,22 @@ Docker'ı başlatın ve sistem açılışında otomatik çalışmasını etkinle
 sudo systemctl enable --now docker
 ```
 
-Kurulumu kontrol edin:
+Kullanıcınızı Docker grubuna ekleyin:
 
 ```bash
-docker --version
+sudo usermod -aG docker $USER
+```
+
+Yeni grup yetkisini etkinleştirin:
+
+```bash
+newgrp docker
+```
+
+Docker'ı kontrol edin:
+
+```bash
+docker ps
 ```
 
 ---
@@ -380,6 +394,5 @@ https://node.optimai.network/register?ref=18ADBAE8
 
 - `Assignments fetched: total=0` hata değildir. O anda görev bulunmadığını gösterir.
 - Yeni görev geldiğinde node otomatik olarak çalışır.
-- Docker container yeniden kullanılabilir.
 - systemd sayesinde VPS yeniden başlatıldığında OptimAI node otomatik olarak tekrar başlar.
 - Aynı hesapla birden fazla desteklenen cihazda node çalıştırılabilir.

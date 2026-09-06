@@ -41,6 +41,19 @@ assert(cms.includes("cms.guidesManagedHint"), "project editor has a managed Guid
 assert(!cms.includes('data-pfield="guideId"'), "project editor no longer asks for a single guide URL/id field");
 assert(i18n.includes("guidesManagedHint") && i18n.includes("Rehberler"), "admin Guides/Rehberler copy exists");
 
+const css = readFileSync(join(root, "../css/style.css"), "utf8");
+assert(css.includes("grid-template-columns: repeat(2, minmax(0, 1fr));"), "project action buttons use a two-column grid");
+assert(css.includes(".project-card-links li:last-child:nth-child(odd)"), "odd final action button spans the full row");
+assert(css.includes("@media (max-width: 449px)"), "very narrow mobile uses a single action column");
+assert(!css.includes("flex: 1 1 calc((100% - 20px) / 3)"), "project actions no longer force three buttons onto one row");
+const labelRule = css.match(/\.project-card-link-label\s*\{[^}]+\}/);
+assert(Boolean(labelRule), "project action label rule exists");
+assert(!/text-overflow:\s*ellipsis/.test(labelRule[0]), "project action labels are not truncated with ellipsis");
+assert(!/white-space:\s*nowrap/.test(labelRule[0]), "project action labels may wrap instead of truncating");
+const order = (optimai.links || []).map((link) => link.guide ? "guide" : String(link.label || "").toLowerCase());
+assert(order[0] === "website" && order[1] === "guide", "OptimAI semantic link order stays Website then Guide");
+assert(parser.includes("if (referralUrl) {\n      links.push({ label: this.t('projects.links.referral'"), "Referral is still appended after project links");
+
 if (failed) {
   console.error(`${failed} failed`);
   process.exit(1);

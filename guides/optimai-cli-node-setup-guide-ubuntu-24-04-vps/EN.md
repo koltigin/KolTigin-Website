@@ -34,103 +34,27 @@ This guide was prepared for Ubuntu 24.04.
 
 ## 1. Check Docker
 
-First, confirm that Docker is installed:
+Check whether Docker is installed:
 
 ```bash
 docker --version
 ```
 
-Check whether the Docker service is running:
-
-```bash
-systemctl status docker --no-pager
-```
-
-If Docker is installed and running, you can skip directly to **2. Install OptimAI CLI**.
+If a Docker version is displayed, skip this step and continue directly to **2. Install OptimAI CLI**.
 
 ### If Docker Is Not Installed
 
-If Docker is not installed, follow the steps below to install Docker Engine on Ubuntu 24.04.
-
-First, update the existing packages:
+Install Docker:
 
 ```bash
-sudo apt update
-sudo apt upgrade -y
+curl -fsSL https://get.docker.com | sh
 ```
 
-Install the packages required to use Docker's official repository:
-
-```bash
-sudo apt install -y ca-certificates curl
-```
-
-Create the directory for Docker's GPG key:
-
-```bash
-sudo install -m 0755 -d /etc/apt/keyrings
-```
-
-Download Docker's official GPG key:
-
-```bash
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-```
-
-Make sure the key is readable:
-
-```bash
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-```
-
-Add Docker's official APT repository:
-
-```bash
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
-
-Update the package list again:
-
-```bash
-sudo apt update
-```
-
-Install Docker Engine, Docker CLI, containerd, Buildx, and the Docker Compose plugin:
-
-```bash
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-
-Enable Docker and start it immediately:
-
-```bash
-sudo systemctl enable --now docker
-```
-
-Verify the installation:
+After the installation is complete, verify it:
 
 ```bash
 docker --version
 ```
-
-Check the Docker service:
-
-```bash
-systemctl status docker --no-pager
-```
-
-Finally, test that Docker can successfully run a container:
-
-```bash
-sudo docker run --rm hello-world
-```
-
-If you see the `Hello from Docker!` message, Docker has been installed successfully.
-
-> **Note:** This guide runs the OptimAI systemd service as the `root` user, so adding another user to the `docker` group is not required for this setup.
 
 ---
 
@@ -211,7 +135,7 @@ Check its status from another terminal:
 optimai-cli node status
 ```
 
-Core Node requires Docker for its workloads, so Docker must remain running.
+Core Node requires Docker for its workloads.
 
 Periods without assigned tasks are not necessarily an error. Task availability and rewards depend on current network workload and network rules.
 
@@ -510,7 +434,7 @@ https://node.optimai.network/register?ref=18ADBAE8
 ## Final Notes
 
 - Docker must remain running while the Core CLI Node is operating.
-- If Docker is not installed, you can use the Docker Engine installation steps included in this guide.
+- If Docker is not installed, it can be installed with the single command included in this guide.
 - Periods without assigned tasks are not necessarily an error.
 - Check node health with `optimai-cli node status`.
 - Keep the CLI and node software updated.

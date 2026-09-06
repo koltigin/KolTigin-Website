@@ -1,46 +1,46 @@
-# OptimAI CLI Node Kurulum Rehberi — Ubuntu 24.04 VPS
+# OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS
 
-OptimAI Network'e farklı yöntemlerle katılabilirsiniz.
+There are several ways to participate in the OptimAI Network.
 
-- **Lite Node:** Chrome, Brave ve Opera gibi desteklenen Chromium tabanlı tarayıcılarda çalıştırılabilir.
-- **Telegram Node:** Telegram Mini App üzerinden kullanılabilir.
-- **Core Node Desktop:** Windows, macOS ve Ubuntu Linux üzerinde çalıştırılabilir.
-- **Core Node CLI:** Windows, macOS, Ubuntu Linux ve sunucularda çalıştırılabilir.
-- **Edge Node:** iOS ve Android cihazlarda kullanılabilir.
+- **Lite Node:** Can run in supported Chromium-based browsers such as Chrome, Brave, and Opera.
+- **Telegram Node:** Can run through the Telegram Mini App.
+- **Core Node Desktop:** Available for Windows, macOS, and Ubuntu Linux.
+- **Core Node CLI:** Available for Windows, macOS, Ubuntu Linux, and servers.
+- **Edge Node:** Available for iOS and Android devices.
 
-Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabilirsiniz.
+You can run nodes on multiple supported devices using the same OptimAI account.
 
-Bu rehber, **Ubuntu 24.04 kullanan bir VPS veya sunucuda OptimAI Core CLI Node çalıştırmak isteyenler** için hazırlanmıştır.
+This guide is intended for users who want to run an **OptimAI Core CLI Node on an Ubuntu 24.04 VPS or server**.
 
 ---
 
-## Sistem Gereksinimleri
+## System Requirements
 
-- Ubuntu 22.04 veya üzeri
-- En az 4 GB RAM
-- En az 2 CPU çekirdeği
-- En az 15 GB boş disk alanı
-- Aktif internet bağlantısı
+- Ubuntu 22.04 or later
+- At least 4 GB RAM
+- At least 2 CPU cores
+- At least 15 GB of free disk space
+- Active internet connection
 - Docker
-- OptimAI hesabı
+- OptimAI account
 
 ---
 
-## 1. Docker Kontrolü
+## 1. Check Docker
 
 ```bash
 docker --version
 ```
 
-Docker sürümü görüntüleniyorsa **2. OptimAI CLI Kurulumu** bölümüne geçin.
+If the Docker version is displayed, continue to **2. Install OptimAI CLI**.
 
-### Docker Yüklü Değilse
+### If Docker Is Not Installed
 
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
 
-Kurulum tamamlandıktan sonra:
+After the installation is complete:
 
 ```bash
 docker --version
@@ -48,27 +48,27 @@ docker --version
 
 ---
 
-## 2. OptimAI CLI Kurulumu
+## 2. Install OptimAI CLI
 
-OptimAI CLI'yi indirin:
+Download the OptimAI CLI:
 
 ```bash
 curl -L https://cli-node.optimai.network/optimai_cli_ubuntu -o optimai-cli
 ```
 
-Çalıştırma izni verin:
+Make it executable:
 
 ```bash
 chmod +x optimai-cli
 ```
 
-CLI'yi `/usr/local/bin` dizinine taşıyın:
+Move the CLI to `/usr/local/bin`:
 
 ```bash
 sudo mv optimai-cli /usr/local/bin/optimai-cli
 ```
 
-Kurulumu kontrol edin:
+Verify the installation:
 
 ```bash
 optimai-cli --version
@@ -76,18 +76,18 @@ optimai-cli --version
 
 ---
 
-## 3. OptimAI Hesabına Giriş
+## 3. Sign In to Your OptimAI Account
 
 ```bash
 optimai-cli auth login
 ```
 
-- Terminalin verdiği URL'yi tarayıcıda açın.
-- OptimAI hesabınıza giriş yapın.
-- Tarayıcı localhost adresine yönlendirilirse adres çubuğundaki **tam URL'yi** kopyalayın.
-- URL'yi terminale yapıştırın.
+- Open the URL displayed in the terminal.
+- Sign in to your OptimAI account.
+- If the browser redirects to a localhost address, copy the **complete URL** from the address bar.
+- Paste the URL into the terminal.
 
-Giriş durumunu kontrol edin:
+Check your authentication status:
 
 ```bash
 optimai-cli auth status
@@ -95,13 +95,13 @@ optimai-cli auth status
 
 ---
 
-## 4. Node'u İlk Kez Başlatma
+## 4. Start the Node for the First Time
 
 ```bash
 optimai-cli node start
 ```
 
-Başarılı çalışmada aşağıdakilere benzer loglar görebilirsiniz:
+A successful startup may show logs similar to:
 
 ```text
 Docker daemon is available
@@ -110,7 +110,7 @@ Docker container is healthy
 Node is running normally. Connected to server, ready for tasks.
 ```
 
-Görev geldiğinde aşağıdakilere benzer loglar görülebilir:
+When a task is assigned, you may see logs similar to:
 
 ```text
 Assignments fetched: total=1
@@ -118,19 +118,19 @@ Successfully crawled ...
 assignment submitted successfully
 ```
 
-`Assignments fetched: total=0` hata değildir. O anda node'a atanmış görev bulunmadığını gösterir.
+`Assignments fetched: total=0` is not an error. It simply means there is no task assigned to the node at that moment.
 
 ---
 
-## 5. Node'u Arka Planda Çalıştırma — systemd
+## 5. Run the Node in the Background — systemd
 
-VPS yeniden başladığında OptimAI node'unun otomatik olarak tekrar çalışması için bir systemd servisi oluşturun:
+To make the OptimAI node start automatically after a VPS reboot, create a systemd service:
 
 ```bash
 sudo nano /etc/systemd/system/optimai.service
 ```
 
-Aşağıdaki içeriği ekleyin:
+Add:
 
 ```ini
 [Unit]
@@ -151,11 +151,11 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Dosyayı kaydedip çıkın.
+Save and exit.
 
 ---
 
-## 6. Servisi Etkinleştirme
+## 6. Enable the Service
 
 ```bash
 sudo systemctl daemon-reload
@@ -165,33 +165,33 @@ sudo systemctl start optimai.service
 
 ---
 
-## 7. Node Durumunu Kontrol Etme
+## 7. Check Node Status
 
-Servis durumunu kontrol edin:
+Check the service:
 
 ```bash
 systemctl status optimai.service --no-pager
 ```
 
-Son logları görüntüleyin:
+View the latest logs:
 
 ```bash
 journalctl -u optimai.service -n 40 --no-pager -l
 ```
 
-Docker container'ını kontrol edin:
+Check the Docker container:
 
 ```bash
 docker ps
 ```
 
-Servisin VPS açılışında otomatik çalışacağını kontrol edin:
+Verify that the service will start automatically after reboot:
 
 ```bash
 systemctl is-enabled optimai.service
 ```
 
-Beklenen çıktı:
+Expected output:
 
 ```text
 enabled
@@ -199,13 +199,13 @@ enabled
 
 ---
 
-## 8. Canlı Logları İzleme
+## 8. Follow Live Logs
 
 ```bash
 journalctl -u optimai.service -f
 ```
 
-Log ekranından çıkmak için:
+Exit the live log view with:
 
 ```text
 Ctrl+C
@@ -213,7 +213,7 @@ Ctrl+C
 
 ---
 
-## 9. Node'u Yeniden Başlatma
+## 9. Restart the Node
 
 ```bash
 sudo systemctl restart optimai.service
@@ -221,25 +221,25 @@ sudo systemctl restart optimai.service
 
 ---
 
-## 10. Node'a İsim Verme
+## 10. Rename the Node
 
-Node'a bir isim vermek için:
+To give the node a recognizable name:
 
 ```bash
-optimai-cli node device rename NODE_ADI
+optimai-cli node device rename NODE_NAME
 ```
 
-Örneğin:
+For example:
 
 ```bash
 optimai-cli node device rename VPS-01
 ```
 
-Birden fazla cihazda node çalıştırıyorsanız farklı isimler kullanmanız node'ları ayırt etmenizi kolaylaştırır.
+Using different names makes it easier to identify nodes when running OptimAI on multiple devices.
 
 ---
 
-## 11. Ödül Bakiyesini Kontrol Etme
+## 11. Check Reward Balance
 
 ```bash
 optimai-cli rewards balance
@@ -247,7 +247,7 @@ optimai-cli rewards balance
 
 ---
 
-## 12. OptimAI CLI'yi Güncelleme
+## 12. Update OptimAI CLI
 
 ```bash
 optimai-cli update
@@ -255,27 +255,29 @@ optimai-cli update
 
 ---
 
-## 13. Birden Fazla Cihazda OptimAI Çalıştırma
+## 13. Running OptimAI on Multiple Devices
 
-Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabilirsiniz.
+You can run nodes on multiple supported devices using the same OptimAI account.
 
-Örneğin:
+For example:
 
-- macOS üzerinde Core Node Desktop
-- Ubuntu üzerinde Core Node Desktop
-- Windows üzerinde Core Node Desktop
-- VPS üzerinde Core Node CLI
-- Mobil cihazda Edge Node
+- Core Node Desktop on macOS
+- Core Node Desktop on Ubuntu
+- Core Node Desktop on Windows
+- Core Node CLI on a VPS
+- Edge Node on a mobile device
 
-Aynı IP üzerindeki farklı cihazlarda da node çalıştırılabilir. Her cihazın OptimAI'nin güncel kullanım ve ödül kurallarına uygun şekilde çalıştırılması gerekir.
+Nodes can also run on different devices sharing the same public IP. Each device should comply with OptimAI's current usage and reward rules.
 
 ---
 
-## 14. Diğer OptimAI Node Seçenekleri
+## 14. Other OptimAI Node Options
 
-VPS kullanmak zorunda değilsiniz.
+A VPS is not required to participate in OptimAI.
 
 ### Core Node Desktop
+
+Available for:
 
 - Windows
 - macOS
@@ -283,7 +285,7 @@ VPS kullanmak zorunda değilsiniz.
 
 ### Lite Node
 
-Desteklenen tarayıcılar üzerinden çalıştırılabilir:
+Can run through supported browsers such as:
 
 - Chrome
 - Brave
@@ -291,7 +293,7 @@ Desteklenen tarayıcılar üzerinden çalıştırılabilir:
 
 ### Telegram Node
 
-Telegram Mini App üzerinden çalıştırılabilir:
+Can run through the Telegram Mini App:
 
 ```text
 @OptimAI_Node_Bot
@@ -299,60 +301,58 @@ Telegram Mini App üzerinden çalıştırılabilir:
 
 ### Edge Node
 
-Mobil cihazlarda:
+Available for mobile devices through:
 
 - iOS — App Store
 - Android — Google Play
 
-üzerinden kullanılabilir.
-
 ---
 
-## 15. Faydalı Komutlar
+## 15. Useful Commands
 
-Node'u başlat:
+Start the node:
 
 ```bash
 optimai-cli node start
 ```
 
-Node durumunu kontrol et:
+Check node status:
 
 ```bash
 optimai-cli node status
 ```
 
-Ödül bakiyesini kontrol et:
+Check reward balance:
 
 ```bash
 optimai-cli rewards balance
 ```
 
-CLI'yi güncelle:
+Update the CLI:
 
 ```bash
 optimai-cli update
 ```
 
-Servisi yeniden başlat:
+Restart the service:
 
 ```bash
 sudo systemctl restart optimai.service
 ```
 
-Servis durumunu kontrol et:
+Check service status:
 
 ```bash
 systemctl status optimai.service --no-pager
 ```
 
-Canlı logları izle:
+Follow live logs:
 
 ```bash
 journalctl -u optimai.service -f
 ```
 
-Docker container'ını kontrol et:
+Check the Docker container:
 
 ```bash
 docker ps
@@ -360,20 +360,20 @@ docker ps
 
 ---
 
-## Referans Bağlantısı
+## Referral Link
 
-OptimAI hesabı oluşturmak isteyenler aşağıdaki referans bağlantısını kullanabilir:
+If you want to create an OptimAI account, you can use the referral link below:
 
 https://node.optimai.network/register?ref=18ADBAE8
 
-**Referans kodu:** `18ADBAE8`
+**Referral code:** `18ADBAE8`
 
 ---
 
-## Notlar
+## Notes
 
-- `Assignments fetched: total=0` hata değildir. O anda görev bulunmadığını gösterir.
-- Yeni görev geldiğinde node otomatik olarak çalışır.
-- Docker container yeniden kullanılabilir.
-- systemd sayesinde VPS yeniden başlatıldığında OptimAI node otomatik olarak tekrar başlar.
-- Aynı hesapla birden fazla desteklenen cihazda node çalıştırılabilir.
+- `Assignments fetched: total=0` is not an error. It means there is no task available at that moment.
+- The node will process new tasks when they become available.
+- The Docker container can be reused.
+- systemd allows the OptimAI node to start automatically after the VPS reboots.
+- Multiple supported devices can run under the same OptimAI account.

@@ -46,7 +46,91 @@ Docker servisinin durumunu kontrol edin:
 systemctl status docker --no-pager
 ```
 
-Docker kurulu veya çalışır durumda değilse node'u başlatmadan önce Docker kurulumunu tamamlamanız gerekir.
+Docker kurulu ve servis çalışıyorsa doğrudan **2. OptimAI CLI Kurulumu** bölümüne geçebilirsiniz.
+
+### Docker Yüklü Değilse
+
+Docker yüklü değilse aşağıdaki adımlarla Ubuntu 24.04 üzerine Docker Engine kurabilirsiniz.
+
+Öncelikle mevcut paketleri güncelleyin:
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+Docker'ın resmi deposunu kullanabilmek için gerekli paketleri yükleyin:
+
+```bash
+sudo apt install -y ca-certificates curl
+```
+
+Docker'ın GPG anahtarı için dizini oluşturun:
+
+```bash
+sudo install -m 0755 -d /etc/apt/keyrings
+```
+
+Docker'ın resmi GPG anahtarını indirin:
+
+```bash
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+```
+
+Anahtarın okunabilir olduğundan emin olun:
+
+```bash
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+Docker'ın resmi APT deposunu ekleyin:
+
+```bash
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+Paket listesini tekrar güncelleyin:
+
+```bash
+sudo apt update
+```
+
+Docker Engine, CLI, containerd ve Docker Compose eklentilerini yükleyin:
+
+```bash
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Docker servisini etkinleştirin ve başlatın:
+
+```bash
+sudo systemctl enable --now docker
+```
+
+Kurulumu doğrulayın:
+
+```bash
+docker --version
+```
+
+Docker servisinin çalıştığını kontrol edin:
+
+```bash
+systemctl status docker --no-pager
+```
+
+Son olarak Docker'ın container çalıştırabildiğini test edin:
+
+```bash
+sudo docker run --rm hello-world
+```
+
+`Hello from Docker!` mesajını görüyorsanız Docker kurulumu başarıyla tamamlanmıştır.
+
+> **Not:** Bu rehberde OptimAI servisi `root` kullanıcısıyla çalıştırıldığı için ayrıca kullanıcıyı `docker` grubuna eklemek zorunlu değildir.
 
 ---
 
@@ -288,7 +372,7 @@ Ardından:
 systemctl status optimai.service --no-pager
 ```
 
-ile tekrar kontrol edin.
+ile tekrar kontrol edebilirsiniz.
 
 ---
 
@@ -438,6 +522,7 @@ https://node.optimai.network/register?ref=18ADBAE8
 ## Son Notlar
 
 - Docker, Core CLI Node çalışırken açık olmalıdır.
+- Docker kurulu değilse bu rehberdeki Docker Engine kurulum adımlarını kullanabilirsiniz.
 - Görev gelmediği dönemler tek başına bir hata göstergesi değildir.
 - Node'un durumunu `optimai-cli node status` ile kontrol edebilirsiniz.
 - CLI ve node yazılımını güncel tutun.

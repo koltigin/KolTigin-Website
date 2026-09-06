@@ -205,6 +205,33 @@ assert(writingEditor.includes("data-kind-select") && writingEditor.includes("dat
 const videoEditor = adminSrc.slice(adminSrc.indexOf("function renderVideoEditor"), adminSrc.indexOf("function loc("));
 assert(videoEditor.includes("editor-layout"), "video editor still uses the existing side preview layout");
 
+const pageEditor = cmsSrc.slice(cmsSrc.indexOf("function renderPageEditor"), cmsSrc.indexOf("async function openPage"));
+assert(!pageEditor.includes("editor-layout"), "about/resume editor is not a two-column editor/preview grid");
+assert(pageEditor.includes("editor-preview"), "about/resume preview uses the shared stacked preview class");
+assert(pageEditor.indexOf("data-save-page") < pageEditor.indexOf("admin-md-preview"), "about/resume preview sits below Save");
+assert(pageEditor.includes("data-page-md") && pageEditor.includes("renderAboutIconPicker"), "about/resume markdown and icon picker remain");
+
+assert(!adminSrc.includes("parts[1] !== 'videos'"), "edit routes no longer default to writings");
+const navStart = adminSrc.indexOf("function navIdFromParts");
+const navEnd = adminSrc.indexOf("function currentNav");
+assert(navStart !== -1 && navEnd > navStart, "central navIdFromParts helper exists");
+const navIdFromParts = new Function(`${adminSrc.slice(navStart, navEnd)}; return navIdFromParts;`)();
+assert(navIdFromParts(["edit", "writings", "x"]) === "writings", "edit Writing → Writings");
+assert(navIdFromParts(["new", "articles"]) === "writings", "new article → Writings");
+assert(navIdFromParts(["edit", "videos", "x"]) === "videos", "edit Video → Videos");
+assert(navIdFromParts(["new", "videos"]) === "videos", "new Video → Videos");
+assert(navIdFromParts(["edit", "guides", "x"]) === "guides", "edit Guide → Guides");
+assert(navIdFromParts(["new", "guides"]) === "guides", "new Guide → Guides");
+assert(navIdFromParts(["edit", "projects", "x"]) === "projects", "edit Project → Projects");
+assert(navIdFromParts(["new", "projects"]) === "projects", "new Project → Projects");
+assert(navIdFromParts(["about"]) === "about", "About → About");
+assert(navIdFromParts(["resume"]) === "resume", "Resume → Resume");
+assert(navIdFromParts(["profile"]) === "profile", "Profile → Profile");
+assert(navIdFromParts(["social-links"]) === "social-links", "Social Links → Social Links");
+assert(navIdFromParts(["contact"]) === "contact", "Contact → Contact");
+assert(navIdFromParts(["writing-types"]) === "writings", "writing types still highlight Writings");
+assert(navIdFromParts(["project-categories"]) === "projects", "project categories still highlight Projects");
+
 assert(css.includes(".editor-preview"), "shared stacked preview CSS exists");
 assert(/textarea,\s*select \{\s*width:\s*100%;/.test(css.replace(/\n/g, " ")), "textarea still uses full field width");
 

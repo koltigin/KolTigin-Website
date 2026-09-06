@@ -220,25 +220,22 @@
         <button type="button" class="tab ${lang === 'en' ? 'is-active' : ''}" data-page-lang="en">${esc(t('tabs.contentEn'))}</button>
         <button type="button" class="tab ${lang === 'tr' ? 'is-active' : ''}" data-page-lang="tr">${esc(t('tabs.contentTr'))}</button>
       </div>
-      <div class="editor-layout">
-        <form data-page-editor>
-          <div class="field">
-            ${mdToolbar()}
-            <textarea id="page-md" data-page-md>${esc(md)}</textarea>
-          </div>
-        </form>
-        <aside>
-          <div class="auto-card guide-preview-card">
-            <h3>${esc(t('cms.preview'))}</h3>
-            <div class="guide-body admin-md-preview">${window.KolTiginGuideMarkdown ? window.KolTiginGuideMarkdown.render(md, { copyLabel: t('cms.preview') }) : esc(md)}</div>
-          </div>
-        </aside>
-      </div>
-      </div>
+      <form data-page-editor>
+        <div class="field">
+          ${mdToolbar()}
+          <textarea id="page-md" data-page-md>${esc(md)}</textarea>
+        </div>
+      </form>
       ${family === 'about' ? renderAboutIconPicker(md) : ''}
       <div class="footer-actions">
         <button class="btn btn-gold" type="button" data-save-page>${esc(family === 'about' ? H().saveActionLabel('cms.saveAbout') : H().saveActionLabel('writings.save'))}</button>
       </div>
+      <aside class="editor-preview">
+        <div class="auto-card guide-preview-card">
+          <h3>${esc(t('cms.preview'))}</h3>
+          <div class="guide-body admin-md-preview">${window.KolTiginGuideMarkdown ? window.KolTiginGuideMarkdown.render(md, { copyLabel: t('cms.preview') }) : esc(md)}</div>
+        </div>
+      </aside>
     `);
   }
 

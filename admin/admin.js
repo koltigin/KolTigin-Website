@@ -605,16 +605,29 @@
     }
   }
 
-  function currentNav() {
-    const { parts } = route();
-    const page = parts[0];
+  function navIdFromParts(parts) {
+    const page = String((parts && parts[0]) || '');
+    const section = String((parts && parts[1]) || '');
+    const editorNav = {
+      writings: 'writings',
+      articles: 'writings',
+      notes: 'writings',
+      social: 'writings',
+      videos: 'videos',
+      guides: 'guides',
+      projects: 'projects'
+    };
+    if (page === 'new' || page === 'edit') return editorNav[section] || page;
     if (page === 'writings' || page === 'articles' || page === 'notes' || page === 'writing-types') return 'writings';
-    if ((page === 'new' || page === 'edit') && parts[1] && parts[1] !== 'videos') return 'writings';
-    if (page === 'videos' || ((page === 'new' || page === 'edit') && parts[1] === 'videos')) return 'videos';
-    if (page === 'projects' || page === 'project-categories' || ((page === 'new' || page === 'edit') && parts[1] === 'projects')) return 'projects';
-    if (page === 'guides' || ((page === 'new' || page === 'edit') && parts[1] === 'guides')) return 'guides';
+    if (page === 'videos') return 'videos';
+    if (page === 'projects' || page === 'project-categories') return 'projects';
+    if (page === 'guides') return 'guides';
     if (page === 'social-links') return 'social-links';
     return page;
+  }
+
+  function currentNav() {
+    return navIdFromParts(route().parts);
   }
 
   function navLink(href, label, id) {

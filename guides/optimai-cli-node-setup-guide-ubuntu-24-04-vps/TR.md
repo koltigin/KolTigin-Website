@@ -40,7 +40,13 @@ Docker sürümü görüntüleniyorsa **2. OptimAI CLI Kurulumu** bölümüne ge�
 curl -fsSL https://get.docker.com | sh
 ```
 
-Kurulum tamamlandıktan sonra:
+Docker'ı başlatın ve sistem açılışında otomatik çalışmasını etkinleştirin:
+
+```bash
+sudo systemctl enable --now docker
+```
+
+Kurulumu kontrol edin:
 
 ```bash
 docker --version

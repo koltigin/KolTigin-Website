@@ -40,7 +40,13 @@ If the Docker version is displayed, continue to **2. Install OptimAI CLI**.
 curl -fsSL https://get.docker.com | sh
 ```
 
-After the installation is complete:
+Start Docker and enable it to start automatically at boot:
+
+```bash
+sudo systemctl enable --now docker
+```
+
+Verify the installation:
 
 ```bash
 docker --version

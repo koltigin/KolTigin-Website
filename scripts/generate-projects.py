@@ -22,6 +22,7 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 CATEGORIES_PATH = ROOT / "config" / "project-categories.json"
 CONTENT_ROOT = ROOT / "content" / "projects"
+GUIDES_ROOT = ROOT / "guides"
 OUTPUT_PATH = ROOT / "projects" / "projects.json"
 SOURCE_JSON = ROOT / "projects" / "projects.json"
 
@@ -136,6 +137,48 @@ def normalize_summary(value: object, path: Path) -> dict | None:
     return summary
 
 
+def first_heading(text: str) -> str:
+    for line in str(text or "").splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return ""
+
+
+def guide_folder_exists(guide_id: str) -> bool:
+    folder = GUIDES_ROOT / guide_id
+    return (folder / "EN.md").is_file() or (folder / "TR.md").is_file()
+
+
+def guide_titles(guide_id: str) -> dict | str:
+    folder = GUIDES_ROOT / guide_id
+    en = first_heading((folder / "EN.md").read_text(encoding="utf-8")) if (folder / "EN.md").is_file() else ""
+    tr = first_heading((folder / "TR.md").read_text(encoding="utf-8")) if (folder / "TR.md").is_file() else ""
+    if en and tr:
+        return {"en": en, "tr": tr}
+    return en or tr or "Setup Guide"
+
+
+def enrich_guide_links(links: list[dict]) -> list[dict]:
+    kept = []
+    for link in links:
+        guide = str(link.get("guide") or "").strip()
+        if not guide:
+            kept.append(link)
+            continue
+        if not guide_folder_exists(guide):
+            continue
+        cleaned = {key: value for key, value in link.items() if key != "url"}
+        cleaned["guide"] = guide
+        kept.append(cleaned)
+    guide_items = [link for link in kept if link.get("guide")]
+    if len(guide_items) == 1:
+        guide_items[0]["label"] = "Setup Guide"
+    elif len(guide_items) > 1:
+        for link in guide_items:
+            link["label"] = guide_titles(str(link["guide"]))
+    return kept
+
+
 def normalize_links(value: object, path: Path) -> list[dict] | None:
     if value is None:
         return None
@@ -145,6 +188,10 @@ def normalize_links(value: object, path: Path) -> list[dict] | None:
     for index, item in enumerate(value):
         if not isinstance(item, dict):
             raise ProjectError(path, f"links[{index}] must be an object")
+        guide = item.get("guide")
+        guide_text = str(guide).strip() if guide is not None and str(guide).strip() else ""
+        if guide_text and not re.fullmatch(r"[A-Za-z0-9-]+", guide_text):
+            raise ProjectError(path, f"links[{index}].guide must be a slug")
         label = item.get("label")
         if isinstance(label, dict):
             en = str(label.get("en") or "").strip()
@@ -152,30 +199,38 @@ def normalize_links(value: object, path: Path) -> list[dict] | None:
             if not en:
                 raise ProjectError(path, f"links[{index}].label.en is required")
             stored_label = {"en": en, "tr": tr or en}
-        else:
-            if not isinstance(label, str) or not label.strip():
-                raise ProjectError(path, f"links[{index}].label is required")
+        elif isinstance(label, str) and label.strip():
             stored_label = label.strip()
+        elif guide_text:
+            stored_label = "Setup Guide"
+        else:
+            raise ProjectError(path, f"links[{index}].label is required")
         url = item.get("url")
-        if not isinstance(url, str) or not url.strip():
-            raise ProjectError(path, f"links[{index}].url is required")
-        if not is_allowed_url(url):
+        url_text = str(url).strip() if isinstance(url, str) else ""
+        if not guide_text:
+            if not url_text:
+                raise ProjectError(path, f"links[{index}].url is required")
+            if not is_allowed_url(url_text):
+                raise ProjectError(
+                    path,
+                    f"links[{index}].url is not a supported URL: {quote_preview(url_text)}",
+                )
+        elif url_text and not is_allowed_url(url_text):
             raise ProjectError(
                 path,
-                f"links[{index}].url is not a supported URL: {quote_preview(url)}",
+                f"links[{index}].url is not a supported URL: {quote_preview(url_text)}",
             )
-        link = {"label": stored_label, "url": url.strip()}
-        guide = item.get("guide")
-        if guide is not None and str(guide).strip():
-            guide_text = str(guide).strip()
-            if not re.fullmatch(r"[A-Za-z0-9-]+", guide_text):
-                raise ProjectError(path, f"links[{index}].guide must be a slug")
+        link: dict = {"label": stored_label}
+        if url_text:
+            link["url"] = url_text
+        if guide_text:
             link["guide"] = guide_text
         icon = item.get("icon")
         if icon is not None and str(icon).strip():
             link["icon"] = str(icon).strip()
         links.append(link)
-    return links
+    enriched = enrich_guide_links(links)
+    return enriched or None
 
 
 def normalize_logo(value: object, path: Path) -> str | None:

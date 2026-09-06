@@ -132,13 +132,24 @@ class ProjectsParser {
     return /^[a-z0-9-]+$/i.test(value) ? value : '';
   }
 
+  currentLang() {
+    return (window.KolTiginI18n && window.KolTiginI18n.language) === 'tr' ? 'tr' : 'en';
+  }
+
+  guideShareHref(guideId) {
+    return `/guide/${this.currentLang()}/${encodeURIComponent(guideId)}/`;
+  }
+
   normalizeLinks(links) {
     if (!links) return [];
 
     const fromObject = (link) => {
       if (!link || typeof link !== 'object') return null;
+      const guide = typeof link.guide === 'string' && /^[a-z0-9-]+$/i.test(link.guide.trim())
+        ? link.guide.trim()
+        : '';
       const url = typeof link.url === 'string' ? link.url.trim() : '';
-      if (!url) return null;
+      if (!url && !guide) return null;
       const rawLabel = link.label;
       const label = rawLabel && typeof rawLabel === 'object'
         ? (rawLabel.en || rawLabel.tr || this.t('projects.links.link', null, 'Link'))
@@ -146,9 +157,6 @@ class ProjectsParser {
           ? rawLabel.trim()
           : this.t('projects.links.link', null, 'Link'));
       const icon = this.safeIonIcon(link.icon);
-      const guide = typeof link.guide === 'string' && /^[a-z0-9-]+$/i.test(link.guide.trim())
-        ? link.guide.trim()
-        : '';
       return { label: rawLabel && typeof rawLabel === 'object' ? rawLabel : label, url, icon, guide };
     };
 
@@ -179,6 +187,9 @@ class ProjectsParser {
 
   linkIcon(link) {
     const custom = this.safeIonIcon(link && link.icon);
+    if (link && link.guide) {
+      return `<ion-icon name="${this.escapeHtml(custom || 'document-text-outline')}"></ion-icon>`;
+    }
     const fallbacks = {
       Website: 'globe-outline',
       [this.t('projects.links.referral', null, 'Referral')]: 'person-add-outline',
@@ -221,10 +232,10 @@ class ProjectsParser {
           const isGuide = Boolean(link.guide);
           const isInternal = !isGuide && typeof link.url === 'string' && link.url.startsWith('#');
           const href = isGuide
-            ? `#/guides/${encodeURIComponent(link.guide)}`
+            ? this.escapeHtml(this.guideShareHref(link.guide))
             : this.escapeHtml(link.url);
           const attrs = isGuide
-            ? `data-guide="${this.escapeHtml(link.guide)}" data-guide-source="${this.escapeHtml(link.url)}"`
+            ? `data-guide="${this.escapeHtml(link.guide)}"`
             : (isInternal ? '' : 'target="_blank" rel="noopener noreferrer"');
           return `
           <li>
@@ -278,6 +289,8 @@ class ProjectsParser {
     this.container.addEventListener('click', (event) => {
       const link = event.target.closest('[data-guide]');
       if (!link) return;
+      const href = link.getAttribute('href') || '';
+      if (href.startsWith('/guide/')) return;
       event.preventDefault();
       if (window.guidesParser && typeof window.guidesParser.open === 'function') {
         window.guidesParser.open(link.dataset.guide, { sourceUrl: link.dataset.guideSource || '' });

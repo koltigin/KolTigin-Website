@@ -342,8 +342,7 @@
       summaryTr: '',
       referral_url: '',
       referral_code: '',
-      links: [],
-      guideId: ''
+      links: []
     };
   }
 
@@ -351,14 +350,15 @@
     const p = H().state.projectDraft;
     const app = document.getElementById('app');
     app.querySelectorAll('[data-pfield]').forEach((field) => { p[field.dataset.pfield] = field.value; });
-    p.links = [];
+    const guideLinks = (p.links || []).filter((link) => link && link.guide);
+    const manual = [];
     app.querySelectorAll('[data-plink]').forEach((row) => {
-      p.links.push({
+      manual.push({
         label: { en: row.querySelector('[data-plabel-en]').value, tr: row.querySelector('[data-plabel-tr]').value },
-        url: row.querySelector('[data-purl]').value,
-        guide: row.querySelector('[data-pguide]') ? row.querySelector('[data-pguide]').value : ''
+        url: row.querySelector('[data-purl]').value
       });
     });
+    p.links = [...guideLinks, ...manual];
   }
 
   function renderProjectEditor() {
@@ -366,18 +366,35 @@
     const cats = (H().state.projectsData && H().state.projectsData.categories) || [];
     const guides = H().state.guidesData || [];
     const heading = p.id && p.fromCategory ? t('writings.edit') : t('cms.newProject');
-    const links = (p.links || []).map((link, index) => {
+    const guideLinks = (p.links || []).filter((link) => link && link.guide);
+    const manualLinks = (p.links || []).filter((link) => !(link && link.guide));
+    const links = manualLinks.map((link, index) => {
       const labels = linkLabelParts(link.label);
       return `
         <article class="social-row" data-plink>
           <div class="field"><label>${esc(t('cms.labelEn'))}</label><input data-plabel-en type="text" value="${esc(labels.en)}"></div>
           <div class="field"><label>${esc(t('cms.labelTr'))}</label><input data-plabel-tr type="text" value="${esc(labels.tr)}"></div>
           <div class="field"><label>URL</label><input data-purl type="url" value="${esc(link.url || '')}"></div>
-          <input data-pguide type="hidden" value="${esc(link.guide || '')}">
           <div class="item-actions">
             <button class="btn btn-ghost" type="button" data-plink-up="${index}">${esc(t('social.up'))}</button>
             <button class="btn btn-ghost" type="button" data-plink-down="${index}">${esc(t('social.down'))}</button>
             <button class="btn btn-ghost" type="button" data-plink-remove="${index}">${esc(t('social.remove'))}</button>
+          </div>
+        </article>`;
+    }).join('');
+    const linkedGuides = guideLinks.map((link) => {
+      const g = guides.find((item) => item.id === link.guide) || {};
+      const title = H().uiLang() === 'tr'
+        ? (g.titleTr || g.titleEn || link.guide)
+        : (g.titleEn || g.titleTr || link.guide);
+      const enMark = g.existsEn ? 'EN ✓' : 'EN —';
+      const trMark = g.existsTr ? 'TR ✓' : 'TR —';
+      return `
+        <article class="social-row">
+          <p><strong>${esc(title)}</strong></p>
+          <p class="hint">${esc(enMark)} · ${esc(trMark)}</p>
+          <div class="item-actions">
+            <button class="btn btn-ghost" type="button" data-go="#/edit/guides/${esc(link.guide)}">${esc(t('writings.editBtn'))}</button>
           </div>
         </article>`;
     }).join('');
@@ -390,7 +407,6 @@
         <p>${esc(H().uiLang() === 'tr' ? p.summaryTr : p.summaryEn)}</p>
         <p class="hint">${(p.links || []).map((link) => linkLabelParts(link.label).en).join(' · ')}</p>
         ${p.referral_code ? `<p>${esc(p.referral_code)}</p>` : ''}
-        ${p.guideId ? `<p class="pill gold">${esc(p.guideId)}</p>` : ''}
       </div>`;
     document.getElementById('app').innerHTML = H().layout(heading, `
       <form data-project-editor>
@@ -415,18 +431,12 @@
         <div class="field"><label>${esc(t('cms.summaryEn'))}</label><textarea data-pfield="summaryEn">${esc(p.summaryEn)}</textarea></div>
         <div class="field"><label>${esc(t('cms.summaryTr'))}</label><textarea data-pfield="summaryTr">${esc(p.summaryTr)}</textarea></div>
         <h3 class="section-label">${esc(t('nav.guides'))}</h3>
-        <div class="field">
-          <label>${esc(t('cms.relatedProject'))}</label>
-          <select data-pfield="guideId">
-            <option value="">${esc(t('cms.none'))}</option>
-            ${guides.map((g) => `<option value="${esc(g.id)}" ${p.guideId === g.id ? 'selected' : ''}>${esc(g.titleEn || g.id)}</option>`).join('')}
-          </select>
-        </div>
+        <p class="hint">${esc(t('cms.guidesManagedHint'))}</p>
+        ${linkedGuides || `<p class="hint">${esc(t('cms.noLinkedGuides'))}</p>`}
         <div class="row-actions">
           <button class="btn btn-ghost" type="button" data-go="#/new/guides">${esc(t('cms.newGuide'))}</button>
-          ${p.guideId ? `<button class="btn btn-ghost" type="button" data-go="#/edit/guides/${esc(p.guideId)}">${esc(t('writings.editBtn'))}</button>` : ''}
         </div>
-        <h3 class="section-label">Links</h3>
+        <h3 class="section-label">${esc(t('cms.links'))}</h3>
         ${links}
         <button class="btn btn-ghost" type="button" data-add-plink>${esc(t('cms.addLink'))}</button>
         <div class="field"><label>${esc(t('cms.referralUrl'))}</label><input data-pfield="referral_url" type="url" value="${esc(p.referral_url)}"></div>
@@ -453,7 +463,6 @@
     if (!rec) throw new Error('Project not found');
     const role = rec.role && typeof rec.role === 'object' ? rec.role : { en: rec.role || '', tr: rec.role || '' };
     const summary = rec.summary || {};
-    const guideId = (rec.links || []).map((link) => link.guide).find(Boolean) || '';
     H().state.projectDraft = {
       id: rec.id,
       slug: rec.slug,
@@ -469,8 +478,7 @@
       summaryTr: summary.tr || '',
       referral_url: rec.referral_url || '',
       referral_code: rec.referral_code || '',
-      links: rec.links || [],
-      guideId
+      links: rec.links || []
     };
     H().clearDirty();
     renderProjectEditor();
@@ -481,14 +489,7 @@
     const p = H().state.projectDraft;
     H().clearStatus();
     try {
-      const links = (p.links || []).filter((link) => (link.url || '').trim());
-      if (p.guideId) {
-        const without = links.filter((link) => !link.guide);
-        without.push({ label: { en: 'Setup Guide', tr: 'Kurulum Rehberi' }, url: `#/guides/${p.guideId}`, guide: p.guideId });
-        p.links = without;
-      } else {
-        p.links = links.filter((link) => !link.guide);
-      }
+      const links = (p.links || []).filter((link) => (link.url || '').trim() && !link.guide);
       const result = await H().api('/admin/api/project-save', {
         method: 'POST',
         body: JSON.stringify({
@@ -502,7 +503,7 @@
           former_name: p.former_name,
           logo: p.logo,
           summary: { en: p.summaryEn, tr: p.summaryTr },
-          links: p.links,
+          links: links,
           referral_url: p.referral_url,
           referral_code: p.referral_code
         })
@@ -879,26 +880,39 @@
       }
       const up = event.target.closest('[data-plink-up]');
       if (up) {
+        event.preventDefault();
         collectProjectForm();
         const i = Number(up.dataset.plinkUp);
-        const list = H().state.projectDraft.links;
-        if (i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+        const draft = H().state.projectDraft;
+        const guides = (draft.links || []).filter((link) => link && link.guide);
+        const manual = (draft.links || []).filter((link) => !(link && link.guide));
+        if (i > 0) [manual[i - 1], manual[i]] = [manual[i], manual[i - 1]];
+        draft.links = [...guides, ...manual];
         renderProjectEditor();
         return;
       }
       const down = event.target.closest('[data-plink-down]');
       if (down) {
+        event.preventDefault();
         collectProjectForm();
         const i = Number(down.dataset.plinkDown);
-        const list = H().state.projectDraft.links;
-        if (i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+        const draft = H().state.projectDraft;
+        const guides = (draft.links || []).filter((link) => link && link.guide);
+        const manual = (draft.links || []).filter((link) => !(link && link.guide));
+        if (i < manual.length - 1) [manual[i + 1], manual[i]] = [manual[i], manual[i + 1]];
+        draft.links = [...guides, ...manual];
         renderProjectEditor();
         return;
       }
       const rm = event.target.closest('[data-plink-remove]');
       if (rm) {
+        event.preventDefault();
         collectProjectForm();
-        H().state.projectDraft.links.splice(Number(rm.dataset.plinkRemove), 1);
+        const draft = H().state.projectDraft;
+        const guides = (draft.links || []).filter((link) => link && link.guide);
+        const manual = (draft.links || []).filter((link) => !(link && link.guide));
+        manual.splice(Number(rm.dataset.plinkRemove), 1);
+        draft.links = [...guides, ...manual];
         renderProjectEditor();
         return;
       }

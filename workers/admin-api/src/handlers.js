@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, projectMarkdownId, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -352,11 +352,18 @@ export async function handleProjectSave(body, github) {
     if (!enSum || !trSum) throw new HttpError(400, "Summary needs both English and Turkish");
     data.summary = { en: enSum, tr: trSum };
   }
+  const dest = projectMdPath(cat.folder, slug);
+  const fromCat = cats.find((item) => item.id === fromCategory) || cat;
+  const src = projectMdPath(fromCat.folder, slug);
+  let existingMd = "";
+  if (await github.exists(src)) existingMd = await github.getText(src);
+  else if (src !== dest && (await github.exists(dest))) existingMd = await github.getText(dest);
   const links = [];
   for (const [index, raw] of (Array.isArray(body.links) ? body.links : []).entries()) {
     if (!raw || typeof raw !== "object") continue;
+    if (String(raw.guide || "").trim()) continue;
     const url = String(raw.url || "").trim();
-    if (!url) throw new HttpError(400, `Link ${index + 1} needs a URL`);
+    if (!url) continue;
     if (!allowedLinkUrl(url)) throw new HttpError(400, `Link ${index + 1} URL is not allowed`);
     let storedLabel;
     if (raw.label && typeof raw.label === "object") {
@@ -368,22 +375,18 @@ export async function handleProjectSave(body, github) {
       storedLabel = String(raw.label || "").trim();
       if (!storedLabel) throw new HttpError(400, `Link ${index + 1} needs a label`);
     }
-    const link = { label: storedLabel, url };
-    const guide = String(raw.guide || "").trim();
-    if (guide) {
-      if (!ID_RE.test(guide)) throw new HttpError(400, "Guide id is invalid");
-      link.guide = guide;
-    }
-    links.push(link);
+    links.push({ label: storedLabel, url });
   }
-  if (links.length) data.links = links;
+  const guideLinks = extractGuideIdsFromMarkdown(existingMd).map((guide) => ({
+    label: "Setup Guide",
+    guide
+  }));
+  const mergedLinks = [...links, ...guideLinks];
+  if (mergedLinks.length) data.links = mergedLinks;
   const referralUrl = String(body.referral_url || body.referralUrl || "").trim();
   const referralCode = String(body.referral_code || body.referralCode || "").trim();
   if (referralUrl) data.referral_url = referralUrl;
   if (referralCode) data.referral_code = referralCode;
-  const dest = projectMdPath(cat.folder, slug);
-  const fromCat = cats.find((item) => item.id === fromCategory) || cat;
-  const src = projectMdPath(fromCat.folder, slug);
   const deletes = src !== dest && (await github.exists(src)) ? [src] : [];
   const json = applyProjectJson(
     await readJson(github, "projects/projects.json", {}),
@@ -406,9 +409,11 @@ export async function handleGuideSave(body, github) {
   const id = slugify(body.id);
   const lang = String(body.lang || "");
   let markdown = String(body.markdown || "");
+  const projectId = String(body.projectId || "").trim();
   if (!ID_RE.test(id)) throw new HttpError(400, "Could not derive a guide id");
   if (RESERVED_GUIDE_IDS.has(id)) throw new HttpError(400, "That guide id is reserved");
   if (lang !== "en" && lang !== "tr") throw new HttpError(400, "Language must be en or tr");
+  if (projectId && !ID_RE.test(projectId)) throw new HttpError(400, "Invalid project id");
   if ("cover" in body) markdown = applyGuideCover(markdown, body.cover);
   const path = guidePath(id, lang);
   const text = markdown.endsWith("\n") ? markdown : `${markdown}\n`;
@@ -423,6 +428,30 @@ export async function handleGuideSave(body, github) {
   }
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id });
   upserts.push({ path: "guides/index.json", text: pretty(index) });
+  const projectFiles = (await github.listPrefix("content/projects/")).filter((item) => {
+    const name = item.split("/").pop() || "";
+    return item.endsWith(".md") && !name.startsWith("_");
+  });
+  const markdownByPath = {};
+  for (const projectPath of projectFiles) {
+    markdownByPath[projectPath] = await github.getText(projectPath);
+  }
+  if (projectId) {
+    const known = projectFiles.some((projectPath) => projectMarkdownId(markdownByPath[projectPath], projectPath) === projectId);
+    if (!known) throw new HttpError(400, "Unknown project");
+  }
+  for (const [projectPath, current] of Object.entries(markdownByPath)) {
+    let next = stripGuideFromProjectMarkdown(current, id);
+    if (projectId && projectMarkdownId(current, projectPath) === projectId) {
+      next = attachGuideToProjectMarkdown(next, id);
+    }
+    if (next !== current) upserts.push({ path: projectPath, text: next.endsWith("\n") ? next : `${next}\n` });
+  }
+  let projectsJson = await readJson(github, "projects/projects.json", {});
+  const nextJson = attachGuideToProjectsJson(projectsJson, projectId, id);
+  if (nextJson.changed) {
+    upserts.push({ path: "projects/projects.json", text: pretty(nextJson.data) });
+  }
   const result = await github.commit({
     message: commitMsg("save guide", `${id}/${lang}`),
     upserts

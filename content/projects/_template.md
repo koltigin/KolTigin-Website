@@ -24,8 +24,10 @@ summary:
   en: One or two sentences in English.
   tr: Bir veya iki cümle Türkçe.
 
-# Optional. Repeat the block for each button. Keep label + url.
-# Use guide: folder-id for in-site setup guides.
+# Optional. Repeat the block for each button. Keep label + url for normal links.
+# Guide buttons are created by setting Linked Project on the Guide, not by pasting a share URL.
+# - label: Setup Guide
+#   guide: example-guide
 links:
   - label: Website
     url: https://example.com

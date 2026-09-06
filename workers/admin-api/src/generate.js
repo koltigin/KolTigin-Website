@@ -86,7 +86,9 @@ function isGuideLink(link, guideId) {
   if (!link || typeof link !== "object") return false;
   if (String(link.guide || "") === guideId) return true;
   const url = String(link.url || "");
-  return url === `#/guides/${guideId}` || url.endsWith(`#/guides/${guideId}`);
+  if (url === `#/guides/${guideId}` || url.endsWith(`#/guides/${guideId}`)) return true;
+  const escaped = String(guideId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|/)guide/(?:en|tr)/${escaped}/?(?:[?#].*)?$`).test(url);
 }
 
 export function stripGuideFromProjectsJson(json, guideId) {
@@ -112,16 +114,16 @@ export function stripGuideFromProjectMarkdown(text, guideId) {
   if (!id) return raw;
   const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const guideRe = new RegExp(`^\\s*guide:\\s*['"]?${escaped}['"]?\\s*$`);
-  const urlRe = new RegExp(`^\\s*url:\\s*['"]?#/guides/${escaped}['"]?\\s*$`);
+  const urlRe = new RegExp(`^\\s*url:\\s*['"]?(?:#/guides/${escaped}|/guide/(?:en|tr)/${escaped}/?)['"]?\\s*$`);
   const lines = raw.split("\n");
   const out = [];
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    if (/^-\s/.test(line)) {
+    if (/^\s*-\s/.test(line)) {
       const item = [line];
       i += 1;
-      while (i < lines.length && /^  /.test(lines[i])) {
+      while (i < lines.length && /^ +/.test(lines[i]) && !/^\s*-\s/.test(lines[i])) {
         item.push(lines[i]);
         i += 1;
       }
@@ -133,6 +135,62 @@ export function stripGuideFromProjectMarkdown(text, guideId) {
     i += 1;
   }
   return out.join("\n");
+}
+
+export function projectMarkdownId(text, path = "") {
+  const match = String(text || "").match(/^id:\s*['"]?([A-Za-z0-9-]+)['"]?\s*$/m);
+  if (match) return match[1];
+  const base = String(path).split("/").pop() || "";
+  return base.replace(/\.md$/i, "");
+}
+
+export function extractGuideIdsFromMarkdown(text) {
+  const ids = [];
+  for (const line of String(text || "").split("\n")) {
+    const match = line.match(/^\s*guide:\s*['"]?([A-Za-z0-9-]+)['"]?\s*$/);
+    if (match && !ids.includes(match[1])) ids.push(match[1]);
+  }
+  return ids;
+}
+
+export function attachGuideToProjectMarkdown(text, guideId) {
+  const id = String(guideId || "");
+  const raw = stripGuideFromProjectMarkdown(text, id);
+  if (!id) return raw;
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (new RegExp(`^\\s*guide:\\s*['"]?${escaped}['"]?\\s*$`, "m").test(raw)) return raw;
+  const blockLines = [`  - label: Setup Guide`, `    guide: ${id}`];
+  const parts = String(raw || "").split("\n");
+  if (parts[0] !== "---") {
+    return `---\nlinks:\n${blockLines.join("\n")}\n---\n${raw}`;
+  }
+  let end = parts.indexOf("---", 1);
+  if (end === -1) end = parts.length;
+  const fm = parts.slice(1, end);
+  const linksIdx = fm.findIndex((line) => /^links:\s*$/.test(line));
+  if (linksIdx >= 0) fm.splice(linksIdx + 1, 0, ...blockLines);
+  else fm.push("links:", ...blockLines);
+  return ["---", ...fm, "---", ...parts.slice(end + 1)].join("\n");
+}
+
+export function attachGuideToProjectsJson(json, projectId, guideId) {
+  const stripped = stripGuideFromProjectsJson(json, guideId);
+  const data = stripped.data;
+  if (!projectId) return { data, changed: stripped.changed };
+  let changed = stripped.changed;
+  for (const key of Object.keys(data)) {
+    if (!Array.isArray(data[key])) continue;
+    for (const item of data[key]) {
+      if (!item || item.id !== projectId) continue;
+      const links = Array.isArray(item.links) ? item.links.slice() : [];
+      if (!links.some((link) => isGuideLink(link, guideId))) {
+        links.push({ label: "Setup Guide", guide: guideId });
+        item.links = links;
+        changed = true;
+      }
+    }
+  }
+  return { data, changed };
 }
 
 export function projectNameSortKey(name) {

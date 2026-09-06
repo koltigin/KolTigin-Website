@@ -273,6 +273,15 @@ def list_guides() -> list[dict]:
     return guides
 
 
+def _is_project_guide_link(link: dict, guide_id: str) -> bool:
+    if str(link.get("guide") or "") == guide_id:
+        return True
+    url = str(link.get("url") or "")
+    if url == f"#/guides/{guide_id}" or url.endswith(f"#/guides/{guide_id}"):
+        return True
+    return f"/guide/en/{guide_id}" in url or f"/guide/tr/{guide_id}" in url
+
+
 def strip_guide_from_projects(guide_id: str) -> list[str]:
     changed = []
     for path in PROJECTS_ROOT.rglob("*.md"):
@@ -288,7 +297,7 @@ def strip_guide_from_projects(guide_id: str) -> list[str]:
         next_links = []
         dirty = False
         for link in links:
-            if isinstance(link, dict) and str(link.get("guide") or "") == guide_id:
+            if isinstance(link, dict) and _is_project_guide_link(link, guide_id):
                 dirty = True
                 continue
             next_links.append(link)
@@ -303,7 +312,7 @@ def strip_guide_from_projects(guide_id: str) -> list[str]:
     return changed
 
 
-def set_project_guide(project_id: str, guide_id: str | None) -> None:
+def attach_guide_to_project(project_id: str, guide_id: str) -> None:
     records = [item for item in list_project_records() if item["id"] == project_id]
     if not records:
         raise ValueError("Unknown project")
@@ -311,14 +320,19 @@ def set_project_guide(project_id: str, guide_id: str | None) -> None:
     path = ROOT / rec["path"]
     data = parse_project_file(path)
     links = list(data.get("links") or [])
-    links = [link for link in links if not (isinstance(link, dict) and link.get("guide"))]
-    if guide_id:
-        links.append({"label": "Setup Guide", "url": f"#/guides/{guide_id}", "guide": guide_id})
-    if links:
-        data["links"] = links
-    else:
-        data.pop("links", None)
+    if any(isinstance(link, dict) and str(link.get("guide") or "") == guide_id for link in links):
+        return
+    links.append({"label": "Setup Guide", "guide": guide_id})
+    data["links"] = links
     path.write_text("---\n" + dump_project_yaml(data) + "---\n", encoding="utf-8")
+
+
+def set_project_guide(project_id: str, guide_id: str | None) -> None:
+    if guide_id:
+        strip_guide_from_projects(guide_id)
+        attach_guide_to_project(project_id, guide_id)
+        return
+    strip_guide_from_projects(guide_id or "")
 
 
 def map_embed_url(query: str, lang: str = "en") -> str:
@@ -709,21 +723,15 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
         if "cover" in body:
             stub = apply_guide_cover(stub, body.get("cover"))
         sibling.write_text(stub if stub.endswith("\n") else stub + "\n", encoding="utf-8")
-    if project_id:
-        try:
-            set_project_guide(project_id, item_id)
-        except ValueError as exc:
-            return json_error(handler, HTTPStatus.BAD_REQUEST, str(exc))
-        try:
-            log = regenerate_projects()
-        except RuntimeError as exc:
-            return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
-    else:
-        changed = strip_guide_from_projects(item_id)
-        try:
-            log = regenerate_projects() if changed else ""
-        except RuntimeError as exc:
-            return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
+    try:
+        strip_guide_from_projects(item_id)
+        if project_id:
+            attach_guide_to_project(project_id, item_id)
+        log = regenerate_projects()
+    except ValueError as exc:
+        return json_error(handler, HTTPStatus.BAD_REQUEST, str(exc))
+    except RuntimeError as exc:
+        return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
     write_guides_index()
     try:
         share_log = regenerate_share()

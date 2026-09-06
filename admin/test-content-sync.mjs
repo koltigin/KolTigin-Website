@@ -114,6 +114,8 @@ assert(saveVideoFn.includes("await api('/admin/api/save'") && saveVideoFn.indexO
 
 assert(cmsSrc.includes("adoptGuides") && cmsSrc.includes("upsertById"), "guide create/list uses the same overlay lifecycle");
 assert(cmsSrc.includes("adoptProjects") && cmsSrc.includes("upsertById"), "project create/list uses the same overlay lifecycle");
+assert(cmsSrc.includes("cms.guidesManagedHint"), "project editor shows managed Guides instead of a URL field");
+assert(!cmsSrc.includes('data-pfield="guideId"'), "project editor does not manage Guide relationships via a single select");
 assert(staticSrc.includes("invalidate"), "static source cache can be cleared so saves are not pinned to one stale index");
 
 if (failed) {

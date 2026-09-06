@@ -1,7 +1,7 @@
 import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
-import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, writingShareArtifacts } from "../src/generate.js";
+import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover } from "../src/markdown.js";
 import { HttpError } from "../src/util.js";
 import { readFileSync } from "node:fs";
@@ -29,7 +29,8 @@ function seed() {
       ]
     }, null, 2) + "\n",
     "config/project-categories.json": JSON.stringify([
-      { id: "mainnet", folder: "mainnet", order: 1, protected: true, label: { en: "Mainnet", tr: "Mainnet" } }
+      { id: "mainnet", folder: "mainnet", order: 1, protected: true, label: { en: "Mainnet", tr: "Mainnet" } },
+      { id: "depin", folder: "depin", order: 2, label: { en: "DePIN", tr: "DePIN" } }
     ], null, 2) + "\n",
     "content/index.json": JSON.stringify({
       types: [],
@@ -38,7 +39,25 @@ function seed() {
       social: { en: [], tr: [] },
       videos: []
     }, null, 2) + "\n",
-    "projects/projects.json": JSON.stringify({ mainnet: [] }, null, 2) + "\n",
+    "projects/projects.json": JSON.stringify({
+      mainnet: [],
+      depin: [{
+        id: "optimai",
+        name: "OptimAI",
+        status: "active",
+        links: [{ label: "Website", url: "https://optimai.network" }]
+      }]
+    }, null, 2) + "\n",
+    "content/projects/depin/optimai.md": `---
+name: OptimAI
+category: depin
+status: active
+id: optimai
+links:
+- label: Website
+  url: https://optimai.network
+---
+`,
     "guides/index.json": JSON.stringify({ guides: [] }, null, 2) + "\n",
     "i18n/en.json": JSON.stringify({ contact: { title: "Contact", submit: "Send" } }, null, 2) + "\n",
     "i18n/tr.json": JSON.stringify({ contact: { title: "İletişim", submit: "Gönder" } }, null, 2) + "\n",
@@ -101,6 +120,23 @@ async function main() {
       indexIds: ["aioz-depin"],
       markdownById: { "aioz-depin": { en: "", tr: "" } }
     }).includes("aioz-depin"), "orphan slug without sources is not listed");
+    const attached = attachGuideToProjectMarkdown(`---
+name: OptimAI
+links:
+- label: Website
+  url: https://optimai.network
+---
+`, "optimai-cli-node-setup-guide-ubuntu-24-04-vps");
+    assert(attached.includes("guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps"), "attach writes guide id into project markdown");
+    assert(!/url:\s*.*guide\//.test(attached), "attached guide has no share URL");
+    const attachedJson = attachGuideToProjectsJson({
+      depin: [{ id: "optimai", links: [{ label: "Website", url: "https://optimai.network" }] }],
+      mainnet: [{ id: "ario", links: [{ label: "Website", url: "https://ar.io" }] }]
+    }, "optimai", "optimai-cli-node-setup-guide-ubuntu-24-04-vps");
+    assert(attachedJson.data.depin[0].links.some((link) => link.guide === "optimai-cli-node-setup-guide-ubuntu-24-04-vps" && !link.url), "projects.json stores guide id without URL");
+    const reassigned = attachGuideToProjectsJson(attachedJson.data, "ario", "optimai-cli-node-setup-guide-ubuntu-24-04-vps");
+    assert(!(reassigned.data.depin[0].links || []).some((link) => link.guide), "reassignment removes old project json relationship");
+    assert((reassigned.data.mainnet[0].links || []).some((link) => link.guide === "optimai-cli-node-setup-guide-ubuntu-24-04-vps"), "reassignment attaches the new project");
     const strippedMd = stripGuideFromProjectMarkdown(`---
 links:
 - label: Website
@@ -111,6 +147,18 @@ links:
 ---
 `, "aioz-depin");
     assert(strippedMd.includes("https://aioz.network") && !strippedMd.includes("guide: aioz-depin"), "project markdown strip keeps other links");
+    const dumpedStrip = stripGuideFromProjectMarkdown(`---
+name: OptimAI
+links:
+  -     label: Website
+    url: "https://optimai.network"
+  -     label: "Setup Guide"
+    guide: keep-me
+  -     label: "Setup Guide"
+    guide: drop-me
+---
+`, "drop-me");
+    assert(dumpedStrip.includes("guide: keep-me") && !dumpedStrip.includes("guide: drop-me") && dumpedStrip.includes("https://optimai.network"), "indented project YAML strip removes only the target Guide");
     const strippedJson = stripGuideFromProjectsJson({
       depin: [{ id: "aioz-depin", links: [{ label: "Website", url: "https://aioz.network" }, { guide: "aioz-depin", url: "#/guides/aioz-depin" }] }]
     }, "aioz-depin");
@@ -180,6 +228,83 @@ links:
     assert(res.status === 200 && res.body.id === "ario", "save project");
     const projects = JSON.parse(github.files.get("projects/projects.json"));
     assert(projects.mainnet.some((item) => item.id === "ario"), "projects.json updated in same commit");
+
+    assert(projects.mainnet.some((item) => item.id === "ario"), "projects.json updated in same commit");
+
+    const OPTIMAI_GUIDE = "optimai-cli-node-setup-guide-ubuntu-24-04-vps";
+    res = await json(await post("/api/admin/guide-save", {
+      id: "missing-project-guide", lang: "en", markdown: "# Nope\n", projectId: "does-not-exist"
+    }, env));
+    assert(res.status === 400, "unknown Linked Project is rejected");
+    res = await json(await post("/api/admin/guide-save", {
+      id: OPTIMAI_GUIDE,
+      lang: "en",
+      markdown: "# OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS\n",
+      projectId: "optimai"
+    }, env));
+    assert(res.status === 200, "save guide linked to OptimAI");
+    assert(String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "OptimAI markdown stores the Guide id");
+    assert(!/url:\s*['"]?https?:\/\/.*guide/.test(String(github.files.get("content/projects/depin/optimai.md"))), "no absolute Guide share URL is stored");
+    let liveProjects = JSON.parse(github.files.get("projects/projects.json"));
+    let liveOptimai = liveProjects.depin.find((item) => item.id === "optimai");
+    assert((liveOptimai.links || []).some((link) => link.guide === OPTIMAI_GUIDE && !link.url), "generated projects.json links OptimAI without a share URL");
+    res = await json(await post("/api/admin/guide-save", {
+      id: OPTIMAI_GUIDE,
+      lang: "tr",
+      markdown: "# OptimAI CLI Node Kurulum Rehberi — Ubuntu 24.04 VPS\n",
+      projectId: "optimai"
+    }, env));
+    assert(res.status === 200, "TR save keeps the OptimAI relationship");
+    res = await json(await post("/api/admin/project-save", {
+      id: "optimai",
+      name: "OptimAI",
+      category: "depin",
+      status: "active",
+      summary: { en: "Decentralized AI.", tr: "Merkeziyetsiz yapay zeka." },
+      links: [{ label: "Website", url: "https://optimai.network" }],
+      referral_url: "https://node.optimai.network/register?ref=18ADBAE8",
+      referral_code: "18ADBAE8"
+    }, env));
+    assert(res.status === 200, "project save still works with a linked Guide");
+    assert(String(github.files.get("content/projects/depin/optimai.md")).includes("https://optimai.network"), "manual Website link remains");
+    assert(String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "project editor save does not drop the Guide relationship");
+    res = await json(await post("/api/admin/guide-save", {
+      id: "second-optimai-guide", lang: "en", markdown: "# Second OptimAI Guide\n", projectId: "optimai"
+    }, env));
+    assert(res.status === 200, "second Guide can link to the same project");
+    liveProjects = JSON.parse(github.files.get("projects/projects.json"));
+    liveOptimai = liveProjects.depin.find((item) => item.id === "optimai");
+    assert((liveOptimai.links || []).filter((link) => link.guide).length >= 2, "multiple Guides can be associated with one Project");
+    res = await json(await post("/api/admin/guide-save", {
+      id: OPTIMAI_GUIDE,
+      lang: "en",
+      markdown: "# OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS\n",
+      projectId: "ario"
+    }, env));
+    assert(res.status === 200, "reassign Linked Project");
+    assert(!String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "reassignment removes OptimAI relationship");
+    assert(String(github.files.get("content/projects/depin/optimai.md")).includes("guide: second-optimai-guide"), "other OptimAI Guides remain");
+    assert(String(github.files.get("content/projects/mainnet/ario.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "reassignment establishes ARO relationship");
+    res = await json(await post("/api/admin/guide-save", {
+      id: OPTIMAI_GUIDE,
+      lang: "en",
+      markdown: "# OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS\n",
+      projectId: ""
+    }, env));
+    assert(res.status === 200, "Linked Project none");
+    assert(!String(github.files.get("content/projects/mainnet/ario.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "none removes the project relationship");
+    liveProjects = JSON.parse(github.files.get("projects/projects.json"));
+    assert(!(liveProjects.mainnet.find((item) => item.id === "ario").links || []).some((link) => link.guide === OPTIMAI_GUIDE), "none removes generated ARO guide link");
+    res = await json(await post("/api/admin/guide-save", {
+      id: OPTIMAI_GUIDE, lang: "en", markdown: "# OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS\n", projectId: "optimai"
+    }, env));
+    assert(res.status === 200, "relink OptimAI for delete test");
+    res = await json(await post("/api/admin/guide-delete", { id: OPTIMAI_GUIDE }, env));
+    assert(res.status === 200, "delete linked OptimAI guide");
+    assert(!String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "guide deletion removes project relationship");
+    liveProjects = JSON.parse(github.files.get("projects/projects.json"));
+    liveOptimai = liveProjects.depin.find((item) => item.id === "optimai");
+    assert(!(liveOptimai.links || []).some((link) => link.guide === OPTIMAI_GUIDE), "deleted Guide never remains on the project json");
 
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n" }, env));
     assert(res.status === 200, "save guide");

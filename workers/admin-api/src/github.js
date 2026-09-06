@@ -29,6 +29,8 @@ export class MockGitHub {
   }
 
   async getText(path) {
+    this.getTextCalls = this.getTextCalls || [];
+    this.getTextCalls.push(path);
     const value = this.files.get(path);
     if (value == null) throw new HttpError(404, "File not found");
     return typeof value === "string" ? value : new TextDecoder().decode(value);
@@ -41,10 +43,14 @@ export class MockGitHub {
   }
 
   async exists(path) {
+    this.existsCalls = this.existsCalls || [];
+    this.existsCalls.push(path);
     return this.files.has(path);
   }
 
   async listPrefix(prefix) {
+    this.listPrefixCalls = this.listPrefixCalls || [];
+    this.listPrefixCalls.push(prefix);
     return this.listPaths().filter((path) => path === prefix || path.startsWith(prefix));
   }
 

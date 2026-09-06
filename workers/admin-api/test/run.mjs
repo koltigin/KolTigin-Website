@@ -3,7 +3,7 @@ import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
 import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover } from "../src/markdown.js";
-import { HttpError } from "../src/util.js";
+import { HttpError, safeExceptionDetail } from "../src/util.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -96,6 +96,26 @@ function assert(cond, msg) {
 
 async function json(response) {
   return { status: response.status, body: await response.json() };
+}
+
+function projectMarkdownReads(github) {
+  return (github.getTextCalls || []).filter((path) => path.startsWith("content/projects/") && path.endsWith(".md"));
+}
+
+function resetGithubCalls(github) {
+  github.getTextCalls = [];
+  github.existsCalls = [];
+  github.listPrefixCalls = [];
+}
+
+function estimateWorkerSubrequests(github) {
+  const getTexts = (github.getTextCalls || []).length;
+  const exists = (github.existsCalls || []).length;
+  const lists = (github.listPrefixCalls || []).length * 3;
+  const commit = github.commits.at(-1) || { upserts: [], deletes: [] };
+  const upserts = (commit.upserts || []).length;
+  const deletes = (commit.deletes || []).length;
+  return getTexts + exists + lists + 2 + upserts + upserts + deletes + 4;
 }
 
 async function main() {
@@ -236,6 +256,7 @@ links:
       id: "missing-project-guide", lang: "en", markdown: "# Nope\n", projectId: "does-not-exist"
     }, env));
     assert(res.status === 400, "unknown Linked Project is rejected");
+    resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-save", {
       id: OPTIMAI_GUIDE,
       lang: "en",
@@ -243,11 +264,15 @@ links:
       projectId: "optimai"
     }, env));
     assert(res.status === 200, "save guide linked to OptimAI");
+    assert(projectMarkdownReads(github).length === 1, "new Guide None→OptimAI fetches one project Markdown file");
+    assert(projectMarkdownReads(github).every((path) => path.endsWith("/optimai.md")), "new Guide only reads the selected project Markdown");
+    assert(estimateWorkerSubrequests(github) < 40, "new Guide save stays under the Cloudflare subrequest budget");
     assert(String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "OptimAI markdown stores the Guide id");
     assert(!/url:\s*['"]?https?:\/\/.*guide/.test(String(github.files.get("content/projects/depin/optimai.md"))), "no absolute Guide share URL is stored");
     let liveProjects = JSON.parse(github.files.get("projects/projects.json"));
     let liveOptimai = liveProjects.depin.find((item) => item.id === "optimai");
     assert((liveOptimai.links || []).some((link) => link.guide === OPTIMAI_GUIDE && !link.url), "generated projects.json links OptimAI without a share URL");
+    resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-save", {
       id: OPTIMAI_GUIDE,
       lang: "tr",
@@ -255,6 +280,9 @@ links:
       projectId: "optimai"
     }, env));
     assert(res.status === 200, "TR save keeps the OptimAI relationship");
+    assert(projectMarkdownReads(github).length === 1, "OptimAI→OptimAI fetches project Markdown once");
+    assert((String(github.files.get("content/projects/depin/optimai.md")).match(new RegExp(`guide:\\s*${OPTIMAI_GUIDE}`, "g")) || []).length === 1, "same-project save keeps the Guide relationship exactly once");
+    assert(estimateWorkerSubrequests(github) < 40, "same-project Guide save stays under the Cloudflare subrequest budget");
     res = await json(await post("/api/admin/project-save", {
       id: "optimai",
       name: "OptimAI",
@@ -275,6 +303,7 @@ links:
     liveProjects = JSON.parse(github.files.get("projects/projects.json"));
     liveOptimai = liveProjects.depin.find((item) => item.id === "optimai");
     assert((liveOptimai.links || []).filter((link) => link.guide).length >= 2, "multiple Guides can be associated with one Project");
+    resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-save", {
       id: OPTIMAI_GUIDE,
       lang: "en",
@@ -282,9 +311,15 @@ links:
       projectId: "ario"
     }, env));
     assert(res.status === 200, "reassign Linked Project");
+    const reassignReads = [...new Set(projectMarkdownReads(github))];
+    assert(reassignReads.length === 2, "reassignment fetches only old and new project Markdown");
+    assert(reassignReads.some((path) => path.endsWith("/optimai.md")) && reassignReads.some((path) => path.endsWith("/ario.md")), "reassignment mutates OptimAI and ARO files only");
     assert(!String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "reassignment removes OptimAI relationship");
     assert(String(github.files.get("content/projects/depin/optimai.md")).includes("guide: second-optimai-guide"), "other OptimAI Guides remain");
     assert(String(github.files.get("content/projects/mainnet/ario.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "reassignment establishes ARO relationship");
+    assert(String(github.files.get("content/projects/mainnet/ario.md")).includes("https://ar.io"), "ARO Website link remains after reassignment");
+    assert(estimateWorkerSubrequests(github) < 40, "reassignment stays under the Cloudflare subrequest budget");
+    resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-save", {
       id: OPTIMAI_GUIDE,
       lang: "en",
@@ -292,6 +327,7 @@ links:
       projectId: ""
     }, env));
     assert(res.status === 200, "Linked Project none");
+    assert(projectMarkdownReads(github).length === 1 && projectMarkdownReads(github)[0].endsWith("/ario.md"), "none fetches only the previously linked project Markdown");
     assert(!String(github.files.get("content/projects/mainnet/ario.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "none removes the project relationship");
     liveProjects = JSON.parse(github.files.get("projects/projects.json"));
     assert(!(liveProjects.mainnet.find((item) => item.id === "ario").links || []).some((link) => link.guide === OPTIMAI_GUIDE), "none removes generated ARO guide link");
@@ -299,12 +335,18 @@ links:
       id: OPTIMAI_GUIDE, lang: "en", markdown: "# OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS\n", projectId: "optimai"
     }, env));
     assert(res.status === 200, "relink OptimAI for delete test");
+    resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-delete", { id: OPTIMAI_GUIDE }, env));
     assert(res.status === 200, "delete linked OptimAI guide");
+    assert(projectMarkdownReads(github).length === 1 && projectMarkdownReads(github)[0].endsWith("/optimai.md"), "delete fetches only the projects.json-identified Markdown");
     assert(!String(github.files.get("content/projects/depin/optimai.md")).includes(`guide: ${OPTIMAI_GUIDE}`), "guide deletion removes project relationship");
+    assert(String(github.files.get("content/projects/depin/optimai.md")).includes("guide: second-optimai-guide"), "sibling Guide relationships survive delete");
     liveProjects = JSON.parse(github.files.get("projects/projects.json"));
     liveOptimai = liveProjects.depin.find((item) => item.id === "optimai");
     assert(!(liveOptimai.links || []).some((link) => link.guide === OPTIMAI_GUIDE), "deleted Guide never remains on the project json");
+    assert((liveOptimai.links || []).some((link) => link.guide === "second-optimai-guide"), "sibling Guide remains on projects.json");
+    assert(String(github.files.get("content/projects/depin/optimai.md")).includes("https://optimai.network"), "Website link remains after Guide delete");
+    assert(estimateWorkerSubrequests(github) < 40, "Guide delete stays under the Cloudflare subrequest budget");
 
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n" }, env));
     assert(res.status === 200, "save guide");
@@ -718,6 +760,84 @@ links:
 
     assert(!String(JSON.stringify([...github.files.values()])).includes("ghp_"), "no pat in mock files");
     assert(github.commits.length > 0, "commits recorded");
+
+    const detail = safeExceptionDetail(new Error("Too many subrequests"));
+    assert(detail.includes("Too many subrequests"), "Worker logs keep the real exception message");
+    assert(!safeExceptionDetail(new Error("Bearer ghp_secretTokenValue999 Authorization: secret")).includes("ghp_secretTokenValue999"), "exception logs redact GitHub tokens");
+    assert(!safeExceptionDetail(new Error("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aaa.bbb")).includes("eyJ"), "exception logs redact JWTs");
+
+    const crowded = seed();
+    const crowdedJson = JSON.parse(crowded["projects/projects.json"]);
+    crowdedJson.mainnet = [{
+      id: "ario",
+      name: "AR.IO",
+      status: "active",
+      links: [{ label: "Website", url: "https://ar.io" }, { label: "Explorer", url: "https://viewblock.io/arweave" }]
+    }];
+    crowdedJson.completed = [];
+    const cats = JSON.parse(crowded["config/project-categories.json"]);
+    cats.push({ id: "completed", folder: "completed-testnets", order: 9, label: { en: "Completed", tr: "Completed" } });
+    crowded["config/project-categories.json"] = JSON.stringify(cats, null, 2) + "\n";
+    crowded["content/projects/mainnet/ar-io.md"] = `---
+name: AR.IO
+category: mainnet
+status: active
+id: ario
+links:
+- label: Website
+  url: https://ar.io
+- label: Explorer
+  url: https://viewblock.io/arweave
+---
+`;
+    for (let i = 0; i < 62; i += 1) {
+      const id = `dummy-${i}`;
+      crowdedJson.completed.push({
+        id,
+        name: id,
+        status: "completed",
+        links: [{ label: "Website", url: "https://example.com" }]
+      });
+      crowded[`content/projects/completed-testnets/${id}.md`] = `---
+name: ${id}
+category: completed
+id: ${id}
+links:
+- label: Website
+  url: https://example.com
+---
+`;
+    }
+    crowded["projects/projects.json"] = JSON.stringify(crowdedJson, null, 2) + "\n";
+    const crowdedGithub = new MockGitHub(crowded);
+    const crowdedEnv = envWith(crowdedGithub);
+    resetGithubCalls(crowdedGithub);
+    let crowdedRes = await json(await post("/api/admin/guide-save", {
+      id: "budget-guide", lang: "en", markdown: "# Budget\n", projectId: "optimai"
+    }, crowdedEnv));
+    assert(crowdedRes.status === 200, "Guide save succeeds with 60+ projects in the index");
+    assert(projectMarkdownReads(crowdedGithub).length === 1, "Guide save does not getText one Markdown file per project");
+    assert(projectMarkdownReads(crowdedGithub)[0].endsWith("/optimai.md"), "60+ project corpus still only reads the linked Markdown");
+    assert(!(crowdedGithub.listPrefixCalls || []).some((prefix) => prefix === "content/projects/" || prefix === "content/projects"), "happy-path Guide save does not enumerate the project tree");
+    assert(estimateWorkerSubrequests(crowdedGithub) < 40, "60+ project Guide save stays under 50 subrequests");
+    assert(String(crowdedGithub.files.get("content/projects/completed-testnets/dummy-0.md")).includes("https://example.com"), "unrelated project Markdown is untouched");
+    resetGithubCalls(crowdedGithub);
+    crowdedRes = await json(await post("/api/admin/guide-save", {
+      id: "budget-guide", lang: "en", markdown: "# Budget\n", projectId: "ario"
+    }, crowdedEnv));
+    assert(crowdedRes.status === 200, "reassign uses projects.json even when the filename differs from the id");
+    const mismatchReads = [...new Set(projectMarkdownReads(crowdedGithub))];
+    assert(mismatchReads.length === 2, "filename-mismatch reassignment still only reads two project files");
+    assert(mismatchReads.some((path) => path.endsWith("/ar-io.md")), "stale filename is resolved from the git tree, not a full Contents scan");
+    assert(!String(crowdedGithub.files.get("content/projects/depin/optimai.md")).includes("guide: budget-guide"), "no ghost OptimAI relationship after reassignment");
+    assert(String(crowdedGithub.files.get("content/projects/mainnet/ar-io.md")).includes("guide: budget-guide"), "ARO markdown received the Guide relationship");
+    assert(String(crowdedGithub.files.get("content/projects/mainnet/ar-io.md")).includes("https://viewblock.io/arweave"), "Explorer link remains on filename-mismatch project");
+    resetGithubCalls(crowdedGithub);
+    crowdedRes = await json(await post("/api/admin/guide-delete", { id: "budget-guide" }, crowdedEnv));
+    assert(crowdedRes.status === 200, "delete succeeds with 60+ projects in the index");
+    assert(projectMarkdownReads(crowdedGithub).length === 1, "delete does not getText one Markdown file per project");
+    assert(projectMarkdownReads(crowdedGithub)[0].endsWith("/ar-io.md"), "delete only reads the projects.json-identified Markdown");
+    assert(estimateWorkerSubrequests(crowdedGithub) < 40, "60+ project Guide delete stays under 50 subrequests");
   } catch (error) {
     failed += 1;
     console.error("FAIL uncaught", error);

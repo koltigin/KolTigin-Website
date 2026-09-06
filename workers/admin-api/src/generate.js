@@ -193,6 +193,30 @@ export function attachGuideToProjectsJson(json, projectId, guideId) {
   return { data, changed };
 }
 
+export function findProjectsWithGuide(json, guideId) {
+  const hits = [];
+  for (const [categoryId, items] of Object.entries(json || {})) {
+    if (!Array.isArray(items)) continue;
+    for (const item of items) {
+      if (!item || !item.id || !Array.isArray(item.links)) continue;
+      if (item.links.some((link) => isGuideLink(link, guideId))) {
+        hits.push({ id: item.id, categoryId });
+      }
+    }
+  }
+  return hits;
+}
+
+export function findProjectInJson(json, projectId) {
+  if (!projectId) return null;
+  for (const [categoryId, items] of Object.entries(json || {})) {
+    if (!Array.isArray(items)) continue;
+    const item = (items || []).find((entry) => entry && entry.id === projectId);
+    if (item) return { id: item.id, categoryId, item };
+  }
+  return null;
+}
+
 export function projectNameSortKey(name) {
   return String(name || "")
     .trim()

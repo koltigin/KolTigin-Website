@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, projectMarkdownId, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -14,6 +14,88 @@ async function readJson(github, path, fallback) {
     if (fallback !== undefined && error.status === 404) return fallback;
     throw error;
   }
+}
+
+const PROJECT_FOLDER_PROBE_LIMIT = 8;
+
+function projectMarkdownFiles(paths) {
+  return (paths || []).filter((item) => {
+    const name = item.split("/").pop() || "";
+    return item.endsWith(".md") && !name.startsWith("_");
+  });
+}
+
+function projectFileStem(path) {
+  return (String(path).split("/").pop() || "").replace(/\.md$/i, "");
+}
+
+function compactProjectId(value) {
+  return String(value || "").replace(/-/g, "").toLowerCase();
+}
+
+async function loadProjectMarkdown(github, { projectId, categoryId, cats, treeHolder, required }) {
+  const cat = (cats || []).find((item) => item && item.id === categoryId);
+  const folder = (cat && cat.folder) || categoryId || "";
+  if (folder) {
+    const guessed = projectMdPath(folder, projectId);
+    if (await github.exists(guessed)) {
+      return { path: guessed, text: await github.getText(guessed) };
+    }
+  }
+  treeHolder.list = treeHolder.list || projectMarkdownFiles(await github.listPrefix("content/projects/"));
+  const scoped = folder
+    ? treeHolder.list.filter((path) => path.startsWith(`content/projects/${folder}/`))
+    : treeHolder.list;
+  const named = scoped.find((path) => projectFileStem(path) === projectId);
+  if (named) return { path: named, text: await github.getText(named) };
+  const compact = compactProjectId(projectId);
+  const heuristic = scoped.filter((path) => compactProjectId(projectFileStem(path)) === compact);
+  if (heuristic.length === 1) return { path: heuristic[0], text: await github.getText(heuristic[0]) };
+  if (scoped.length && scoped.length <= PROJECT_FOLDER_PROBE_LIMIT) {
+    for (const path of scoped) {
+      const text = await github.getText(path);
+      if (projectMarkdownId(text, path) === projectId) return { path, text };
+    }
+  }
+  if (required) throw new HttpError(400, "Unknown project");
+  return null;
+}
+
+async function applyGuideProjectRelationships(github, { guideId, nextProjectId, upserts }) {
+  const projectsJson = await readJson(github, "projects/projects.json", {});
+  const cats = await readJson(github, "config/project-categories.json", []);
+  const oldHits = findProjectsWithGuide(projectsJson, guideId);
+  if (nextProjectId && !findProjectInJson(projectsJson, nextProjectId)) {
+    throw new HttpError(400, "Unknown project");
+  }
+  const treeHolder = { list: null };
+  const wanted = new Map();
+  for (const hit of oldHits) {
+    wanted.set(hit.id, { categoryId: hit.categoryId, attach: hit.id === nextProjectId });
+  }
+  if (nextProjectId) {
+    const found = findProjectInJson(projectsJson, nextProjectId);
+    wanted.set(nextProjectId, { categoryId: found.categoryId, attach: true });
+  }
+  const seenPaths = new Set();
+  for (const [projectId, meta] of wanted) {
+    const file = await loadProjectMarkdown(github, {
+      projectId,
+      categoryId: meta.categoryId,
+      cats,
+      treeHolder,
+      required: Boolean(meta.attach)
+    });
+    if (!file || seenPaths.has(file.path)) continue;
+    seenPaths.add(file.path);
+    let next = stripGuideFromProjectMarkdown(file.text, guideId);
+    if (meta.attach) next = attachGuideToProjectMarkdown(next, guideId);
+    if (next !== file.text) upserts.push({ path: file.path, text: next.endsWith("\n") ? next : `${next}\n` });
+  }
+  const nextJson = nextProjectId
+    ? attachGuideToProjectsJson(projectsJson, nextProjectId, guideId)
+    : stripGuideFromProjectsJson(projectsJson, guideId);
+  if (nextJson.changed) upserts.push({ path: "projects/projects.json", text: pretty(nextJson.data) });
 }
 
 function applyLocation(site, incoming) {
@@ -428,30 +510,7 @@ export async function handleGuideSave(body, github) {
   }
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id });
   upserts.push({ path: "guides/index.json", text: pretty(index) });
-  const projectFiles = (await github.listPrefix("content/projects/")).filter((item) => {
-    const name = item.split("/").pop() || "";
-    return item.endsWith(".md") && !name.startsWith("_");
-  });
-  const markdownByPath = {};
-  for (const projectPath of projectFiles) {
-    markdownByPath[projectPath] = await github.getText(projectPath);
-  }
-  if (projectId) {
-    const known = projectFiles.some((projectPath) => projectMarkdownId(markdownByPath[projectPath], projectPath) === projectId);
-    if (!known) throw new HttpError(400, "Unknown project");
-  }
-  for (const [projectPath, current] of Object.entries(markdownByPath)) {
-    let next = stripGuideFromProjectMarkdown(current, id);
-    if (projectId && projectMarkdownId(current, projectPath) === projectId) {
-      next = attachGuideToProjectMarkdown(next, id);
-    }
-    if (next !== current) upserts.push({ path: projectPath, text: next.endsWith("\n") ? next : `${next}\n` });
-  }
-  let projectsJson = await readJson(github, "projects/projects.json", {});
-  const nextJson = attachGuideToProjectsJson(projectsJson, projectId, id);
-  if (nextJson.changed) {
-    upserts.push({ path: "projects/projects.json", text: pretty(nextJson.data) });
-  }
+  await applyGuideProjectRelationships(github, { guideId: id, nextProjectId: projectId, upserts });
   const result = await github.commit({
     message: commitMsg("save guide", `${id}/${lang}`),
     upserts
@@ -479,16 +538,7 @@ export async function handleGuideDelete(body, github) {
   await collectExisting(github, guideShareArtifacts(id), deletes);
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id, remove: true });
   const upserts = [{ path: "guides/index.json", text: pretty(index) }];
-  const projectsJson = await readJson(github, "projects/projects.json", {});
-  const stripped = stripGuideFromProjectsJson(projectsJson, id);
-  if (stripped.changed) upserts.push({ path: "projects/projects.json", text: pretty(stripped.data) });
-  const projectFiles = await github.listPrefix("content/projects/");
-  for (const path of projectFiles) {
-    if (!path.endsWith(".md")) continue;
-    const text = await github.getText(path);
-    const next = stripGuideFromProjectMarkdown(text, id);
-    if (next !== text) upserts.push({ path, text: next.endsWith("\n") ? next : `${next}\n` });
-  }
+  await applyGuideProjectRelationships(github, { guideId: id, nextProjectId: "", upserts });
   const result = await github.commit({
     message: commitMsg("delete guide", id),
     upserts,

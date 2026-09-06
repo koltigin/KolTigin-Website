@@ -1,4 +1,4 @@
-import { JSON_LIMIT, UPLOAD_LIMIT, HttpError, jsonOk, jsonErr } from "./util.js";
+import { JSON_LIMIT, UPLOAD_LIMIT, HttpError, jsonOk, jsonErr, safeExceptionDetail } from "./util.js";
 import { assertAccess } from "./access.js";
 import { createGitHub } from "./github.js";
 import { POST_HANDLERS, handleUpload } from "./handlers.js";
@@ -68,9 +68,19 @@ export async function handleRequest(request, env) {
     return jsonOk(payload);
   } catch (error) {
     const status = error instanceof HttpError ? error.status : 500;
-    const message = error instanceof HttpError ? error.message : "Publish failed";
-    console.error("admin-api", pathnameOf(request.url), status, message);
-    return jsonErr(status, message);
+    const publicMessage = error instanceof HttpError ? error.message : "Publish failed";
+    if (error instanceof HttpError) {
+      console.error("admin-api", pathnameOf(request.url), status, publicMessage);
+    } else {
+      console.error(
+        "admin-api",
+        pathnameOf(request.url),
+        status,
+        publicMessage,
+        safeExceptionDetail(error)
+      );
+    }
+    return jsonErr(status, publicMessage);
   }
 }
 

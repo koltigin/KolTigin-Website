@@ -16,6 +16,19 @@ export class HttpError extends Error {
   }
 }
 
+export function safeExceptionDetail(error) {
+  const name = error && error.name ? String(error.name) : "Error";
+  const raw = error instanceof Error ? error.message : String(error || "");
+  let text = `${name}: ${raw}`;
+  text = text.replace(/Bearer\s+[A-Za-z0-9._\-+/=]+/gi, "Bearer [redacted]");
+  text = text.replace(/ghp_[A-Za-z0-9]+/g, "[redacted]");
+  text = text.replace(/github_pat_[A-Za-z0-9_]+/g, "[redacted]");
+  text = text.replace(/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9._-]+/g, "[redacted-jwt]");
+  text = text.replace(/Authorization:\s*\S+/gi, "Authorization: [redacted]");
+  if (text.length > 400) text = `${text.slice(0, 400)}…`;
+  return text;
+}
+
 export function jsonOk(payload, status = 200) {
   return new Response(JSON.stringify({ ok: true, ...payload }), {
     status,

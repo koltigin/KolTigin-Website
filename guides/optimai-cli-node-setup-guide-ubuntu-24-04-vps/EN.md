@@ -36,6 +36,8 @@ If the Docker version is displayed, continue to **2. Install OptimAI CLI**.
 
 ### If Docker Is Not Installed
 
+Install Docker:
+
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
@@ -46,10 +48,22 @@ Start Docker and enable it to start automatically at boot:
 sudo systemctl enable --now docker
 ```
 
-Verify the installation:
+Add your user to the Docker group:
 
 ```bash
-docker --version
+sudo usermod -aG docker $USER
+```
+
+Activate the new group permissions:
+
+```bash
+newgrp docker
+```
+
+Check Docker:
+
+```bash
+docker ps
 ```
 
 ---
@@ -124,7 +138,7 @@ Successfully crawled ...
 assignment submitted successfully
 ```
 
-`Assignments fetched: total=0` is not an error. It simply means there is no task assigned to the node at that moment.
+`Assignments fetched: total=0` is not an error. It means there is no task assigned to the node at that moment.
 
 ---
 
@@ -211,7 +225,7 @@ enabled
 journalctl -u optimai.service -f
 ```
 
-Exit the live log view with:
+Exit with:
 
 ```text
 Ctrl+C
@@ -307,7 +321,7 @@ Can run through the Telegram Mini App:
 
 ### Edge Node
 
-Available for mobile devices through:
+Available for:
 
 - iOS — App Store
 - Android — Google Play
@@ -380,6 +394,5 @@ https://node.optimai.network/register?ref=18ADBAE8
 
 - `Assignments fetched: total=0` is not an error. It means there is no task available at that moment.
 - The node will process new tasks when they become available.
-- The Docker container can be reused.
 - systemd allows the OptimAI node to start automatically after the VPS reboots.
 - Multiple supported devices can run under the same OptimAI account.

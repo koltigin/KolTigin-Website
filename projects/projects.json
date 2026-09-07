@@ -83,6 +83,10 @@
         {
           "label": "Website",
           "url": "https://aro.network"
+        },
+        {
+          "label": "Setup Guide",
+          "guide": "aro-network-depin-ubuntu-vps-installation-guide"
         }
       ],
       "referralUrl": "https://dashboard.aro.network/signup?referral=9KAG",

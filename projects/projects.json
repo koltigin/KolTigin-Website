@@ -44,10 +44,6 @@
         {
           "label": "Gateway",
           "url": "https://gateways.ar.io/#/dashboard"
-        },
-        {
-          "label": "Setup Guide",
-          "guide": "test"
         }
       ]
     },

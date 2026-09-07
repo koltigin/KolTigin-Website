@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import re
 import shutil
 import sys
 import tempfile
@@ -71,6 +73,10 @@ def setup_root(tmp: Path) -> Path:
         '---\ntitle: "A tweet"\ndate: "2026-01-01"\nexternalUrl: "https://x.com/x/status/1"\n---\n\n',
     )
     tiny_png(tmp / "assets" / "images" / "blog" / "soul.png")
+    write(
+        tmp / "content" / "notes" / "en" / "undated.md",
+        '---\ntitle: "Undated note"\nsummary: "No calendar date."\n---\n\nBody.\n',
+    )
     write(tmp / "guides" / "demo-guide" / "EN.md", "# Demo Guide\n\nInstall the node.\n")
     write(tmp / "guides" / "demo-guide" / "TR.md", "# Demo Rehber\n\nDüğümü kurun.\n")
     write(
@@ -105,6 +111,17 @@ def setup_root(tmp: Path) -> Path:
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def json_ld(html: str) -> dict:
+    match = re.search(r'<script type="application/ld\+json">(.*?)</script>', html, flags=re.S)
+    if not match:
+        fail("missing json-ld script")
+    try:
+        return json.loads(match.group(1))
+    except json.JSONDecodeError as exc:
+        fail(f"json-ld is not valid JSON: {exc}")
+    raise AssertionError("unreachable")
 
 
 def main() -> None:
@@ -161,6 +178,42 @@ def main() -> None:
             fail("tr metadata")
         ok("bilingual writing metadata")
 
+        note_ld = json_ld(html)
+        if note_ld.get("@type") != "BlogPosting":
+            fail("writing json-ld type")
+        if note_ld.get("headline") != "Validator notes":
+            fail("writing json-ld headline")
+        if note_ld.get("description") != "Uptime and keys.":
+            fail("writing json-ld description")
+        if note_ld.get("inLanguage") != "en":
+            fail("writing json-ld language")
+        if note_ld.get("url") != "https://koltigin.xyz/writings/en/notes/no-cover/":
+            fail("writing json-ld url")
+        if note_ld.get("mainEntityOfPage") != note_ld.get("url"):
+            fail("writing json-ld mainEntityOfPage")
+        if note_ld.get("image") != "https://koltigin.xyz/assets/images/og/writings/en/notes/no-cover.png":
+            fail("writing json-ld image")
+        if (note_ld.get("author") or {}).get("name") != "KolTigin":
+            fail("writing json-ld author from displayName")
+        if note_ld.get("datePublished") != "2026-08-29":
+            fail("writing json-ld datePublished")
+        if "#" in str(note_ld.get("url")):
+            fail("json-ld url must not be a hash")
+        tr_ld = json_ld(tr_html)
+        if tr_ld.get("inLanguage") != "tr" or tr_ld.get("url") != "https://koltigin.xyz/writings/tr/notes/no-cover/":
+            fail("tr writing json-ld locale url")
+        if tr_ld.get("headline") != "Doğrulayıcı notları":
+            fail("tr writing json-ld headline")
+        if note_ld.get("url") == tr_ld.get("url"):
+            fail("en/tr json-ld urls must differ")
+        undated_html = read(tmp / "writings" / "en" / "notes" / "undated" / "index.html")
+        undated_ld = json_ld(undated_html)
+        if "datePublished" in undated_ld:
+            fail("undated writing must omit datePublished")
+        if undated_ld.get("@type") != "BlogPosting":
+            fail("undated writing json-ld type")
+        ok("writing json-ld")
+
         cover_og = tmp / "assets" / "images" / "og" / "writings" / "en" / "articles" / "with-cover.png"
         if Image.open(cover_og).size != (1200, 630):
             fail("custom cover og size")
@@ -185,6 +238,30 @@ def main() -> None:
         if Image.open(guide_og).size != (1200, 630):
             fail("guide fallback size")
         ok("guide without cover")
+
+        guide_ld = json_ld(ghtml)
+        if guide_ld.get("@type") != "TechArticle":
+            fail("guide json-ld type")
+        if guide_ld.get("headline") != "Demo Guide":
+            fail("guide json-ld headline")
+        if "Install the node." not in str(guide_ld.get("description") or ""):
+            fail("guide json-ld description")
+        if guide_ld.get("inLanguage") != "en":
+            fail("guide json-ld language")
+        if guide_ld.get("url") != "https://koltigin.xyz/guide/en/demo-guide/":
+            fail("guide json-ld url")
+        if guide_ld.get("mainEntityOfPage") != guide_ld.get("url"):
+            fail("guide json-ld mainEntityOfPage")
+        if guide_ld.get("image") != "https://koltigin.xyz/assets/images/og/guides/en/demo-guide.png":
+            fail("guide json-ld image")
+        if "datePublished" in guide_ld:
+            fail("guide json-ld must omit datePublished")
+        guide_tr = json_ld(read(tmp / "guide" / "tr" / "demo-guide" / "index.html"))
+        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guide/tr/demo-guide/":
+            fail("tr guide json-ld locale url")
+        if guide_tr.get("headline") != "Demo Rehber":
+            fail("tr guide json-ld headline")
+        ok("guide json-ld")
 
         covered_og = tmp / "assets" / "images" / "og" / "guides" / "en" / "covered-guide.png"
         if Image.open(covered_og).size != (1200, 630):
@@ -330,6 +407,9 @@ def main() -> None:
         html = read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html")
         if "Ada Lovelace" not in html or "KolTigin" in html:
             fail("share html should follow the new displayName")
+        ada_ld = json_ld(html)
+        if (ada_ld.get("author") or {}).get("name") != "Ada Lovelace":
+            fail("json-ld author must follow displayName")
         fallback = Image.open(fallback_png)
         if fallback.size != (1200, 630):
             fail("renamed author fallback size")

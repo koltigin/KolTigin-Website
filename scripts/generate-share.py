@@ -414,6 +414,61 @@ def abs_url(base: str, rel: str) -> str:
     return f"{base}/{rel.lstrip('/')}"
 
 
+DATE_ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
+DATE_EU = re.compile(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$")
+
+
+def published_date(value: object) -> str | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    match = DATE_ISO.match(raw)
+    if match:
+        year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+        if 1 <= month <= 12 and 1 <= day <= 31:
+            return f"{year:04d}-{month:02d}-{day:02d}"
+        return None
+    match = DATE_EU.match(raw)
+    if match:
+        day, month, year = int(match.group(1)), int(match.group(2)), int(match.group(3))
+        if 1 <= month <= 12 and 1 <= day <= 31:
+            return f"{year:04d}-{month:02d}-{day:02d}"
+    return None
+
+
+def json_ld_payload(
+    *,
+    schema_type: str,
+    headline: str,
+    description: str,
+    author: str,
+    image: str,
+    url: str,
+    in_language: str,
+    date_published: str | None = None,
+) -> dict:
+    data = {
+        "@context": "https://schema.org",
+        "@type": schema_type,
+        "headline": headline,
+        "description": description,
+        "author": {"@type": "Person", "name": author},
+        "image": image,
+        "url": url,
+        "mainEntityOfPage": url,
+        "inLanguage": in_language,
+    }
+    if date_published:
+        data["datePublished"] = date_published
+    return data
+
+
+def json_ld_script(data: dict) -> str:
+    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+    payload = payload.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    return f'  <script type="application/ld+json">{payload}</script>'
+
+
 def share_html(
     *,
     lang: str,
@@ -425,6 +480,9 @@ def share_html(
     alternates: dict[str, str],
     marker: str,
     brand: str,
+    schema_type: str,
+    author: str,
+    date_published: str | None = None,
 ) -> str:
     hreflang = []
     for code, url in alternates.items():
@@ -457,6 +515,16 @@ def share_html(
   <meta name="twitter:title" content="{html.escape(title)}">
   <meta name="twitter:description" content="{html.escape(description)}">
   <meta name="twitter:image" content="{html.escape(image)}">
+{json_ld_script(json_ld_payload(
+        schema_type=schema_type,
+        headline=title,
+        description=description,
+        author=author,
+        image=image,
+        url=canonical,
+        in_language="tr" if lang == "tr" else "en",
+        date_published=date_published,
+    ))}
   <meta http-equiv="refresh" content="0;url={html.escape(continue_href)}">
   <style>
     body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111113; color: #d6d6d6; font-family: Poppins, system-ui, sans-serif; }}
@@ -498,6 +566,7 @@ def discover_writings(root: Path) -> list[dict]:
                     "title": str(meta.get("title") or item_id).strip(),
                     "description": str(meta.get("summary") or meta.get("excerpt") or excerpt(body)).strip(),
                     "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
+                    "date": published_date(meta.get("date")),
                 }
     return [items[key] for key in sorted(items)]
 
@@ -716,6 +785,9 @@ def generate(root: Path) -> dict:
                     alternates=alternates,
                     marker=WRITINGS_MARKER,
                     brand=brand,
+                    schema_type="BlogPosting",
+                    author=brand,
+                    date_published=data.get("date"),
                 ),
             )
             keep.add(html_path.resolve())
@@ -758,6 +830,9 @@ def generate(root: Path) -> dict:
                     alternates=alternates,
                     marker=GUIDES_MARKER,
                     brand=brand,
+                    schema_type="TechArticle",
+                    author=brand,
+                    date_published=None,
                 ),
             )
             keep.add(html_path.resolve())

@@ -662,6 +662,7 @@ class BlogParser {
             <p class="blog-category">${this.escapeHtml(meta)}</p>
           </div>
           <h2 class="h2 writings-detail-title">${this.escapeHtml(item.title)}</h2>
+          ${this.shareMarkup(item)}
         </header>
         ${cover}
         <div class="blog-post-content">
@@ -670,7 +671,21 @@ class BlogParser {
       </section>
     `;
     this.bindCoverFallbacks();
+    if (window.KolTiginShareActions) window.KolTiginShareActions.bind(this.view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  contentLang() {
+    const lang = window.KolTiginI18n && window.KolTiginI18n.language;
+    return lang === 'tr' ? 'tr' : 'en';
+  }
+
+  shareMarkup(item) {
+    if (!window.KolTiginShareActions) return '';
+    return window.KolTiginShareActions.render({
+      title: item.title,
+      url: window.KolTiginShareActions.writingShareUrl(this.contentLang(), item.kind, item.slug)
+    });
   }
 
 }

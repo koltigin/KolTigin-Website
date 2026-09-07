@@ -11,6 +11,7 @@ class GuidesParser {
     this.bodyEl = this.page?.querySelector('[data-guide-content]');
     this.langNav = this.page?.querySelector('[data-guide-langs]');
     this.currentId = '';
+    this.currentTitle = '';
     this.sourceUrl = '';
 
     this.wrapActivatePage();
@@ -100,6 +101,7 @@ class GuidesParser {
     if (!this.page || !/^[a-z0-9-]+$/i.test(id)) return;
 
     this.currentId = id;
+    this.currentTitle = '';
     this.currentLang = this.siteGuideLang();
     if (typeof options.sourceUrl === 'string' && options.sourceUrl) {
       this.sourceUrl = options.sourceUrl;
@@ -118,6 +120,8 @@ class GuidesParser {
 
     try {
       const markdown = await this.loadMarkdown(id, this.currentLang);
+      this.currentTitle = this.firstHeading(markdown) || id;
+      this.renderShareBar();
       const html = this.parseMarkdown(markdown, id);
       this.bodyEl.innerHTML = html;
     } catch (error) {
@@ -125,10 +129,35 @@ class GuidesParser {
     }
   }
 
+  firstHeading(markdown) {
+    const withoutFm = String(markdown || '').replace(/^---[\s\S]*?---\s*/, '');
+    const match = withoutFm.match(/^#\s+(.+)$/m);
+    return match ? match[1].trim() : '';
+  }
+
+  contentLang() {
+    return String(this.currentLang || this.siteGuideLang()).toLowerCase() === 'tr' ? 'tr' : 'en';
+  }
+
   renderChrome() {
     this.langNav?.querySelectorAll('[data-guide-lang]').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.guideLang === this.currentLang);
     });
+    this.renderShareBar();
+  }
+
+  renderShareBar() {
+    const toolbar = this.page?.querySelector('.guide-toolbar');
+    if (!toolbar || !this.currentId || !window.KolTiginShareActions) return;
+    toolbar.querySelector('[data-share-actions]')?.remove();
+    const html = window.KolTiginShareActions.render({
+      title: this.currentTitle || this.currentId,
+      url: window.KolTiginShareActions.guideShareUrl(this.contentLang(), this.currentId)
+    });
+    const back = toolbar.querySelector('[data-guide-back]');
+    if (back) back.insertAdjacentHTML('afterend', html);
+    else toolbar.insertAdjacentHTML('beforeend', html);
+    window.KolTiginShareActions.bind(toolbar);
   }
 
   async loadMarkdown(id, lang) {

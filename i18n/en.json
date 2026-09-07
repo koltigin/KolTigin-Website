@@ -122,6 +122,14 @@
     "error": "The message could not be sent. Please try again later.",
     "mapTitle": "Eskişehir, Türkiye"
   },
+  "share": {
+    "x": "X",
+    "linkedin": "LinkedIn",
+    "farcaster": "Farcaster",
+    "share": "Share",
+    "copied": "Copied",
+    "copyFailed": "Could not copy link"
+  },
   "common": {
     "copy": "Copy",
     "copied": "Copied"

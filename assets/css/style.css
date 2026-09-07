@@ -2595,6 +2595,48 @@ main {
   margin-bottom: 20px;
 }
 
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+
+.guide-toolbar .share-actions {
+  margin: 0;
+}
+
+.share-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--jet);
+  border-radius: 8px;
+  background: var(--eerie-black-2);
+  color: var(--light-gray);
+  font-family: inherit;
+  font-size: var(--fs-8);
+  font-weight: var(--fw-500);
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition-1);
+}
+
+.share-action:hover,
+.share-action:focus-visible {
+  color: var(--orange-yellow-crayola);
+  border-color: rgba(255, 216, 111, 0.55);
+}
+
+.share-action.is-copied {
+  color: var(--orange-yellow-crayola);
+}
+
 .writings-detail-cover {
   position: relative;
   display: block;

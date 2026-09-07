@@ -1269,22 +1269,48 @@ class AdminHandler(SimpleHTTPRequestHandler):
         if kind not in writing_kind_ids():
             return json_error(self, HTTPStatus.BAD_REQUEST, "Unknown type")
 
-        lang = str(body.get("lang") or "")
-        if lang not in {"en", "tr"}:
-            return json_error(self, HTTPStatus.BAD_REQUEST, "Language must be en or tr")
-        title = str(body.get("title") or "").strip()
+        locales_raw = body.get("locales")
+        locale_items = []
+        seen_langs = set()
+        source_items = locales_raw if isinstance(locales_raw, list) and locales_raw else [
+            {"lang": body.get("lang"), "title": body.get("title"), "cover": body.get("cover"), "body": body.get("body")}
+        ]
+        for item in source_items:
+            if not isinstance(item, dict):
+                continue
+            loc = str(item.get("lang") or "").strip()
+            loc_title = str(item.get("title") or "").strip()
+            if loc not in {"en", "tr"}:
+                return json_error(self, HTTPStatus.BAD_REQUEST, "Language must be en or tr")
+            if not loc_title:
+                continue
+            if loc in seen_langs:
+                continue
+            seen_langs.add(loc)
+            loc_cover = str(item.get("cover") or "").strip()
+            if loc_cover and ("/" in loc_cover or "\\" in loc_cover or ".." in loc_cover):
+                return json_error(self, HTTPStatus.BAD_REQUEST, "Cover must be a file name, not a path")
+            if loc_cover:
+                cover_path = BLOG_DIR / loc_cover
+                if not cover_path.is_file():
+                    return json_error(
+                        self,
+                        HTTPStatus.BAD_REQUEST,
+                        "Cover image is not in assets/images/blog/. Choose the image again so it can be copied locally.",
+                    )
+            locale_items.append(
+                {"lang": loc, "title": loc_title, "cover": loc_cover, "body": str(item.get("body") or "")}
+            )
+        if not locale_items:
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Title is required")
         date = normalize_date(str(body.get("date") or ""))
-        cover = str(body.get("cover") or "").strip()
-        content = str(body.get("body") or "")
         external = str(body.get("externalUrl") or "").strip()
         item_id = str(body.get("id") or "").strip()
         if item_id:
             if not ID_RE.match(item_id):
                 return json_error(self, HTTPStatus.BAD_REQUEST, "Invalid shared content ID")
         else:
-            item_id = slugify(title)
-        if not title:
-            return json_error(self, HTTPStatus.BAD_REQUEST, "Title is required")
+            item_id = slugify(locale_items[0]["title"])
         if not date:
             return json_error(
                 self,
@@ -1295,16 +1321,6 @@ class AdminHandler(SimpleHTTPRequestHandler):
             return json_error(self, HTTPStatus.BAD_REQUEST, "Could not derive a content ID from the title")
         if is_external_writing(kind) and not X_URL_RE.match(external):
             return json_error(self, HTTPStatus.BAD_REQUEST, "A valid https://x.com/… URL is required")
-        if cover and ("/" in cover or "\\" in cover or ".." in cover):
-            return json_error(self, HTTPStatus.BAD_REQUEST, "Cover must be a file name, not a path")
-        if cover:
-            cover_path = BLOG_DIR / cover
-            if not cover_path.is_file():
-                return json_error(
-                    self,
-                    HTTPStatus.BAD_REQUEST,
-                    "Cover image is not in assets/images/blog/. Choose the image again so it can be copied locally.",
-                )
 
         filename = f"{item_id}.md"
         from_kind = str(body.get("fromKind") or kind).strip()
@@ -1318,45 +1334,56 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 return json_error(self, HTTPStatus.CONFLICT, str(exc))
             except OSError as exc:
                 return json_error(self, HTTPStatus.INTERNAL_SERVER_ERROR, f"Could not move writing: {exc}")
-        existing = existing_writing_path(kind, lang, item_id)
-        if existing and existing.name != filename:
-            return json_error(
-                self,
-                HTTPStatus.CONFLICT,
-                f"{existing.relative_to(ROOT)} already exists for this language.",
+        written = []
+        last_path = None
+        last_markdown = ""
+        for loc_item in locale_items:
+            loc = loc_item["lang"]
+            existing = existing_writing_path(kind, loc, item_id)
+            if existing and existing.name != filename:
+                return json_error(
+                    self,
+                    HTTPStatus.CONFLICT,
+                    f"{existing.relative_to(ROOT)} already exists for this language.",
+                )
+            path = writing_path(kind, loc, filename)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            markdown = build_writing_markdown(
+                {
+                    "kind": kind,
+                    "title": loc_item["title"],
+                    "date": date,
+                    "cover": loc_item["cover"],
+                    "externalUrl": external,
+                    "body": loc_item["body"],
+                }
             )
-        path = writing_path(kind, lang, filename)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        markdown = build_writing_markdown(
-            {
-                "kind": kind,
-                "title": title,
-                "date": date,
-                "cover": cover,
-                "externalUrl": external,
-                "body": content,
-            }
-        )
-        path.write_text(markdown, encoding="utf-8")
-        other = "tr" if lang == "en" else "en"
-        sibling = existing_writing_path(kind, other, item_id)
-        if sibling:
-            rewrite_writing_path(sibling, kind, external if is_external_writing(kind) else "")
+            path.write_text(markdown, encoding="utf-8")
+            written.append(loc)
+            last_path = path
+            last_markdown = markdown
+        if len(locale_items) == 1:
+            loc = locale_items[0]["lang"]
+            other = "tr" if loc == "en" else "en"
+            sibling = existing_writing_path(kind, other, item_id)
+            if sibling:
+                rewrite_writing_path(sibling, kind, external if is_external_writing(kind) else "")
         try:
             generator_log = regenerate_writings_index()
         except RuntimeError as exc:
             return json_error(
                 self,
                 HTTPStatus.INTERNAL_SERVER_ERROR,
-                f"Markdown was written to {path.relative_to(ROOT)}, but regenerating content/index.json failed: {exc}",
+                f"Markdown was written to {last_path.relative_to(ROOT)}, but regenerating content/index.json failed: {exc}",
             )
         return json_ok(
             self,
             {
-                "path": str(path.relative_to(ROOT)),
+                "path": str(last_path.relative_to(ROOT)),
                 "id": item_id,
-                "lang": lang,
-                "markdown": markdown,
+                "langs": written,
+                "lang": written[0],
+                "markdown": last_markdown,
                 "manifest": True,
                 "generator": generator_log,
             },

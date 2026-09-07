@@ -151,6 +151,29 @@ async function collectExisting(github, paths, deletes) {
 
 const RESERVED_GUIDE_IDS = new Set(["en", "tr", "guide", "writings", "assets", "content"]);
 
+function writingLocaleSaves(body) {
+  const raw = Array.isArray(body.locales) ? body.locales : null;
+  const items = raw && raw.length
+    ? raw
+    : [{ lang: body.lang, title: body.title, cover: body.cover, body: body.body }];
+  const seen = new Set();
+  const out = [];
+  for (const item of items) {
+    const lang = String((item && item.lang) || "").trim();
+    const title = String((item && item.title) || "").trim();
+    if (lang !== "en" && lang !== "tr") throw new HttpError(400, "Language must be en or tr");
+    if (!title) continue;
+    if (seen.has(lang)) continue;
+    seen.add(lang);
+    const cover = String((item && item.cover) || "").trim();
+    if (cover && (cover.includes("/") || cover.includes("\\") || cover.includes(".."))) {
+      throw new HttpError(400, "Cover must be a file name, not a path");
+    }
+    out.push({ lang, title, cover, body: (item && item.body) || "" });
+  }
+  return out;
+}
+
 export async function handleSave(body, github) {
   if (body.kind === "videos") return handleVideoSave(body, github);
   if (body.action === "delete") return handleWritingDelete(body, github);
@@ -159,18 +182,12 @@ export async function handleSave(body, github) {
   const typeList = types.types || [];
   const kindIds = typeList.map((item) => item.id);
   if (!kindIds.includes(kind) && !CORE_TYPE_IDS.includes(kind)) throw new HttpError(400, "Unknown type");
-  const lang = String(body.lang || "");
-  if (lang !== "en" && lang !== "tr") throw new HttpError(400, "Language must be en or tr");
-  const title = String(body.title || "").trim();
+  const locales = writingLocaleSaves(body);
+  if (!locales.length) throw new HttpError(400, "Title is required");
   const date = normalizeDate(body.date);
-  const cover = String(body.cover || "").trim();
-  const id = String(body.id || slugify(title));
-  if (!title) throw new HttpError(400, "Title is required");
+  const id = String(body.id || slugify(locales[0].title));
   if (!date) throw new HttpError(400, "Date must be YYYY-MM-DD or DD.MM.YYYY");
   if (!ID_RE.test(id)) throw new HttpError(400, "Invalid shared content ID");
-  if (cover && (cover.includes("/") || cover.includes("\\") || cover.includes(".."))) {
-    throw new HttpError(400, "Cover must be a file name, not a path");
-  }
   const destExternal = isExternalKind(typeList, kind);
   const external = String(body.externalUrl || "").trim();
   if (destExternal && !isXUrl(external)) {
@@ -178,13 +195,20 @@ export async function handleSave(body, github) {
   }
   const fromKind = String(body.fromKind || kind);
   const file = `${id}.md`;
-  const markdown = buildWritingMarkdown({
-    title, date, cover, externalUrl: destExternal ? external : "", kind, body: body.body || "", external: destExternal
-  });
+  const localeByLang = Object.fromEntries(locales.map((item) => [item.lang, item]));
+  const markdownFor = (item) => mdText(buildWritingMarkdown({
+    title: item.title,
+    date,
+    cover: item.cover,
+    externalUrl: destExternal ? external : "",
+    kind,
+    body: item.body || "",
+    external: destExternal
+  }));
   const upserts = [];
   const deletes = [];
   let index = await readJson(github, "content/index.json", {});
-  const destCurrent = writingPath(kind, lang, id);
+  const savedLangs = [];
 
   if (fromKind && fromKind !== kind) {
     if (!kindIds.includes(fromKind) && !CORE_TYPE_IDS.includes(fromKind)) {
@@ -196,39 +220,46 @@ export async function handleSave(body, github) {
       if (await github.exists(src)) sources.push({ lang: other, src });
     }
     if (!sources.length) throw new HttpError(404, `Writing ${id} was not found in ${fromKind}`);
-    for (const item of sources) {
-      const dest = writingPath(kind, item.lang, id);
+    const langsToWrite = new Set([...sources.map((item) => item.lang), ...locales.map((item) => item.lang)]);
+    for (const lang of ["en", "tr"]) {
+      if (!langsToWrite.has(lang)) continue;
+      const dest = writingPath(kind, lang, id);
       if (await github.exists(dest)) throw new HttpError(409, `${dest} already exists`);
     }
-    if (!sources.some((item) => item.lang === lang) && (await github.exists(destCurrent))) {
-      throw new HttpError(409, `${destCurrent} already exists`);
-    }
-    for (const item of sources) {
-      const dest = writingPath(kind, item.lang, id);
-      deletes.push(item.src);
-      if (item.lang === lang) {
-        upserts.push({ path: dest, text: mdText(markdown) });
+    for (const lang of ["en", "tr"]) {
+      if (!langsToWrite.has(lang)) continue;
+      const dest = writingPath(kind, lang, id);
+      const src = writingPath(fromKind, lang, id);
+      const item = localeByLang[lang];
+      if (item) {
+        upserts.push({ path: dest, text: markdownFor(item) });
+        savedLangs.push(lang);
       } else {
         upserts.push({
           path: dest,
-          text: mdText(rewriteWritingText(await github.getText(item.src), kind, typeList, destExternal ? external : ""))
+          text: mdText(rewriteWritingText(await github.getText(src), kind, typeList, destExternal ? external : ""))
         });
       }
-      index = applyWritingIndex(index, { kind, lang: item.lang, file, fromKind });
-    }
-    await collectExisting(github, writingShareArtifacts(fromKind, id), deletes);
-    if (!sources.some((item) => item.lang === lang)) {
-      upserts.push({ path: destCurrent, text: mdText(markdown) });
+      if (await github.exists(src)) deletes.push(src);
       index = applyWritingIndex(index, { kind, lang, file, fromKind });
     }
+    await collectExisting(github, writingShareArtifacts(fromKind, id), deletes);
   } else {
-    upserts.push({ path: destCurrent, text: mdText(markdown) });
-    index = applyWritingIndex(index, { kind, lang, file });
+    for (const item of locales) {
+      upserts.push({ path: writingPath(kind, item.lang, id), text: markdownFor(item) });
+      index = applyWritingIndex(index, { kind, lang: item.lang, file });
+      savedLangs.push(item.lang);
+    }
   }
 
   upserts.push({ path: "content/index.json", text: pretty(index) });
-  const result = await github.commit({ message: commitMsg("save writing", `${kind}/${lang}/${file}`), upserts, deletes });
-  return { id, path: destCurrent, sha: result.sha };
+  const langLabel = savedLangs.join("+") || locales.map((item) => item.lang).join("+");
+  const result = await github.commit({
+    message: commitMsg("save writing", `${kind}/${langLabel}/${file}`),
+    upserts,
+    deletes
+  });
+  return { id, langs: savedLangs, path: writingPath(kind, savedLangs[0], id), sha: result.sha };
 }
 
 async function handleWritingDelete(body, github) {

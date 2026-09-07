@@ -226,6 +226,52 @@ links:
     assert(res.status === 200, "save writing tr pair");
     assert(github.files.has("content/articles/tr/smoke-note.md"), "writing tr file written");
 
+    const beforeBilingual = github.commits.length;
+    res = await json(await post("/api/admin/save", {
+      kind: "articles",
+      id: "bilingual-atomic",
+      date: "2026-09-07",
+      locales: [
+        { lang: "en", title: "Bilingual Production Test", body: "English body" },
+        { lang: "tr", title: "Iki Dilli Production Testi", body: "Turkce govde" }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.ok === true, "bilingual locales save ok");
+    assert(github.commits.length === beforeBilingual + 1, "bilingual save is one GitHub commit");
+    assert(github.files.has("content/articles/en/bilingual-atomic.md"), "bilingual EN markdown written");
+    assert(github.files.has("content/articles/tr/bilingual-atomic.md"), "bilingual TR markdown written");
+    const bilingualIndex = JSON.parse(github.files.get("content/index.json"));
+    assert(bilingualIndex.articles.en.includes("bilingual-atomic.md"), "index lists bilingual EN");
+    assert(bilingualIndex.articles.tr.includes("bilingual-atomic.md"), "index lists bilingual TR");
+    assert(Array.isArray(res.body.langs) && res.body.langs.join(",") === "en,tr", "save response reports both langs");
+    const bilingualCommit = github.commits[github.commits.length - 1];
+    assert(bilingualCommit.upserts.includes("content/articles/en/bilingual-atomic.md") && bilingualCommit.upserts.includes("content/articles/tr/bilingual-atomic.md"), "one commit upserts both locale files");
+
+    res = await json(await post("/api/admin/save", {
+      kind: "social",
+      id: "x-bilingual",
+      date: "2026-09-07",
+      externalUrl: "https://x.com/koltigin/status/1",
+      locales: [
+        { lang: "en", title: "X EN", body: "en note" },
+        { lang: "tr", title: "X TR", body: "tr note" }
+      ]
+    }, env));
+    assert(res.status === 200, "X post bilingual save keeps URL validation on one request");
+    assert(String(github.files.get("content/social/en/x-bilingual.md")).includes("https://x.com/koltigin/status/1"), "X EN keeps URL");
+    assert(String(github.files.get("content/social/tr/x-bilingual.md")).includes("https://x.com/koltigin/status/1"), "X TR keeps URL");
+
+    res = await json(await post("/api/admin/save", {
+      kind: "social",
+      id: "x-bilingual-bad",
+      date: "2026-09-07",
+      locales: [
+        { lang: "en", title: "X EN", body: "" },
+        { lang: "tr", title: "X TR", body: "" }
+      ]
+    }, env));
+    assert(res.status === 400, "X post without URL is still rejected");
+
     res = await json(await post("/api/admin/page", { family: "about", lang: "en", markdown: "# About\n\nUpdated\n" }, env));
     assert(res.status === 200 && res.body.ok, "save about");
     assert(String(github.files.get("content/about/en.md")).includes("Updated"), "about body");

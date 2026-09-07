@@ -15,6 +15,7 @@ const {
   parseFrontMatter,
   writingLocalesToSave,
   writingSavePayloads,
+  writingSaveRequest,
   writingSaveShouldShowSuccess
 } = createRequire(join(root, "content-sync.js"))("./content-sync.js");
 
@@ -113,11 +114,12 @@ assert(!/await loadContent\(\)/.test(saveWritingFn), "writing save does not refe
 assert(saveVideoFn.includes("upsertVideoInState"), "video save updates canonical list after backend success");
 assert(!/await loadContent\(\)/.test(saveVideoFn), "video save does not refetch stale Pages content");
 assert(saveWritingFn.includes("await api('/admin/api/save'") && saveWritingFn.indexOf("await api('/admin/api/save'") < saveWritingFn.indexOf("upsertWritingInState"), "writing list update happens only after backend save");
-assert(saveWritingFn.includes("writingSavePayloads") && saveWritingFn.includes("for (const payload of payloads)"), "writing save posts every filled locale, not only the active tab");
+assert(saveWritingFn.includes("writingSaveRequest") && saveWritingFn.includes("locales"), "writing save sends every filled locale in one GitHub commit request");
+assert((saveWritingFn.match(/await api\('\/admin\/api\/save'/g) || []).length === 1, "writing save does not make one GitHub commit per locale");
 assert(!/const lang = editor\.lang/.test(saveWritingFn), "writing save does not use the EN/TR tab as the saved language");
-assert(saveWritingFn.includes("writingSaveShouldShowSuccess"), "writing save shows success only after every locale request succeeds");
-assert(saveWritingFn.includes("errors.savePartial"), "partial bilingual save surfaces an error instead of success");
-assert(!/catch[\s\S]*showNotice\(/.test(saveWritingFn), "failed or partial writing save does not show the success notice");
+assert(saveWritingFn.includes("writingSaveShouldShowSuccess"), "writing save shows success only after the bilingual commit succeeds");
+assert(saveWritingFn.includes("errors.savePartial"), "incomplete bilingual save surfaces an error instead of success");
+assert(!/catch[\s\S]*showNotice\(/.test(saveWritingFn), "failed writing save does not show the success notice");
 assert(saveVideoFn.includes("await api('/admin/api/save'") && saveVideoFn.indexOf("await api('/admin/api/save'") < saveVideoFn.indexOf("upsertVideoInState"), "video list update happens only after backend save");
 
 const bilingualEditor = {
@@ -188,6 +190,26 @@ const movePayloads = writingSavePayloads({
   fromKind: "articles"
 });
 assert(movePayloads[0].fromKind === "articles" && movePayloads[1].fromKind == null, "category move fromKind is only on the first locale request");
+
+const bilingualRequest = writingSaveRequest(bilingualEditor, "bilingual-production-test", {
+  date: "2026-09-07",
+  isExternal: false
+});
+assert(bilingualRequest && bilingualRequest.locales.length === 2, "client posts both locales in a single save body");
+assert(bilingualRequest.locales.every((row) => row.lang === "en" || row.lang === "tr"), "save body locales are en and tr");
+assert(bilingualRequest.fromKind == null, "new bilingual save request has no fromKind");
+
+const ghostList = writingFromEditor({
+  kind: "articles",
+  lang: "tr",
+  pair: { date: "2026-09-07", externalUrl: "" },
+  langs: {
+    en: { title: "Bilingual Production Test", body: "English body", exists: false, cover: "" },
+    tr: { title: "Iki Dilli Production Testi", body: "Turkce govde", exists: true, cover: "" }
+  }
+}, "bilingual-production-test");
+assert(!ghostList.languages.en, "Admin EN checkmark requires a persisted EN file, not an unsaved title");
+assert(Boolean(ghostList.languages.tr), "persisted TR locale is listed");
 
 assert(writingSaveShouldShowSuccess(2, 2, false) === true, "full bilingual save may show success");
 assert(writingSaveShouldShowSuccess(1, 2, true) === false, "partial bilingual save must not show success");

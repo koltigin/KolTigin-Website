@@ -929,26 +929,47 @@
     </div>`;
   }
 
-  function coverPicker(draft) {
+  function coverPicker(draft, locale) {
+    const loc = locale || 'en';
     const hasImage = Boolean(draft.coverPreview || draft.cover);
     const name = draft.coverFile?.name || draft.cover || '';
     return `
       <div class="field">
-        <label for="cover-file">${escapeHtml(t('writings.cover'))}</label>
-        <input id="cover-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
+        <label for="cover-file-${escapeHtml(loc)}">${escapeHtml(t('writings.cover'))}</label>
+        <input id="cover-file-${escapeHtml(loc)}" data-cover-input="${escapeHtml(loc)}" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
         ${hasImage ? `
           <div class="cover-picker">
             ${coverBlock(draft, '')}
             ${name ? `<span class="hint">${escapeHtml(name)}</span>` : ''}
             <div class="cover-actions">
-              <button class="btn btn-ghost" type="button" data-cover-pick>${escapeHtml(t('writings.replace'))}</button>
-              <button class="btn btn-ghost" type="button" data-cover-remove>${escapeHtml(t('writings.remove'))}</button>
+              <button class="btn btn-ghost" type="button" data-cover-pick data-cover-lang="${escapeHtml(loc)}">${escapeHtml(t('writings.replace'))}</button>
+              <button class="btn btn-ghost" type="button" data-cover-remove data-cover-lang="${escapeHtml(loc)}">${escapeHtml(t('writings.remove'))}</button>
             </div>
           </div>
         ` : `
-          <button class="btn btn-ghost" type="button" data-cover-pick>${escapeHtml(t('writings.chooseImage'))}</button>
+          <button class="btn btn-ghost" type="button" data-cover-pick data-cover-lang="${escapeHtml(loc)}">${escapeHtml(t('writings.chooseImage'))}</button>
           <span class="hint">${escapeHtml(t('writings.coverHint'))}</span>
         `}
+      </div>
+    `;
+  }
+
+  function localePanel(editor, locale) {
+    const draft = editor.langs[locale];
+    const kind = editor.kind;
+    const active = editor.lang === locale;
+    return `
+      <div class="locale-panel${active ? '' : ' is-hidden'}" data-locale-panel="${locale}">
+        <div class="field">
+          <label for="title-${locale}">${escapeHtml(t('writings.titleField'))}</label>
+          <input id="title-${locale}" data-locale="${locale}" data-field="title" type="text" value="${escapeHtml(draft.title)}">
+        </div>
+        ${coverPicker(draft, locale)}
+        <div class="field">
+          <label for="body-${locale}">${escapeHtml(isExternalType(kind) ? t('writings.commentary') : t('writings.content'))}</label>
+          ${toolbar()}
+          <textarea id="body-${locale}" data-locale="${locale}" data-field="body">${escapeHtml(draft.body)}</textarea>
+        </div>
       </div>
     `;
   }
@@ -1017,21 +1038,13 @@
             ${kindConfirm}
           </div>
           <div class="field">
-            <label for="title">${escapeHtml(t('writings.titleField'))}</label>
-            <input id="title" data-field="title" type="text" required value="${escapeHtml(draft.title)}">
-          </div>
-          <div class="field">
             <label for="date">${escapeHtml(t('writings.date'))}</label>
             <input id="date" data-pair="date" type="date" required value="${escapeHtml(editor.pair.date)}">
             <span class="hint">${escapeHtml(t('writings.dateHint'))}</span>
           </div>
           ${xField}
-          ${coverPicker(draft)}
-          <div class="field">
-            <label for="body">${escapeHtml(isExternalType(kind) ? t('writings.commentary') : t('writings.content'))}</label>
-            ${toolbar()}
-            <textarea id="body" data-field="body">${escapeHtml(draft.body)}</textarea>
-          </div>
+          ${localePanel(editor, 'en')}
+          ${localePanel(editor, 'tr')}
         </form>
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
@@ -1350,6 +1363,15 @@
 
   function syncLangFromForm() {
     if (!state.editor || state.editor.kind === 'videos') return;
+    const localeFields = app.querySelectorAll('[data-locale][data-field]');
+    if (localeFields.length) {
+      localeFields.forEach((field) => {
+        const locale = field.dataset.locale;
+        if (!state.editor.langs[locale]) return;
+        state.editor.langs[locale][field.dataset.field] = field.value;
+      });
+      return;
+    }
     const draft = state.editor.langs[state.editor.lang];
     app.querySelectorAll('[data-field]').forEach((field) => { draft[field.dataset.field] = field.value; });
   }
@@ -1431,13 +1453,19 @@
         ? editor.originalKind
         : ''
     });
-    if (!payloads.length) {
+    const requestBody = Sync.writingSaveRequest(editor, id, {
+      date: normalizeDate(editor.pair.date),
+      isExternal: isExternalType(editor.kind),
+      fromKind: editor.mode === 'edit' && editor.originalKind && editor.originalKind !== editor.kind
+        ? editor.originalKind
+        : ''
+    });
+    if (!payloads.length || !requestBody) {
       showError(t('errors.titleFirst'));
       renderWritingEditor();
       return;
     }
     const previousKind = editor.originalKind;
-    let savedCount = 0;
     try {
       for (const payload of payloads) {
         const draft = editor.langs[payload.lang];
@@ -1447,34 +1475,39 @@
           draft.coverFile = null;
           payload.cover = draft.cover;
         }
-        const result = await api('/admin/api/save', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        draft.exists = true;
-        editor.sharedId = result.id || id;
-        savedCount += 1;
-        if (payload.fromKind) editor.originalKind = editor.kind;
       }
+      requestBody.locales = payloads.map((row) => ({
+        lang: row.lang,
+        title: row.title,
+        cover: row.cover,
+        body: row.body
+      }));
+      const result = await api('/admin/api/save', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+      const savedLangs = Array.isArray(result.langs) && result.langs.length
+        ? result.langs
+        : payloads.map((row) => row.lang);
+      savedLangs.forEach((lang) => {
+        if (editor.langs[lang]) editor.langs[lang].exists = true;
+      });
+      editor.sharedId = result.id || id;
       editor.mode = 'edit';
       editor.originalKind = editor.kind;
       if (!isExternalType(editor.kind)) editor.pair.externalUrl = '';
       if (previousKind && previousKind !== editor.kind) {
         history.replaceState(null, '', `${location.pathname}${location.search}#/edit/${editor.kind}/${encodeURIComponent(editor.sharedId)}`);
       }
-      if (Sync.writingSaveShouldShowSuccess(savedCount, payloads.length, false)) {
+      if (Sync.writingSaveShouldShowSuccess(savedLangs.length, payloads.length, false)) {
         clearDirty();
         showNotice();
+      } else {
+        showError(t('errors.savePartial', { detail: t('errors.api') }));
       }
       upsertWritingInState(Sync.writingFromEditor(editor, editor.sharedId), previousKind);
     } catch (error) {
-      if (savedCount) {
-        editor.mode = 'edit';
-        upsertWritingInState(Sync.writingFromEditor(editor, editor.sharedId || id), previousKind);
-        showError(t('errors.savePartial', { detail: error.message }));
-      } else {
-        showError(error.message);
-      }
+      showError(error.message);
     }
     renderWritingEditor();
   }
@@ -1842,7 +1875,8 @@
       }
       const md = event.target.closest('[data-md]');
       if (md) {
-        const textarea = app.querySelector('#body');
+        const textarea = app.querySelector('[data-locale-panel]:not(.is-hidden) textarea[data-field="body"]')
+          || app.querySelector('#body');
         if (textarea) {
           applyMd(md.dataset.md, textarea);
           return;
@@ -1863,12 +1897,14 @@
       }
       if (event.target.closest('[data-cover-pick]')) {
         event.preventDefault();
-        app.querySelector('#cover-file')?.click();
+        const loc = event.target.closest('[data-cover-pick]').dataset.coverLang || state.editor.lang;
+        app.querySelector(`[data-cover-input="${loc}"]`)?.click();
         return;
       }
       if (event.target.closest('[data-cover-remove]')) {
         event.preventDefault();
-        const draft = state.editor.langs[state.editor.lang];
+        const loc = event.target.closest('[data-cover-remove]').dataset.coverLang || state.editor.lang;
+        const draft = state.editor.langs[loc];
         if (draft.coverPreview) URL.revokeObjectURL(draft.coverPreview);
         draft.cover = '';
         draft.coverFile = null;
@@ -2045,7 +2081,7 @@
         renderWritingEditor();
         return;
       }
-      if (event.target.id === 'cover-file' && state.editor) {
+      if (event.target.matches('[data-cover-input]') && state.editor) {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         if (!isImageFile(file)) {
@@ -2053,7 +2089,8 @@
           renderWritingEditor();
           return;
         }
-        const draft = state.editor.langs[state.editor.lang];
+        const loc = event.target.dataset.coverInput || state.editor.lang;
+        const draft = state.editor.langs[loc];
         draft.coverFile = file;
         if (draft.coverPreview) URL.revokeObjectURL(draft.coverPreview);
         draft.coverPreview = URL.createObjectURL(file);

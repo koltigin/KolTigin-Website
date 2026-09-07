@@ -423,6 +423,10 @@ textarea {
   font-weight: 600;
 }
 
+.locale-panel.is-hidden {
+  display: none;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;

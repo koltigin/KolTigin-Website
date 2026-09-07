@@ -200,7 +200,7 @@ const writingEditor = adminSrc.slice(adminSrc.indexOf("function renderWritingEdi
 assert(!writingEditor.includes("editor-layout"), "writing editor is not a two-column editor/preview grid");
 assert(writingEditor.includes("editor-preview"), "writing preview uses the shared stacked preview class");
 assert(writingEditor.indexOf("data-save") < writingEditor.indexOf("preview.markdown"), "writing preview sits below Save");
-assert(writingEditor.includes("data-kind-select") && writingEditor.includes("data-field=\"title\"") && writingEditor.includes("data-field=\"body\""), "writing type, title, and markdown fields remain");
+assert(adminSrc.includes("localePanel") && adminSrc.includes("data-locale") && adminSrc.includes("data-locale-panel"), "writing editor keeps EN and TR fields in the DOM");
 
 const videoEditor = adminSrc.slice(adminSrc.indexOf("function renderVideoEditor"), adminSrc.indexOf("function loc("));
 assert(videoEditor.includes("editor-layout"), "video editor still uses the existing side preview layout");

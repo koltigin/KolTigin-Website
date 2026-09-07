@@ -154,15 +154,33 @@
     return !failed && Number(savedCount) > 0 && Number(savedCount) === Number(totalCount);
   }
 
+  function writingSaveRequest(editor, id, options) {
+    const payloads = writingSavePayloads(editor, id, options);
+    if (!payloads.length) return null;
+    const first = payloads[0];
+    return {
+      kind: first.kind,
+      id,
+      date: first.date,
+      ...(first.fromKind ? { fromKind: first.fromKind } : {}),
+      externalUrl: first.externalUrl || '',
+      locales: payloads.map((row) => ({
+        lang: row.lang,
+        title: row.title,
+        cover: row.cover,
+        body: row.body
+      }))
+    };
+  }
+
   function writingFromEditor(editor, id) {
     const langs = (editor && editor.langs) || {};
     const pair = (editor && editor.pair) || {};
     const languages = {};
     ['en', 'tr'].forEach((lang) => {
       const draft = langs[lang] || {};
+      if (!draft.exists) return;
       const title = scalarTitle(draft.title);
-      const has = Boolean(draft.exists || title || String(draft.body || '').trim());
-      if (!has && lang !== editor.lang) return;
       languages[lang] = {
         title,
         date: pair.date || '',
@@ -235,6 +253,7 @@
     mergeRemoteList,
     writingLocalesToSave,
     writingSavePayloads,
+    writingSaveRequest,
     writingSaveShouldShowSuccess,
     writingFromEditor,
     videoFromEditor,

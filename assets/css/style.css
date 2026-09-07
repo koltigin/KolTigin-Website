@@ -2603,8 +2603,18 @@ main {
   margin: 12px 0 0;
 }
 
-.guide-toolbar .share-actions {
-  margin: 0;
+.blog-post-content + .share-actions,
+.guide-body > .share-actions:last-child {
+  margin-top: 28px;
+  margin-bottom: 0;
+}
+
+.guide-body > h1:has(+ .share-actions) {
+  margin-bottom: 0;
+}
+
+.guide-body > h1 + .share-actions {
+  margin: 12px 0 20px;
 }
 
 .share-action {

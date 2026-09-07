@@ -78,12 +78,20 @@ assert(!markup.includes("#/yazilar"), "markup does not share spa hashes");
 const cardFn = blog.slice(blog.indexOf("createCard("), blog.indexOf("renderList("));
 assert(!cardFn.includes("shareMarkup") && !cardFn.includes("data-share-actions"), "writing list cards have no share controls");
 assert(blog.includes("shareMarkup(item)"), "writing detail uses shared share helper");
-assert(blog.includes("writings-detail-title") && blog.includes("${this.shareMarkup(item)}"), "writing share sits after detail title");
+const showItem = blog.slice(blog.indexOf("showItem(id)"), blog.indexOf("contentLang()"));
+const writingShareCalls = showItem.match(/this\.shareMarkup\(item\)/g) || [];
+assert(writingShareCalls.length === 2, "writing detail has top and bottom share groups");
+assert(showItem.indexOf("shareMarkup(item)") < showItem.indexOf("writings-detail-cover") || showItem.includes("writings-detail-title"), "writing top share stays after title");
+assert(showItem.lastIndexOf("shareMarkup(item)") > showItem.indexOf("blog-post-content"), "writing bottom share is after article body");
 
-assert(guides.includes("renderShareBar()"), "guides inject share via helper");
-assert(guides.includes(".guide-toolbar"), "guides place share in toolbar");
+assert(guides.includes("injectShareRows()"), "guides inject share via helper");
+assert(guides.includes("querySelector('h1')"), "guide top share targets rendered H1");
+assert(guides.includes("insertAdjacentHTML('afterend'"), "guide top share is injected after H1");
+assert(guides.includes("insertAdjacentHTML('beforeend'"), "guide bottom share is appended after body");
+assert(!guides.includes("back.insertAdjacentHTML"), "guides no longer attach share next to Back");
+assert(!guides.includes("renderShareBar()"), "toolbar share helper is gone");
 const parseMdMatch = guides.match(/parseMarkdown\(markdown, guideId\) \{[\s\S]*?\n  \}/);
-assert(Boolean(parseMdMatch) && !parseMdMatch[0].includes("share-actions") && !parseMdMatch[0].includes("KolTiginShareActions"), "guide markdown does not host share UI");
+assert(Boolean(parseMdMatch) && !parseMdMatch[0].includes("share-actions") && !parseMdMatch[0].includes("KolTiginShareActions"), "guide markdown renderer does not host share UI");
 
 assert(en.share.x === "X" && en.share.share === "Share" && en.share.copied === "Copied", "en share labels");
 assert(tr.share.share === "Paylaş" && tr.share.copied === "Bağlantı kopyalandı", "tr share labels");

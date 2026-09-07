@@ -668,6 +668,7 @@ class BlogParser {
         <div class="blog-post-content">
           ${this.parseMarkdown(item.body)}
         </div>
+        ${this.shareMarkup(item)}
       </section>
     `;
     this.bindCoverFallbacks();

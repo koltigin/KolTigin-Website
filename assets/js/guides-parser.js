@@ -121,9 +121,9 @@ class GuidesParser {
     try {
       const markdown = await this.loadMarkdown(id, this.currentLang);
       this.currentTitle = this.firstHeading(markdown) || id;
-      this.renderShareBar();
       const html = this.parseMarkdown(markdown, id);
       this.bodyEl.innerHTML = html;
+      this.injectShareRows();
     } catch (error) {
       this.bodyEl.innerHTML = `<p class="guide-status">${this.escapeHtml(error.message)}</p>`;
     }
@@ -143,21 +143,22 @@ class GuidesParser {
     this.langNav?.querySelectorAll('[data-guide-lang]').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.guideLang === this.currentLang);
     });
-    this.renderShareBar();
+    this.page?.querySelector('.guide-toolbar [data-share-actions]')?.remove();
   }
 
-  renderShareBar() {
-    const toolbar = this.page?.querySelector('.guide-toolbar');
-    if (!toolbar || !this.currentId || !window.KolTiginShareActions) return;
-    toolbar.querySelector('[data-share-actions]')?.remove();
+  injectShareRows() {
+    if (!this.bodyEl || !this.currentId || !window.KolTiginShareActions) return;
+    this.bodyEl.querySelectorAll('[data-share-actions]').forEach((bar) => bar.remove());
+    this.page?.querySelector('.guide-toolbar [data-share-actions]')?.remove();
     const html = window.KolTiginShareActions.render({
       title: this.currentTitle || this.currentId,
       url: window.KolTiginShareActions.guideShareUrl(this.contentLang(), this.currentId)
     });
-    const back = toolbar.querySelector('[data-guide-back]');
-    if (back) back.insertAdjacentHTML('afterend', html);
-    else toolbar.insertAdjacentHTML('beforeend', html);
-    window.KolTiginShareActions.bind(toolbar);
+    const heading = this.bodyEl.querySelector('h1');
+    if (heading) heading.insertAdjacentHTML('afterend', html);
+    else this.bodyEl.insertAdjacentHTML('afterbegin', html);
+    this.bodyEl.insertAdjacentHTML('beforeend', html);
+    window.KolTiginShareActions.bind(this.bodyEl);
   }
 
   async loadMarkdown(id, lang) {

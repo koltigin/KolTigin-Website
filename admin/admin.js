@@ -1366,7 +1366,10 @@
     syncLangFromForm();
     syncPairFromForm();
     if (state.editor && state.editor.kind !== 'videos') {
-      maybeLockSharedId(state.editor, state.editor.langs[state.editor.lang].title);
+      maybeLockSharedId(
+        state.editor,
+        state.editor.langs.en.title || state.editor.langs.tr.title
+      );
     }
   }
 
@@ -1401,8 +1404,6 @@
   async function saveWriting() {
     syncDraftFromForm();
     const editor = state.editor;
-    const lang = editor.lang;
-    const draft = editor.langs[lang];
     clearStatus();
     if (editor.kindPending) {
       showError(isExternalType(editor.kindPending.to) ? t('writings.becomeX') : t('writings.becomeInternal'));
@@ -1414,48 +1415,66 @@
       renderWritingEditor();
       return;
     }
-    const id = maybeLockSharedId(editor, draft.title);
+    const id = maybeLockSharedId(
+      editor,
+      Sync.scalarTitle(editor.langs.en.title) || Sync.scalarTitle(editor.langs.tr.title)
+    );
     if (!id) {
       showError(t('errors.titleFirst'));
       renderWritingEditor();
       return;
     }
+    const payloads = Sync.writingSavePayloads(editor, id, {
+      date: normalizeDate(editor.pair.date),
+      isExternal: isExternalType(editor.kind),
+      fromKind: editor.mode === 'edit' && editor.originalKind && editor.originalKind !== editor.kind
+        ? editor.originalKind
+        : ''
+    });
+    if (!payloads.length) {
+      showError(t('errors.titleFirst'));
+      renderWritingEditor();
+      return;
+    }
+    const previousKind = editor.originalKind;
+    let savedCount = 0;
     try {
-      if (draft.coverFile) {
-        const uploaded = await uploadImage('/admin/api/cover', draft.coverFile);
-        draft.cover = uploaded.filename;
-        draft.coverFile = null;
+      for (const payload of payloads) {
+        const draft = editor.langs[payload.lang];
+        if (draft.coverFile) {
+          const uploaded = await uploadImage('/admin/api/cover', draft.coverFile);
+          draft.cover = uploaded.filename;
+          draft.coverFile = null;
+          payload.cover = draft.cover;
+        }
+        const result = await api('/admin/api/save', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        draft.exists = true;
+        editor.sharedId = result.id || id;
+        savedCount += 1;
+        if (payload.fromKind) editor.originalKind = editor.kind;
       }
-      const result = await api('/admin/api/save', {
-        method: 'POST',
-        body: JSON.stringify({
-          kind: editor.kind,
-          ...(editor.mode === 'edit' && editor.originalKind && editor.originalKind !== editor.kind
-            ? { fromKind: editor.originalKind }
-            : {}),
-          lang,
-          id,
-          title: draft.title,
-          date: normalizeDate(editor.pair.date),
-          cover: draft.cover,
-          body: draft.body,
-          externalUrl: isExternalType(editor.kind) ? editor.pair.externalUrl : ''
-        })
-      });
-      draft.exists = true;
-      editor.sharedId = result.id || id;
-      const previousKind = editor.originalKind;
       editor.mode = 'edit';
       editor.originalKind = editor.kind;
       if (!isExternalType(editor.kind)) editor.pair.externalUrl = '';
       if (previousKind && previousKind !== editor.kind) {
         history.replaceState(null, '', `${location.pathname}${location.search}#/edit/${editor.kind}/${encodeURIComponent(editor.sharedId)}`);
       }
-      clearDirty();
-      showNotice();
+      if (Sync.writingSaveShouldShowSuccess(savedCount, payloads.length, false)) {
+        clearDirty();
+        showNotice();
+      }
       upsertWritingInState(Sync.writingFromEditor(editor, editor.sharedId), previousKind);
     } catch (error) {
-      showError(error.message);
+      if (savedCount) {
+        editor.mode = 'edit';
+        upsertWritingInState(Sync.writingFromEditor(editor, editor.sharedId || id), previousKind);
+        showError(t('errors.savePartial', { detail: error.message }));
+      } else {
+        showError(error.message);
+      }
     }
     renderWritingEditor();
   }

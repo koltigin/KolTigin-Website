@@ -12,7 +12,10 @@ const {
   mergeRemoteList,
   writingFromEditor,
   videoFromEditor,
-  parseFrontMatter
+  parseFrontMatter,
+  writingLocalesToSave,
+  writingSavePayloads,
+  writingSaveShouldShowSuccess
 } = createRequire(join(root, "content-sync.js"))("./content-sync.js");
 
 const adminSrc = readFileSync(join(root, "admin.js"), "utf8");
@@ -110,7 +113,85 @@ assert(!/await loadContent\(\)/.test(saveWritingFn), "writing save does not refe
 assert(saveVideoFn.includes("upsertVideoInState"), "video save updates canonical list after backend success");
 assert(!/await loadContent\(\)/.test(saveVideoFn), "video save does not refetch stale Pages content");
 assert(saveWritingFn.includes("await api('/admin/api/save'") && saveWritingFn.indexOf("await api('/admin/api/save'") < saveWritingFn.indexOf("upsertWritingInState"), "writing list update happens only after backend save");
+assert(saveWritingFn.includes("writingSavePayloads") && saveWritingFn.includes("for (const payload of payloads)"), "writing save posts every filled locale, not only the active tab");
+assert(!/const lang = editor\.lang/.test(saveWritingFn), "writing save does not use the EN/TR tab as the saved language");
+assert(saveWritingFn.includes("writingSaveShouldShowSuccess"), "writing save shows success only after every locale request succeeds");
+assert(saveWritingFn.includes("errors.savePartial"), "partial bilingual save surfaces an error instead of success");
+assert(!/catch[\s\S]*showNotice\(/.test(saveWritingFn), "failed or partial writing save does not show the success notice");
 assert(saveVideoFn.includes("await api('/admin/api/save'") && saveVideoFn.indexOf("await api('/admin/api/save'") < saveVideoFn.indexOf("upsertVideoInState"), "video list update happens only after backend save");
+
+const bilingualEditor = {
+  kind: "articles",
+  lang: "tr",
+  mode: "new",
+  originalKind: "articles",
+  pair: { date: "2026-09-07", externalUrl: "" },
+  langs: {
+    en: { title: "Production Writing Test", body: "English body", exists: false, cover: "" },
+    tr: { title: "Uretim Yazi Testi", body: "Turkce govde", exists: false, cover: "cover.png" }
+  }
+};
+assert(writingLocalesToSave(bilingualEditor).join(",") === "en,tr", "both EN and TR with titles are selected for save");
+assert(writingLocalesToSave(bilingualEditor)[0] === "en" && bilingualEditor.lang === "tr", "active TR tab does not drop the EN locale from save");
+
+const bilingualPayloads = writingSavePayloads(bilingualEditor, "production-writing-test", {
+  date: "2026-09-07",
+  isExternal: false
+});
+assert(bilingualPayloads.length === 2, "one Save builds two locale payloads when both titles are filled");
+assert(bilingualPayloads.every((row) => row.id === "production-writing-test"), "both locale payloads share the same Shared ID");
+assert(bilingualPayloads[0].lang === "en" && bilingualPayloads[0].title === "Production Writing Test", "EN markdown payload is included");
+assert(bilingualPayloads[1].lang === "tr" && bilingualPayloads[1].title === "Uretim Yazi Testi", "TR markdown payload is included");
+assert(!bilingualPayloads.some((row) => row.fromKind), "new bilingual save does not send fromKind");
+
+const trOnly = writingSavePayloads({
+  ...bilingualEditor,
+  langs: {
+    en: { title: "  ", body: "", exists: false, cover: "" },
+    tr: bilingualEditor.langs.tr
+  }
+}, "production-writing-test", { date: "2026-09-07", isExternal: false });
+assert(trOnly.length === 1 && trOnly[0].lang === "tr", "empty EN title does not create an EN file");
+
+const notesBilingual = writingSavePayloads({ ...bilingualEditor, kind: "notes" }, "shared-note", {
+  date: "2026-09-07",
+  isExternal: false
+});
+assert(notesBilingual.length === 2 && notesBilingual.every((row) => row.kind === "notes" && row.id === "shared-note"), "technical notes use the same bilingual save plan");
+
+const xEditor = {
+  kind: "social",
+  lang: "en",
+  pair: { date: "2026-09-07", externalUrl: "https://x.com/koltigin/status/1" },
+  langs: {
+    en: { title: "X post EN", body: "note", exists: false, cover: "" },
+    tr: { title: "X post TR", body: "not", exists: false, cover: "" }
+  }
+};
+const xPayloads = writingSavePayloads(xEditor, "x-post-en", {
+  date: "2026-09-07",
+  isExternal: true
+});
+assert(xPayloads.length === 2 && xPayloads.every((row) => row.externalUrl === "https://x.com/koltigin/status/1"), "X posts keep the shared URL on both locale saves");
+assert(writingSavePayloads({
+  ...xEditor,
+  langs: { en: xEditor.langs.en, tr: { title: "", body: "", exists: false, cover: "" } }
+}, "x-post-en", { date: "2026-09-07", isExternal: true }).length === 1, "X post with only one title still saves a single locale");
+
+const movePayloads = writingSavePayloads({
+  ...bilingualEditor,
+  kind: "notes",
+  originalKind: "articles"
+}, "production-writing-test", {
+  date: "2026-09-07",
+  isExternal: false,
+  fromKind: "articles"
+});
+assert(movePayloads[0].fromKind === "articles" && movePayloads[1].fromKind == null, "category move fromKind is only on the first locale request");
+
+assert(writingSaveShouldShowSuccess(2, 2, false) === true, "full bilingual save may show success");
+assert(writingSaveShouldShowSuccess(1, 2, true) === false, "partial bilingual save must not show success");
+assert(writingSaveShouldShowSuccess(0, 2, true) === false, "failed save must not show success");
 
 assert(cmsSrc.includes("adoptGuides") && cmsSrc.includes("upsertById"), "guide create/list uses the same overlay lifecycle");
 assert(cmsSrc.includes("adoptProjects") && cmsSrc.includes("upsertById"), "project create/list uses the same overlay lifecycle");

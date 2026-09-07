@@ -230,7 +230,8 @@ window.ADMIN_I18N = {
       youtube: 'A valid YouTube URL is required.',
       socialUrl: 'Each social link needs a valid https:// URL.',
       api: 'The admin API is not running. Start scripts/admin-dev-server.py.',
-      publishNotConnected: 'Publishing backend is not connected yet.'
+      publishNotConnected: 'Publishing backend is not connected yet.',
+      savePartial: 'Save did not finish for every language. {detail}'
     },
     unsaved: {
       leave: 'You have unsaved changes. Leave without saving?'
@@ -528,7 +529,8 @@ window.ADMIN_I18N = {
       youtube: 'Geçerli bir YouTube URL gerekli.',
       socialUrl: 'Her sosyal bağlantı geçerli bir https:// URL içermeli.',
       api: 'Admin API çalışmıyor. scripts/admin-dev-server.py başlatın.',
-      publishNotConnected: 'Yayınlama altyapısı henüz bağlı değil.'
+      publishNotConnected: 'Yayınlama altyapısı henüz bağlı değil.',
+      savePartial: 'Kayıt her dil için tamamlanamadı. {detail}'
     },
     unsaved: {
       leave: 'Kaydedilmemiş değişiklikler var. Kaydetmeden ayrılmak istiyor musunuz?'

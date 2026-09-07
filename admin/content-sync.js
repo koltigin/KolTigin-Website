@@ -121,6 +121,39 @@
     return out;
   }
 
+  function writingLocalesToSave(editor) {
+    const langs = (editor && editor.langs) || {};
+    return ['en', 'tr'].filter((lang) => Boolean(scalarTitle(langs[lang] && langs[lang].title)));
+  }
+
+  function writingSavePayloads(editor, id, options) {
+    const opts = options || {};
+    const pair = (editor && editor.pair) || {};
+    const kind = editor && editor.kind;
+    const date = opts.date || pair.date || '';
+    const isExternal = Boolean(opts.isExternal);
+    const fromKind = String(opts.fromKind || '');
+    return writingLocalesToSave(editor).map((lang, index) => {
+      const draft = (editor.langs || {})[lang] || {};
+      const payload = {
+        kind,
+        lang,
+        id,
+        title: scalarTitle(draft.title),
+        date,
+        cover: draft.cover || '',
+        body: typeof draft.body === 'string' ? draft.body : String(draft.body || ''),
+        externalUrl: isExternal ? String(pair.externalUrl || '') : ''
+      };
+      if (index === 0 && fromKind && fromKind !== kind) payload.fromKind = fromKind;
+      return payload;
+    });
+  }
+
+  function writingSaveShouldShowSuccess(savedCount, totalCount, failed) {
+    return !failed && Number(savedCount) > 0 && Number(savedCount) === Number(totalCount);
+  }
+
   function writingFromEditor(editor, id) {
     const langs = (editor && editor.langs) || {};
     const pair = (editor && editor.pair) || {};
@@ -200,6 +233,9 @@
     localizedText,
     upsertById,
     mergeRemoteList,
+    writingLocalesToSave,
+    writingSavePayloads,
+    writingSaveShouldShowSuccess,
     writingFromEditor,
     videoFromEditor,
     parseFrontMatter

@@ -5,9 +5,9 @@ description: "KolTigin — academic background and Web3 work"
 
 # Resume
 
-> TEST
-
 ## Summary
+
+>TEST
 
 Biologist with a doctorate in zoology; independent researcher and content creator working on Web3 infrastructure, node operations, and decentralized networks.
 

@@ -5,9 +5,9 @@ description: "Mehmet Köl Tiğin — akademik ve Web3 geçmişi"
 
 # Özgeçmiş
 
->TEST
-
 ## Özet
+
+>TEST
 
 Zooloji alanında doktora derecesine sahip biyolog; Web3 altyapıları, node operasyonları ve merkeziyetsiz ağlar üzerine çalışan bağımsız araştırmacı ve içerik üreticisi.
 

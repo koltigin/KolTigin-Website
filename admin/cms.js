@@ -9,6 +9,10 @@
     return window.KTContentSync;
   }
 
+  function CmsSave() {
+    return window.KTCmsSave;
+  }
+
   function t(key, vars) {
     return H().t(key, vars);
   }
@@ -258,16 +262,25 @@
         draft.langs.tr = applyServiceIcons(draft.langs.tr, icons);
       }
     }
+    const requestBody = CmsSave().pageSaveRequest(draft);
     H().clearStatus();
+    if (!requestBody) {
+      H().showError(t('errors.titleFirst'));
+      renderPageEditor(draft.family, draft.family === 'about' ? 'nav.about' : 'nav.resume');
+      return;
+    }
     try {
-      const langs = draft.family === 'about' ? ['en', 'tr'] : [draft.lang];
-      for (const lang of langs) {
-        await H().api('/admin/api/page', {
-          method: 'POST',
-          body: JSON.stringify({ family: draft.family, lang, markdown: draft.langs[lang] })
-        });
+      const result = await H().api('/admin/api/page', {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+      const wanted = requestBody.locales.map((row) => row.lang);
+      const savedLangs = Array.isArray(result.langs) ? result.langs : [];
+      if (CmsSave().saveShouldShowSuccess(wanted, savedLangs)) {
+        await saveOk();
+      } else {
+        await saveFail({ message: t('errors.savePartial', { detail: t('errors.api') }) });
       }
-      await saveOk();
     } catch (error) {
       await saveFail(error);
     }
@@ -732,38 +745,45 @@
       const title = (g.langs.en.match(/^#\s+(.+)$/m) || g.langs.tr.match(/^#\s+(.+)$/m) || [])[1] || '';
       g.id = H().slugify(title);
     }
+    const requestBody = CmsSave().guideSaveRequest(g);
+    H().clearStatus();
+    if (!requestBody || !g.id) {
+      H().showError(t('errors.titleFirst'));
+      renderGuideEditor();
+      return;
+    }
     if (g.coverFile) {
       const uploaded = await H().uploadImage('/admin/api/guide-image', g.coverFile, { id: g.id });
       g.cover = uploaded.filename;
       g.coverFile = null;
       if (g.coverPreview) URL.revokeObjectURL(g.coverPreview);
       g.coverPreview = '';
+      requestBody.cover = g.cover || '';
     }
-    H().clearStatus();
     try {
       const result = await H().api('/admin/api/guide-save', {
         method: 'POST',
-        body: JSON.stringify({
-          id: g.id,
-          lang: g.lang,
-          markdown: g.langs[g.lang],
-          projectId: g.projectId,
-          cover: g.cover || ''
-        })
+        body: JSON.stringify(requestBody)
       });
+      const wanted = requestBody.locales.map((row) => row.lang);
+      const savedLangs = Array.isArray(result.langs) ? result.langs : [];
       g.id = result.id || g.id;
       g.locked = true;
       const prev = (H().state.guidesData || []).find((item) => item.id === g.id) || {};
       H().state.guidesData = Sync().upsertById(H().state.guidesData || [], {
         id: g.id,
-        titleEn: guideHeading(g.langs.en) || prev.titleEn || g.id,
-        titleTr: guideHeading(g.langs.tr) || prev.titleTr || g.id,
-        existsEn: Boolean(String(g.langs.en || '').trim()) || Boolean(prev.existsEn),
-        existsTr: Boolean(String(g.langs.tr || '').trim()) || Boolean(prev.existsTr),
+        titleEn: (savedLangs.includes('en') ? guideHeading(g.langs.en) : '') || prev.titleEn || g.id,
+        titleTr: (savedLangs.includes('tr') ? guideHeading(g.langs.tr) : '') || prev.titleTr || g.id,
+        existsEn: savedLangs.includes('en') || Boolean(prev.existsEn),
+        existsTr: savedLangs.includes('tr') || Boolean(prev.existsTr),
         projects: prev.projects || []
       });
-      await saveOk();
       history.replaceState(null, '', `${location.pathname}${location.search}#/edit/guides/${encodeURIComponent(g.id)}`);
+      if (CmsSave().saveShouldShowSuccess(wanted, savedLangs)) {
+        await saveOk();
+      } else {
+        await saveFail({ message: t('errors.savePartial', { detail: t('errors.api') }) });
+      }
     } catch (error) {
       await saveFail(error);
     }

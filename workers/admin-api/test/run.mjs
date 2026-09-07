@@ -282,6 +282,44 @@ links:
     assert(github.commits.length === aboutCommits, "identical about save does not create a commit");
     res = await json(await post("/api/admin/page", { family: "about", lang: "tr", markdown: "# Hakkında\n\nTR body\n" }, env));
     assert(res.status === 200 && res.body.ok && String(github.files.get("content/about/tr.md")).includes("TR body"), "about tr writes source file");
+    const aboutBiBefore = github.commits.length;
+    res = await json(await post("/api/admin/page", {
+      family: "about",
+      locales: [
+        { lang: "en", markdown: "# About\n\nEN icons stay.\n\n## What I Do\n\n### Ops\nicon: rocket-outline\n" },
+        { lang: "tr", markdown: "# Hakkında\n\nTR icons stay.\n\n## Ne Yapıyorum\n\n### Ops\nicon: rocket-outline\n" }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.ok, "about bilingual locales save ok");
+    assert(github.commits.length === aboutBiBefore + 1, "about bilingual save is one GitHub commit");
+    assert(Array.isArray(res.body.langs) && res.body.langs.join(",") === "en,tr", "about save response reports both langs");
+    assert(String(github.files.get("content/about/en.md")).includes("icon: rocket-outline"), "about EN keeps shared icon");
+    assert(String(github.files.get("content/about/tr.md")).includes("icon: rocket-outline"), "about TR keeps shared icon");
+    const aboutSkipBefore = github.files.get("content/about/tr.md");
+    res = await json(await post("/api/admin/page", {
+      family: "about",
+      locales: [
+        { lang: "en", markdown: "# About\n\nOnly EN this time.\n" },
+        { lang: "tr", markdown: "# \n\n" }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.langs.join(",") === "en", "about empty locale is skipped");
+    assert(github.files.get("content/about/tr.md") === aboutSkipBefore, "about skip does not write empty TR file");
+    const resumeBefore = github.commits.length;
+    res = await json(await post("/api/admin/page", {
+      family: "resume",
+      locales: [
+        { lang: "en", markdown: "# Resume\n\n## Experience\n\n- Node ops\n" },
+        { lang: "tr", markdown: "# Özgeçmiş\n\n## Deneyim\n\n- Node operasyonu\n" }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.langs.join(",") === "en,tr", "resume bilingual locales save ok");
+    assert(github.commits.length === resumeBefore + 1, "resume bilingual save is one GitHub commit");
+    assert(String(github.files.get("content/resume/en.md")).includes("## Experience"), "resume EN section structure is kept");
+    assert(String(github.files.get("content/resume/tr.md")).includes("## Deneyim"), "resume TR section structure is kept");
+    res = await json(await post("/api/admin/page", { family: "resume", lang: "en", markdown: "# Resume\n\nEN only\n" }, env));
+    assert(res.status === 200 && res.body.langs.join(",") === "en", "resume single-locale payload still works");
+    assert(String(github.files.get("content/resume/tr.md")).includes("## Deneyim"), "resume TR file is left in place on EN-only save");
 
     res = await json(await post("/api/admin/site", { motto: "Think out of the box.", displayName: "KolTigin" }, env));
     assert(res.status === 200 && res.body.site.motto === "Think out of the box.", "save site");
@@ -400,9 +438,40 @@ links:
     assert(res.status === 200, "save guide tr");
     res = await json(await post("/api/admin/guide-save", { id: "en", lang: "en", markdown: "# Nope\n" }, env));
     assert(res.status === 400, "reserved guide id rejected");
+    const coverTrBefore = String(github.files.get("guides/aioz-depin/TR.md"));
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n", cover: "hero.png" }, env));
     assert(res.status === 200 && String(github.files.get("guides/aioz-depin/EN.md")).includes("cover:"), "guide cover saved on EN");
-    assert(String(github.files.get("guides/aioz-depin/TR.md")).includes("cover:"), "guide cover copied to TR sibling");
+    assert(String(github.files.get("guides/aioz-depin/TR.md")) === coverTrBefore, "single-locale cover does not rewrite the unwritten sibling");
+    const bilingualGuideBefore = github.commits.length;
+    resetGithubCalls(github);
+    res = await json(await post("/api/admin/guide-save", {
+      id: "bilingual-guide",
+      projectId: "optimai",
+      cover: "hero.png",
+      locales: [
+        { lang: "en", markdown: "# Bilingual Guide\n\nEnglish body.\n" },
+        { lang: "tr", markdown: "# Iki Dilli Rehber\n\nTurkce govde.\n" }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.ok, "bilingual guide save ok");
+    assert(github.commits.length === bilingualGuideBefore + 1, "bilingual guide save is one GitHub commit");
+    assert(Array.isArray(res.body.langs) && res.body.langs.join(",") === "en,tr", "guide save response reports both langs");
+    assert(github.files.has("guides/bilingual-guide/EN.md") && github.files.has("guides/bilingual-guide/TR.md"), "bilingual guide writes EN.md and TR.md");
+    assert(String(github.files.get("guides/bilingual-guide/EN.md")).includes("cover:"), "bilingual cover is applied to EN");
+    assert(String(github.files.get("guides/bilingual-guide/TR.md")).includes("cover:"), "bilingual cover is applied to TR");
+    assert(!github.files.has("guides/bilingual-guide/en.md"), "guide files stay EN.md/TR.md");
+    assert(projectMarkdownReads(github).length === 1, "bilingual guide applies Linked Project once");
+    assert((String(github.files.get("content/projects/depin/optimai.md")).match(/guide:\s*bilingual-guide/g) || []).length === 1, "Linked Project is attached once");
+    res = await json(await post("/api/admin/guide-save", {
+      id: "placeholder-guide",
+      locales: [
+        { lang: "en", markdown: "# Real Guide Title\n\nBody\n" },
+        { lang: "tr", markdown: "# \n\n" }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.langs.join(",") === "en", "placeholder guide locale is skipped");
+    assert(github.files.has("guides/placeholder-guide/EN.md"), "filled guide locale is written");
+    assert(!github.files.has("guides/placeholder-guide/TR.md"), "placeholder guide locale does not create a stub file");
     github.files.set("guides/aioz-depin/extra.txt", "orphan");
     github.files.set("assets/images/guides/aioz-depin/shot.png", png);
     github.files.set("guide/en/aioz-depin/index.html", "<html></html>");

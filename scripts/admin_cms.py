@@ -178,6 +178,41 @@ def first_heading(markdown: str) -> str:
     return ""
 
 
+def markdown_has_content(markdown: str) -> bool:
+    text = (markdown or "").replace("\r\n", "\n")
+    if text.startswith("---"):
+        close = text.find("\n---", 3)
+        if close != -1:
+            text = text[close + 4 :]
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    if not lines:
+        return False
+    if all(re.fullmatch(r"#\s*", line) for line in lines):
+        return False
+    return True
+
+
+def cms_locale_saves(body: dict) -> list[dict]:
+    raw = body.get("locales")
+    items = raw if isinstance(raw, list) and raw else [{"lang": body.get("lang"), "markdown": body.get("markdown")}]
+    seen: set[str] = set()
+    out: list[dict] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        lang = str(item.get("lang") or "").strip()
+        if lang not in {"en", "tr"}:
+            raise ValueError("Language must be en or tr")
+        if lang in seen:
+            continue
+        markdown = "" if item.get("markdown") is None else str(item.get("markdown"))
+        if not markdown_has_content(markdown):
+            continue
+        seen.add(lang)
+        out.append({"lang": lang, "markdown": markdown})
+    return out
+
+
 def parse_simple_front_matter(text: str) -> tuple[dict, str]:
     raw = (text or "").replace("\r\n", "\n")
     if not raw.startswith("---"):
@@ -454,13 +489,32 @@ def handle_cms_get(handler, parsed, json_ok, json_error) -> bool:
 
 def handle_page_save(handler, body, json_ok, json_error) -> None:
     family = str(body.get("family") or "")
-    lang = str(body.get("lang") or "")
-    markdown = str(body.get("markdown") or "")
-    if family not in PAGE_FAMILIES or lang not in {"en", "tr"}:
+    if family not in PAGE_FAMILIES:
         return json_error(handler, HTTPStatus.BAD_REQUEST, "Unknown page")
-    path = safe_under(PAGE_FAMILIES[family], f"{lang}.md")
-    path.write_text(markdown if markdown.endswith("\n") else markdown + "\n", encoding="utf-8")
-    return json_ok(handler, {"path": str(path.relative_to(ROOT)), "family": family, "lang": lang})
+    try:
+        locales = cms_locale_saves(body)
+    except ValueError as exc:
+        return json_error(handler, HTTPStatus.BAD_REQUEST, str(exc))
+    if not locales:
+        return json_error(handler, HTTPStatus.BAD_REQUEST, "Markdown is required")
+    langs = []
+    first_path = None
+    for item in locales:
+        path = safe_under(PAGE_FAMILIES[family], f"{item['lang']}.md")
+        markdown = item["markdown"]
+        path.write_text(markdown if markdown.endswith("\n") else markdown + "\n", encoding="utf-8")
+        langs.append(item["lang"])
+        if first_path is None:
+            first_path = path
+    return json_ok(
+        handler,
+        {
+            "path": str(first_path.relative_to(ROOT)),
+            "family": family,
+            "lang": langs[0],
+            "langs": langs,
+        },
+    )
 
 
 def handle_project_save(handler, body, json_ok, json_error) -> None:
@@ -697,32 +751,34 @@ def handle_project_categories_save(handler, body, json_ok, json_error) -> None:
 
 
 def handle_guide_save(handler, body, json_ok, json_error) -> None:
-    item_id = slugify(str(body.get("id") or body.get("titleEn") or body.get("titleTr") or ""))
-    lang = str(body.get("lang") or "")
-    markdown = str(body.get("markdown") or "")
+    try:
+        locales = cms_locale_saves(body)
+    except ValueError as exc:
+        return json_error(handler, HTTPStatus.BAD_REQUEST, str(exc))
+    if not locales:
+        return json_error(handler, HTTPStatus.BAD_REQUEST, "Markdown is required")
+    heading = first_heading(locales[0]["markdown"])
+    item_id = slugify(str(body.get("id") or heading or ""))
     project_id = str(body.get("projectId") or "").strip()
     if not item_id or not ID_RE.match(item_id):
         return json_error(handler, HTTPStatus.BAD_REQUEST, "Could not derive a guide id")
     if item_id in {"en", "tr", "guide", "writings", "assets", "content"}:
         return json_error(handler, HTTPStatus.BAD_REQUEST, "That guide id is reserved")
-    if lang not in {"en", "tr"}:
-        return json_error(handler, HTTPStatus.BAD_REQUEST, "Language must be en or tr")
-    if "cover" in body:
-        markdown = apply_guide_cover(markdown, body.get("cover"))
     folder = safe_under(GUIDES_ROOT, item_id)
     folder.mkdir(parents=True, exist_ok=True)
-    filename = "EN.md" if lang == "en" else "TR.md"
-    path = safe_under(folder, filename)
-    path.write_text(markdown if markdown.endswith("\n") else markdown + "\n", encoding="utf-8")
-    sibling = folder / ("TR.md" if lang == "en" else "EN.md")
-    if sibling.exists() and "cover" in body:
-        sibling.write_text(apply_guide_cover(sibling.read_text(encoding="utf-8"), body.get("cover")), encoding="utf-8")
-    if not sibling.exists():
-        title = first_heading(markdown) or item_id
-        stub = f"# {title}\n\n"
-        if "cover" in body:
-            stub = apply_guide_cover(stub, body.get("cover"))
-        sibling.write_text(stub if stub.endswith("\n") else stub + "\n", encoding="utf-8")
+    cover_in_body = "cover" in body
+    langs = []
+    first_path = None
+    for item in locales:
+        markdown = item["markdown"]
+        if cover_in_body:
+            markdown = apply_guide_cover(markdown, body.get("cover"))
+        filename = "EN.md" if item["lang"] == "en" else "TR.md"
+        path = safe_under(folder, filename)
+        path.write_text(markdown if markdown.endswith("\n") else markdown + "\n", encoding="utf-8")
+        langs.append(item["lang"])
+        if first_path is None:
+            first_path = path
     try:
         strip_guide_from_projects(item_id)
         if project_id:
@@ -737,7 +793,16 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
         share_log = regenerate_share()
     except RuntimeError as exc:
         return json_error(handler, HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
-    return json_ok(handler, {"id": item_id, "path": str(path.relative_to(ROOT)), "generator": log, "share": share_log})
+    return json_ok(
+        handler,
+        {
+            "id": item_id,
+            "path": str(first_path.relative_to(ROOT)),
+            "langs": langs,
+            "generator": log,
+            "share": share_log,
+        },
+    )
 
 
 def handle_guide_delete(handler, body, json_ok, json_error) -> None:

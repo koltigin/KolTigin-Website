@@ -389,20 +389,60 @@ export async function handleSite(body, github) {
   return { site: data, path: "config/site.json", sha: result.sha };
 }
 
+function markdownHasContent(markdown) {
+  let text = String(markdown || "").replace(/\r\n/g, "\n");
+  if (text.startsWith("---")) {
+    const close = text.indexOf("\n---", 3);
+    if (close !== -1) text = text.slice(close + 4);
+  }
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return false;
+  if (lines.every((line) => /^#\s*$/.test(line))) return false;
+  return true;
+}
+
+function cmsLocaleSaves(body) {
+  const raw = Array.isArray(body.locales) ? body.locales : null;
+  const items = raw && raw.length
+    ? raw
+    : [{ lang: body.lang, markdown: body.markdown }];
+  const seen = new Set();
+  const out = [];
+  for (const item of items) {
+    const lang = String((item && item.lang) || "").trim();
+    if (lang !== "en" && lang !== "tr") throw new HttpError(400, "Language must be en or tr");
+    if (seen.has(lang)) continue;
+    const markdown = item && item.markdown != null ? String(item.markdown) : "";
+    if (!markdownHasContent(markdown)) continue;
+    seen.add(lang);
+    out.push({ lang, markdown });
+  }
+  return out;
+}
+
 export async function handlePage(body, github) {
   const family = String(body.family || "");
-  const lang = String(body.lang || "");
-  if (body.markdown == null || typeof body.markdown !== "string") {
-    throw new HttpError(400, "Markdown is required");
-  }
-  const markdown = body.markdown;
-  const path = pagePath(family, lang);
-  const text = markdown.endsWith("\n") ? markdown : `${markdown}\n`;
-  const result = await github.commit({
-    message: commitMsg("save page", `${family}/${lang}`),
-    upserts: [{ path, text }]
+  if (family !== "about" && family !== "resume") throw new HttpError(400, "Unknown page");
+  const locales = cmsLocaleSaves(body);
+  if (!locales.length) throw new HttpError(400, "Markdown is required");
+  const savedLangs = [];
+  const upserts = locales.map((item) => {
+    savedLangs.push(item.lang);
+    const text = item.markdown.endsWith("\n") ? item.markdown : `${item.markdown}\n`;
+    return { path: pagePath(family, item.lang), text };
   });
-  return { path, family, lang, sha: result.sha, unchanged: Boolean(result.unchanged) };
+  const result = await github.commit({
+    message: commitMsg("save page", `${family}/${savedLangs.join("+")}`),
+    upserts
+  });
+  return {
+    family,
+    langs: savedLangs,
+    lang: savedLangs[0],
+    path: pagePath(family, savedLangs[0]),
+    sha: result.sha,
+    unchanged: Boolean(result.unchanged)
+  };
 }
 
 export async function handleProjectSave(body, github) {
@@ -519,34 +559,30 @@ export async function handleProjectSave(body, github) {
 }
 
 export async function handleGuideSave(body, github) {
-  const id = slugify(body.id);
-  const lang = String(body.lang || "");
-  let markdown = String(body.markdown || "");
+  const locales = cmsLocaleSaves(body);
+  if (!locales.length) throw new HttpError(400, "Markdown is required");
+  const heading = locales[0].markdown.match(/^#\s+(.+)$/m);
+  const id = slugify(body.id || (heading && heading[1]) || "");
   const projectId = String(body.projectId || "").trim();
   if (!ID_RE.test(id)) throw new HttpError(400, "Could not derive a guide id");
   if (RESERVED_GUIDE_IDS.has(id)) throw new HttpError(400, "That guide id is reserved");
-  if (lang !== "en" && lang !== "tr") throw new HttpError(400, "Language must be en or tr");
   if (projectId && !ID_RE.test(projectId)) throw new HttpError(400, "Invalid project id");
-  if ("cover" in body) markdown = applyGuideCover(markdown, body.cover);
-  const path = guidePath(id, lang);
-  const text = markdown.endsWith("\n") ? markdown : `${markdown}\n`;
-  const upserts = [{ path, text }];
-  if ("cover" in body) {
-    const otherLang = lang === "en" ? "tr" : "en";
-    const sibling = guidePath(id, otherLang);
-    if (await github.exists(sibling)) {
-      const next = applyGuideCover(await github.getText(sibling), body.cover);
-      upserts.push({ path: sibling, text: next.endsWith("\n") ? next : `${next}\n` });
-    }
+  const coverInBody = Object.prototype.hasOwnProperty.call(body, "cover");
+  const savedLangs = [];
+  const upserts = [];
+  for (const item of locales) {
+    const markdown = coverInBody ? applyGuideCover(item.markdown, body.cover) : item.markdown;
+    upserts.push({ path: guidePath(id, item.lang), text: mdText(markdown) });
+    savedLangs.push(item.lang);
   }
   const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id });
   upserts.push({ path: "guides/index.json", text: pretty(index) });
   await applyGuideProjectRelationships(github, { guideId: id, nextProjectId: projectId, upserts });
   const result = await github.commit({
-    message: commitMsg("save guide", `${id}/${lang}`),
+    message: commitMsg("save guide", `${id}/${savedLangs.join("+")}`),
     upserts
   });
-  return { id, path, sha: result.sha };
+  return { id, langs: savedLangs, path: guidePath(id, savedLangs[0]), sha: result.sha };
 }
 
 export async function handleGuideDelete(body, github) {

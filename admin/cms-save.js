@@ -26,6 +26,22 @@
     return need.length > 0 && need.every((lang) => got.includes(lang));
   }
 
+  function syncGuideEditorFields(draft, fields) {
+    if (!draft) return;
+    const src = fields || {};
+    if ('markdown' in src && draft.langs && draft.lang) {
+      draft.langs[draft.lang] = src.markdown == null ? '' : String(src.markdown);
+    }
+    if ('projectId' in src) {
+      draft.projectId = String(src.projectId || '');
+    }
+  }
+
+  function switchGuideLang(draft, nextLang) {
+    if (!draft) return;
+    draft.lang = nextLang === 'tr' ? 'tr' : 'en';
+  }
+
   function guideSaveRequest(draft) {
     const locales = localesFromLangs((draft && draft.langs) || {});
     if (!locales.length) return null;
@@ -49,6 +65,8 @@
     markdownHasContent,
     localesFromLangs,
     saveShouldShowSuccess,
+    syncGuideEditorFields,
+    switchGuideLang,
     guideSaveRequest,
     pageSaveRequest
   };

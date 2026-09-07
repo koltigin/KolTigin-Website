@@ -9,7 +9,9 @@ const {
   localesFromLangs,
   guideSaveRequest,
   pageSaveRequest,
-  saveShouldShowSuccess
+  saveShouldShowSuccess,
+  syncGuideEditorFields,
+  switchGuideLang
 } = createRequire(join(root, "cms-save.js"))("./cms-save.js");
 
 const cmsSrc = readFileSync(join(root, "cms.js"), "utf8");
@@ -108,7 +110,38 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.1") && htmlSrc.includes("cms.js?v=v3.13"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.2") && htmlSrc.includes("cms.js?v=v3.14"), "admin HTML cache-busts cms-save and cms.js");
+
+const sharedGuide = {
+  id: "ario-guide",
+  lang: "en",
+  cover: "hero.png",
+  projectId: "",
+  langs: {
+    en: "# AR.IO Guide\n\nEnglish body.",
+    tr: "# AR.IO Rehberi\n\nTurkce govde."
+  }
+};
+syncGuideEditorFields(sharedGuide, { markdown: "# AR.IO Guide\n\nEnglish body.", projectId: "ario" });
+assert(sharedGuide.projectId === "ario" && sharedGuide.lang === "en", "EN tab writes AR.IO into shared projectId");
+switchGuideLang(sharedGuide, "tr");
+assert(sharedGuide.projectId === "ario" && sharedGuide.lang === "tr" && sharedGuide.cover === "hero.png", "TR tab keeps AR.IO and shared cover");
+syncGuideEditorFields(sharedGuide, { markdown: "# AR.IO Rehberi\n\nTurkce govde.", projectId: sharedGuide.projectId });
+switchGuideLang(sharedGuide, "en");
+assert(sharedGuide.projectId === "ario" && sharedGuide.lang === "en", "returning to EN still shows AR.IO");
+const sharedSave = guideSaveRequest(sharedGuide);
+assert(sharedSave.projectId === "ario" && sharedSave.locales.length === 2, "one Save payload keeps shared AR.IO projectId with both locales");
+syncGuideEditorFields(sharedGuide, { projectId: "" });
+switchGuideLang(sharedGuide, "tr");
+switchGuideLang(sharedGuide, "en");
+assert(sharedGuide.projectId === "", "None selection is also kept across language tabs");
+assert(guideSaveRequest(sharedGuide).projectId === "", "Save payload sends empty projectId after None");
+
+const tabStart = cmsSrc.indexOf("const gLang = event.target.closest('[data-guide-lang]')");
+const tabBlock = cmsSrc.slice(tabStart, cmsSrc.indexOf("if (event.target.closest('[data-save-guide]')", tabStart));
+assert(tabBlock.includes("syncGuideDraftFromForm") && tabBlock.includes("switchGuideLang"), "language tabs sync shared projectId before re-rendering");
+assert(cmsSrc.includes("data-gfield=\"projectId\"") && cmsSrc.includes("g.projectId === p.id"), "renderGuideEditor reselects the shared projectId");
+assert(cmsSrc.includes("matches('[data-gfield=\"projectId\"]')"), "project select change writes shared guideDraft.projectId");
 
 if (failed) {
   console.error(`${failed} failed`);

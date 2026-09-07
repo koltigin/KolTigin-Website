@@ -735,12 +735,20 @@
     renderGuideEditor();
   }
 
-  async function saveGuide() {
+  function syncGuideDraftFromForm() {
     const g = H().state.guideDraft;
+    if (!g) return;
     const ta = document.querySelector('[data-guide-md]');
     const sel = document.querySelector('[data-gfield="projectId"]');
-    if (ta) g.langs[g.lang] = ta.value;
-    if (sel) g.projectId = sel.value;
+    CmsSave().syncGuideEditorFields(g, {
+      ...(ta ? { markdown: ta.value } : {}),
+      ...(sel ? { projectId: sel.value } : {})
+    });
+  }
+
+  async function saveGuide() {
+    const g = H().state.guideDraft;
+    syncGuideDraftFromForm();
     if (!g.id) {
       const title = (g.langs.en.match(/^#\s+(.+)$/m) || g.langs.tr.match(/^#\s+(.+)$/m) || [])[1] || '';
       g.id = H().slugify(title);
@@ -1038,9 +1046,8 @@
       const gLang = event.target.closest('[data-guide-lang]');
       if (gLang && H().state.guideDraft && event.target.closest('.tabs')) {
         H().clearStatus();
-        const ta = app.querySelector('[data-guide-md]');
-        if (ta) H().state.guideDraft.langs[H().state.guideDraft.lang] = ta.value;
-        H().state.guideDraft.lang = gLang.dataset.guideLang;
+        syncGuideDraftFromForm();
+        CmsSave().switchGuideLang(H().state.guideDraft, gLang.dataset.guideLang);
         renderGuideEditor();
         return;
       }
@@ -1119,6 +1126,11 @@
         draft.langs.en = applyServiceIcons(draft.langs.en, icons);
         draft.langs.tr = applyServiceIcons(draft.langs.tr, icons);
         renderPageEditor('about', 'nav.about');
+        return;
+      }
+      if (event.target.matches('[data-gfield="projectId"]') && H().state.guideDraft) {
+        CmsSave().syncGuideEditorFields(H().state.guideDraft, { projectId: event.target.value });
+        if (H().state.authed) H().markDirty();
         return;
       }
       if (event.target.id === 'guide-cover-file' && event.target.files && event.target.files[0]) {

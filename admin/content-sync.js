@@ -126,6 +126,21 @@
     return ['en', 'tr'].filter((lang) => Boolean(scalarTitle(langs[lang] && langs[lang].title)));
   }
 
+  function mergeLocaleField(editor, locale, field, value, options) {
+    if (!editor || !editor.langs || !editor.langs[locale]) return;
+    const hidden = Boolean(options && options.hidden);
+    const incoming = value == null ? '' : String(value);
+    const current = editor.langs[locale][field] == null ? '' : String(editor.langs[locale][field]);
+    if (hidden && !incoming.trim() && current.trim()) return;
+    editor.langs[locale][field] = incoming;
+  }
+
+  function applyLocaleFields(editor, fields) {
+    (fields || []).forEach((item) => {
+      mergeLocaleField(editor, item.locale, item.field, item.value, { hidden: item.hidden });
+    });
+  }
+
   function writingSavePayloads(editor, id, options) {
     const opts = options || {};
     const pair = (editor && editor.pair) || {};
@@ -255,6 +270,8 @@
     writingSavePayloads,
     writingSaveRequest,
     writingSaveShouldShowSuccess,
+    mergeLocaleField,
+    applyLocaleFields,
     writingFromEditor,
     videoFromEditor,
     parseFrontMatter

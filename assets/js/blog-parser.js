@@ -511,8 +511,7 @@ class BlogParser {
     const raw = String((site && site.avatar) || '').trim();
     if (!raw) return '';
     if (/^(https?:|data:)/i.test(raw)) return raw;
-    if (raw.startsWith('/')) return `.${raw}`;
-    return raw.startsWith('./') ? raw : `./${raw.replace(/^\/+/, '')}`;
+    return publicPath(raw);
   }
 
   coverFallbackSignature() {

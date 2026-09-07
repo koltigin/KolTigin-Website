@@ -1365,11 +1365,12 @@
     if (!state.editor || state.editor.kind === 'videos') return;
     const localeFields = app.querySelectorAll('[data-locale][data-field]');
     if (localeFields.length) {
-      localeFields.forEach((field) => {
-        const locale = field.dataset.locale;
-        if (!state.editor.langs[locale]) return;
-        state.editor.langs[locale][field.dataset.field] = field.value;
-      });
+      Sync.applyLocaleFields(state.editor, [...localeFields].map((field) => ({
+        locale: field.dataset.locale,
+        field: field.dataset.field,
+        value: field.value,
+        hidden: Boolean(field.closest('[data-locale-panel]')?.classList.contains('is-hidden'))
+      })));
       return;
     }
     const draft = state.editor.langs[state.editor.lang];
@@ -1499,7 +1500,8 @@
       if (previousKind && previousKind !== editor.kind) {
         history.replaceState(null, '', `${location.pathname}${location.search}#/edit/${editor.kind}/${encodeURIComponent(editor.sharedId)}`);
       }
-      if (Sync.writingSaveShouldShowSuccess(savedLangs.length, payloads.length, false)) {
+      if (Sync.writingSaveShouldShowSuccess(savedLangs.length, payloads.length, false)
+          && payloads.every((row) => savedLangs.includes(row.lang))) {
         clearDirty();
         showNotice();
       } else {
@@ -1769,6 +1771,17 @@
     return window.confirm(t('unsaved.leave'));
   }
 
+  function showWritingLocalePanels(lang) {
+    if (!state.editor || state.editor.kind === 'videos') return;
+    state.editor.lang = lang === 'tr' ? 'tr' : 'en';
+    app.querySelectorAll('[data-locale-panel]').forEach((panel) => {
+      panel.classList.toggle('is-hidden', panel.dataset.localePanel !== state.editor.lang);
+    });
+    app.querySelectorAll('.tabs [data-lang]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.lang === state.editor.lang);
+    });
+  }
+
   function isImageFile(file) {
     return /^image\/(png|jpeg|webp)$/i.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name);
   }
@@ -1836,8 +1849,7 @@
       if (tab && state.editor && state.editor.kind !== 'videos') {
         clearStatus();
         syncDraftFromForm();
-        state.editor.lang = tab.dataset.lang;
-        renderWritingEditor();
+        showWritingLocalePanels(tab.dataset.lang);
         return;
       }
       const pLang = event.target.closest('[data-profile-lang]');
@@ -2113,6 +2125,22 @@
     });
 
     app.addEventListener('input', (event) => {
+      if (event.target.matches('[data-locale][data-field]') && state.editor) {
+        const panel = event.target.closest('[data-locale-panel]');
+        Sync.mergeLocaleField(
+          state.editor,
+          event.target.dataset.locale,
+          event.target.dataset.field,
+          event.target.value,
+          { hidden: Boolean(panel && panel.classList.contains('is-hidden')) }
+        );
+        maybeLockSharedId(
+          state.editor,
+          state.editor.langs.en.title || state.editor.langs.tr.title
+        );
+        if (state.authed) markDirty();
+        return;
+      }
       if (event.target.matches('[data-field], [data-pair], [data-vfield], [data-profile-field], [data-loc], [data-location-field], [data-wa], textarea, input, select')) {
         if (state.authed) markDirty();
       }

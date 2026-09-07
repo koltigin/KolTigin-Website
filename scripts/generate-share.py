@@ -582,7 +582,7 @@ def sitemap_xml(_base: str, urls: list[dict]) -> str:
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + body + "\n"
 
 
-def section_copy(root: Path, route_id: str, lang: str = "en") -> tuple[str, str]:
+def section_copy(root: Path, route_id: str, lang: str = "en") -> tuple[str, str, str]:
     site = load_json(root / "config" / "site.json", {}) or {}
     seo = site.get("seo") if isinstance(site.get("seo"), dict) else {}
     routes = seo.get("routes") if isinstance(seo.get("routes"), dict) else {}
@@ -594,10 +594,22 @@ def section_copy(root: Path, route_id: str, lang: str = "en") -> tuple[str, str]
         localized = {}
     title = str(localized.get("title") or site.get("displayName") or "Home").strip() or "Home"
     description = str(localized.get("description") or "").strip()
-    return title, description
+    image = str(page.get("ogImage") or site.get("ogImage") or "").strip()
+    return title, description, image
 
 
-def patch_section_head(source: str, *, title: str, description: str, canonical: str) -> str:
+def section_image_url(base: str, image: str) -> str:
+    raw = str(image or "").strip()
+    if not raw:
+        return ""
+    if re.match(r"^https?://", raw, flags=re.IGNORECASE):
+        return raw
+    return abs_url(base, raw.replace("./", "", 1).lstrip("/"))
+
+
+def patch_section_head(
+    source: str, *, title: str, description: str, canonical: str, image: str = ""
+) -> str:
     html_out = source
     html_out = re.sub(
         r"<title>.*?</title>",
@@ -618,6 +630,14 @@ def patch_section_head(source: str, *, title: str, description: str, canonical: 
         (r'(<meta name="twitter:title" content=")[^"]*(")', rf"\1{attr_title}\2"),
         (r'(<meta name="twitter:description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
     ]
+    if image:
+        attr_image = html.escape(image, quote=True)
+        replacements.extend(
+            [
+                (r'(<meta property="og:image" content=")[^"]*(")', rf"\1{attr_image}\2"),
+                (r'(<meta name="twitter:image" content=")[^"]*(")', rf"\1{attr_image}\2"),
+            ]
+        )
     for pattern, repl in replacements:
         html_out, n = re.subn(pattern, repl, html_out, count=1, flags=re.IGNORECASE)
         if n != 1:
@@ -635,13 +655,14 @@ def write_section_pages(root: Path) -> list[str]:
     for spec in PUBLIC_SECTION_ROUTES:
         if not spec["dir"]:
             continue
-        title, description = section_copy(root, spec["id"])
+        title, description, image = section_copy(root, spec["id"])
         canonical = f"{base}{spec['path']}"
         html_out = patch_section_head(
             source,
             title=title,
             description=description,
             canonical=canonical,
+            image=section_image_url(base, image),
         )
         dest = root / spec["dir"] / "index.html"
         write_text(dest, html_out)

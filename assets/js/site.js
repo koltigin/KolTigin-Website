@@ -83,11 +83,13 @@ function routeSeo(site, lang) {
   const pageSeo = routes && routes[routeId];
   const localized = pageSeo && (pageSeo[lang] || pageSeo.en);
   const fallback = site && site.seo && (site.seo[lang] || site.seo.en || site.seo);
+  const ogImage = (pageSeo && pageSeo.ogImage) || (site && site.ogImage);
   return {
     routeId,
     title: (localized && localized.title) || (fallback && fallback.title) || 'KolTigin',
     description: (localized && localized.description) || (fallback && fallback.description) || '',
-    url: router ? `${originUrl(site)}${router.sectionForPath(window.location.pathname).path}` : canonicalUrl(site)
+    url: router ? `${originUrl(site)}${router.sectionForPath(window.location.pathname).path}` : canonicalUrl(site),
+    image: absoluteAssetUrl(site, ogImage)
   };
 }
 
@@ -97,7 +99,7 @@ function applySeo() {
   if (!site) return;
 
   const seo = routeSeo(site, lang);
-  const image = absoluteAssetUrl(site, site && site.ogImage);
+  const image = seo.image;
 
   document.title = seo.title;
   setAttr('meta[name="description"]', 'content', seo.description);

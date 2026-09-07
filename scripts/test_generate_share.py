@@ -44,7 +44,7 @@ def setup_root(tmp: Path) -> Path:
     shutil.copy2(avatar_src, dest_avatar)
     write(
         tmp / "config" / "site.json",
-        '{"displayName":"KolTigin","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/koltigin-at.png"}\n',
+        '{"displayName":"KolTigin","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/koltigin-at.png","ogImage":"./assets/images/social/og-koltigin.png","seo":{"routes":{"resume":{"ogImage":"./assets/images/social/og-resume.png"}}}}\n',
     )
     write(
         tmp / "config" / "writing-types.json",
@@ -90,8 +90,11 @@ def setup_root(tmp: Path) -> Path:
   <meta property="og:title" content="KolTigin">
   <meta property="og:description" content="home">
   <meta property="og:url" content="https://koltigin.xyz/">
+  <meta property="og:image" content="https://koltigin.xyz/assets/images/common/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="KolTigin">
   <meta name="twitter:description" content="home">
+  <meta name="twitter:image" content="https://koltigin.xyz/assets/images/common/og-image.png">
 </head>
 <body></body>
 </html>
@@ -241,6 +244,20 @@ def main() -> None:
             fail("writings list must not be a share redirect")
         if "https://koltigin.xyz/writings/" not in writings_shell:
             fail("writings section canonical")
+        if 'og:image" content="https://koltigin.xyz/assets/images/social/og-koltigin.png"' not in about_html:
+            fail("about section og image")
+        if 'twitter:image" content="https://koltigin.xyz/assets/images/social/og-koltigin.png"' not in about_html:
+            fail("about section twitter image")
+        resume_html = read(tmp / "resume" / "index.html")
+        if 'og:image" content="https://koltigin.xyz/assets/images/social/og-resume.png"' not in resume_html:
+            fail("resume section og image")
+        if 'twitter:card" content="summary_large_image"' not in resume_html:
+            fail("resume twitter card")
+        share_html = read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html")
+        if "/assets/images/og/writings/en/notes/no-cover.png" not in share_html:
+            fail("writing share og image")
+        if "/assets/images/social/" in share_html:
+            fail("writing share must not use section social image")
         ok("sitemap")
 
         write(

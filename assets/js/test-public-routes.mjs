@@ -46,10 +46,23 @@ assert(!indexHtml.includes('href="/en/'), "no /en/ locale routes");
 assert(!indexHtml.includes('href="/tr/'), "no /tr/ locale routes");
 
 const routeIds = ["home", "about", "resume", "projects", "writings", "videos", "contact"];
+const routeImages = {
+  home: "./assets/images/social/og-koltigin.png",
+  about: "./assets/images/social/og-koltigin.png",
+  resume: "./assets/images/social/og-resume.png",
+  projects: "./assets/images/social/og-projects.png",
+  writings: "./assets/images/social/og-writings.png",
+  videos: "./assets/images/social/og-videos.png",
+  contact: "./assets/images/social/og-contact.png"
+};
 for (const id of routeIds) {
   const block = site.seo.routes[id];
   assert(block && block.en && block.tr && block.en.title && block.en.description, `seo.routes.${id}`);
+  assert(block.ogImage === routeImages[id], `seo.routes.${id}.ogImage`);
 }
+assert(site.ogImage === routeImages.home, "default ogImage is og-koltigin");
+assert(indexHtml.includes("https://koltigin.xyz/assets/images/social/og-koltigin.png"), "home html uses og-koltigin");
+assert(indexHtml.includes('twitter:card" content="summary_large_image"'), "home twitter card");
 
 if (failed) {
   console.error(`${failed} failed`);

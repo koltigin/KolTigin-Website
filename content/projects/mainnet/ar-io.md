@@ -9,6 +9,8 @@ summary:
   tr: AR.IO ağında aktif gateway operasyonu.
   en: Active gateway operations on the AR.IO network.
 links:
+  - label: Setup Guide
+    guide: test
 - label: Website
   url: https://ar.io
 - label: Gateway

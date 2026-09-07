@@ -9,6 +9,7 @@ on:
       - "guides/**/*.md"
       - "guides/index.json"
       - "config/writing-types.json"
+      - "index.html"
       - "config/site.json"
       - "assets/images/blog/**"
       - "assets/images/guides/**"
@@ -48,6 +49,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add sitemap.xml
+          git add about/index.html resume/index.html projects/index.html writings/index.html videos/index.html contact/index.html 2>/dev/null || true
           if [ -d writings ]; then git add writings; fi
           if [ -d guide ]; then git add guide; fi
           if [ -d assets/images/og ]; then git add assets/images/og; fi

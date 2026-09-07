@@ -7,8 +7,6 @@ description: "KolTigin — academic background and Web3 work"
 
 ## Summary
 
->TEST
-
 Biologist with a doctorate in zoology; independent researcher and content creator working on Web3 infrastructure, node operations, and decentralized networks.
 
 Since 2022 I have been running node operations, writing technical documentation, researching ecosystems, and contributing to community work across mainnet, testnet, and DePIN networks.

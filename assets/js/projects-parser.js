@@ -1,5 +1,9 @@
 'use strict';
 
+function publicPath(path) {
+  return window.KolTiginRouter ? window.KolTiginRouter.publicPath(path) : String(path || '').replace(/^\.\//, '/');
+}
+
 class ProjectsParser {
   constructor() {
     this.container = document.querySelector('.project-groups');
@@ -50,7 +54,7 @@ class ProjectsParser {
 
   async loadCategoryConfig() {
     try {
-      const response = await fetch('./config/project-categories.json', { cache: 'no-store' });
+      const response = await fetch(publicPath('./config/project-categories.json'), { cache: 'no-store' });
       if (!response.ok) throw new Error('Could not load project-categories.json');
       const data = await response.json();
       if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid project-categories.json');
@@ -177,7 +181,7 @@ class ProjectsParser {
   renderLogo(project) {
     const name = this.escapeHtml(project.name);
     const fallback = `<span class="project-card-fallback" aria-hidden="true">${this.escapeHtml(this.initials(project.name))}</span>`;
-    const src = typeof project.logo === 'string' ? project.logo.trim() : '';
+    const src = typeof project.logo === 'string' ? publicPath(project.logo.trim()) : '';
 
     if (!src) return fallback;
 
@@ -580,7 +584,7 @@ class ProjectsParser {
       await this.loadCategoryConfig();
       this.applyLabels();
 
-      const response = await fetch('./projects/projects.json', { cache: 'no-store' });
+      const response = await fetch(publicPath('./projects/projects.json'), { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(this.t('projects.loadError', null, 'Could not load projects.json'));
       }

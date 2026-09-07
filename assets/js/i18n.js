@@ -29,6 +29,16 @@
     ));
   }
 
+  function publicPath(path) {
+    if (global.KolTiginRouter && typeof global.KolTiginRouter.publicPath === 'function') {
+      return global.KolTiginRouter.publicPath(path);
+    }
+    const raw = String(path || '').trim();
+    if (!raw) return raw;
+    if (raw.startsWith('/') || /^(https?:)?\/\//i.test(raw)) return raw;
+    return `/${raw.replace(/^\.\//, '')}`;
+  }
+
   function t(key, vars, fallback) {
     const found = lookup(key);
     if (typeof found === 'string') return interpolate(found, vars);
@@ -69,7 +79,7 @@
   }
 
   async function loadStrings(lang) {
-    const i18nResponse = await fetch(`./i18n/${lang}.json`, { cache: 'no-store' });
+    const i18nResponse = await fetch(publicPath(`./i18n/${lang}.json`), { cache: 'no-store' });
     if (!i18nResponse.ok) throw new Error('i18n file could not be loaded');
     strings = await i18nResponse.json();
     language = lang;
@@ -77,7 +87,7 @@
   }
 
   async function load() {
-    const siteResponse = await fetch('./config/site.json', { cache: 'no-store' });
+    const siteResponse = await fetch(publicPath('./config/site.json'), { cache: 'no-store' });
     if (!siteResponse.ok) throw new Error('site.json could not be loaded');
     site = await siteResponse.json();
     await loadStrings(resolveLanguage(site));

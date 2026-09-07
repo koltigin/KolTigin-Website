@@ -1,5 +1,9 @@
 'use strict';
 
+function publicPath(path) {
+  return window.KolTiginRouter ? window.KolTiginRouter.publicPath(path) : String(path || '').replace(/^\.\//, '/');
+}
+
 class AboutParser {
     constructor() {
         this.aboutData = null;
@@ -17,7 +21,7 @@ class AboutParser {
 
     contentPath() {
         const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
-        return `./content/about/${lang}.md`;
+        return publicPath(`./content/about/${lang}.md`);
     }
 
     async loadAbout() {

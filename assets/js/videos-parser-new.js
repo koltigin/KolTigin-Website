@@ -1,6 +1,6 @@
 'use strict';
 
-const VIDEOS_DIR = './content/videos/';
+const VIDEOS_DIR = '/content/videos/';
 const VIDEOS_PAGE_SIZE = 8;
 const VIDEOS_TIMEZONE = 'Europe/Istanbul';
 
@@ -159,7 +159,7 @@ function uniqueMarkdownFiles(files) {
 
 async function readVideoManifest() {
   try {
-    const response = await fetch('./content/index.json', { cache: 'no-store' });
+    const response = await fetch('/content/index.json', { cache: 'no-store' });
     if (!response.ok) return [];
     const data = await response.json();
     return uniqueMarkdownFiles(Array.isArray(data.videos) ? data.videos : []);

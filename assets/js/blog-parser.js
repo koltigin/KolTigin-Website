@@ -1,5 +1,9 @@
 'use strict';
 
+function publicPath(path) {
+  return window.KolTiginRouter ? window.KolTiginRouter.publicPath(path) : String(path || '').replace(/^\.\//, '/');
+}
+
 class BlogParser {
   constructor() {
     this.items = [];
@@ -89,7 +93,9 @@ class BlogParser {
   openFromHash() {
     const match = window.location.hash.match(/^#\/yazilar\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([^/]+)$/i);
     if (!match) return;
-    if (typeof this.activateOriginal === 'function') this.activateOriginal('blog');
+    if (typeof this.activateOriginal === 'function') {
+      this.activateOriginal('blog', { skipHistory: true, keepHash: true, instantScroll: true });
+    }
     this.showItem(`${match[1]}/${decodeURIComponent(match[2])}`);
   }
 
@@ -363,10 +369,10 @@ class BlogParser {
   coverSrc(cover) {
     const value = String(cover || '').trim();
     if (!value) return '';
-    if (/^https?:\/\//i.test(value) || value.startsWith('./') || value.startsWith('../') || value.startsWith('assets/')) {
-      return encodeURI(value);
+    if (/^https?:\/\//i.test(value) || value.startsWith('./') || value.startsWith('../') || value.startsWith('assets/') || value.startsWith('/')) {
+      return encodeURI(publicPath(value.startsWith('assets/') ? `./${value}` : value));
     }
-    return encodeURI(`./assets/images/blog/${value.replace(/^\/+/, '')}`);
+    return encodeURI(publicPath(`./assets/images/blog/${value.replace(/^\/+/, '')}`));
   }
 
   hasCover(item) {
@@ -400,7 +406,7 @@ class BlogParser {
       { id: 'social', mode: 'external', icon: 'logo-twitter' }
     ];
     try {
-      const response = await fetch('./content/index.json', { cache: 'no-store' });
+      const response = await fetch(publicPath('./content/index.json'), { cache: 'no-store' });
       if (!response.ok) return { types: fallbackTypes, files: {}, lang };
       const data = await response.json();
       const types = Array.isArray(data.types) && data.types.length
@@ -434,7 +440,7 @@ class BlogParser {
       const files = this.uniqueFiles(index.files[kind]);
       for (const file of files) {
         try {
-          const response = await fetch(`./content/${kind}/${lang}/${file}`, { cache: 'no-store' });
+          const response = await fetch(publicPath(`./content/${kind}/${lang}/${file}`), { cache: 'no-store' });
           if (!response.ok) continue;
           const raw = await response.text();
           const { metadata, body } = this.parseFrontMatter(raw);

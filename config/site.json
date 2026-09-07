@@ -28,6 +28,78 @@
     "tr": {
       "title": "KolTigin",
       "description": "Bağımsız node operatörü, geliştirici ve Web3 araştırmacısı. Mainnet, testnet ve DePIN operasyonları, teknik dokümantasyon ve ekosistem araştırması."
+    },
+    "routes": {
+      "home": {
+        "en": {
+          "title": "KolTigin",
+          "description": "Independent node operator, developer, and Web3 researcher. Mainnet, testnet, and DePIN operations, technical documentation, and ecosystem research."
+        },
+        "tr": {
+          "title": "KolTigin",
+          "description": "Bağımsız node operatörü, geliştirici ve Web3 araştırmacısı. Mainnet, testnet ve DePIN operasyonları, teknik dokümantasyon ve ekosistem araştırması."
+        }
+      },
+      "about": {
+        "en": {
+          "title": "About · KolTigin",
+          "description": "About KolTigin: independent node operator, developer, and Web3 researcher working on mainnet, testnet, and DePIN operations."
+        },
+        "tr": {
+          "title": "Hakkında · KolTigin",
+          "description": "KolTigin hakkında: bağımsız node operatörü, geliştirici ve Web3 araştırmacısı. Mainnet, testnet ve DePIN operasyonları."
+        }
+      },
+      "resume": {
+        "en": {
+          "title": "Resume · KolTigin",
+          "description": "Resume of KolTigin: experience, education, focus areas, and tools across node operations, development, and Web3 research."
+        },
+        "tr": {
+          "title": "Özgeçmiş · KolTigin",
+          "description": "KolTigin özgeçmişi: deneyim, eğitim, odak alanları ve node operasyonu, geliştirme ve Web3 araştırması araçları."
+        }
+      },
+      "projects": {
+        "en": {
+          "title": "Projects · KolTigin",
+          "description": "Projects KolTigin contributes to: mainnet, testnets, DePIN, DeFi, and independently built work."
+        },
+        "tr": {
+          "title": "Projeler · KolTigin",
+          "description": "KolTigin’in katkı verdiği projeler: mainnet, testnet, DePIN, DeFi ve kendi geliştirdiği işler."
+        }
+      },
+      "writings": {
+        "en": {
+          "title": "Writings · KolTigin",
+          "description": "Articles, technical notes, and research writings by KolTigin on infrastructure, Web3, and ecosystem work."
+        },
+        "tr": {
+          "title": "Yazılar · KolTigin",
+          "description": "KolTigin’in altyapı, Web3 ve ekosistem üzerine makaleleri, teknik notları ve araştırmaları."
+        }
+      },
+      "videos": {
+        "en": {
+          "title": "Videos · KolTigin",
+          "description": "Videos by KolTigin on node setup, testnets, and Web3 infrastructure."
+        },
+        "tr": {
+          "title": "Videolar · KolTigin",
+          "description": "KolTigin’in node kurulumu, testnet ve Web3 altyapısı videoları."
+        }
+      },
+      "contact": {
+        "en": {
+          "title": "Contact · KolTigin",
+          "description": "Contact KolTigin for node operations, development, and Web3 research collaboration."
+        },
+        "tr": {
+          "title": "İletişim · KolTigin",
+          "description": "Node operasyonu, geliştirme ve Web3 araştırması için KolTigin ile iletişim."
+        }
+      }
     }
   },
   "social": [

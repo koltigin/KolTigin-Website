@@ -29,6 +29,16 @@ DIVIDER = (255, 216, 111, 107)
 WRITINGS_MARKER = "koltigin-share-writing"
 GUIDES_MARKER = "koltigin-share-guide"
 
+PUBLIC_SECTION_ROUTES = [
+    {"id": "home", "path": "/", "dir": None},
+    {"id": "about", "path": "/about/", "dir": "about"},
+    {"id": "resume", "path": "/resume/", "dir": "resume"},
+    {"id": "projects", "path": "/projects/", "dir": "projects"},
+    {"id": "writings", "path": "/writings/", "dir": "writings"},
+    {"id": "videos", "path": "/videos/", "dir": "videos"},
+    {"id": "contact", "path": "/contact/", "dir": "contact"},
+]
+
 
 def parse_front_matter(text: str) -> tuple[dict, str]:
     raw = (text or "").replace("\r\n", "\n")
@@ -572,14 +582,79 @@ def sitemap_xml(_base: str, urls: list[dict]) -> str:
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + body + "\n"
 
 
+def section_copy(root: Path, route_id: str, lang: str = "en") -> tuple[str, str]:
+    site = load_json(root / "config" / "site.json", {}) or {}
+    seo = site.get("seo") if isinstance(site.get("seo"), dict) else {}
+    routes = seo.get("routes") if isinstance(seo.get("routes"), dict) else {}
+    page = routes.get(route_id) if isinstance(routes.get(route_id), dict) else {}
+    localized = page.get(lang) if isinstance(page.get(lang), dict) else page.get("en")
+    if not isinstance(localized, dict):
+        localized = seo.get(lang) if isinstance(seo.get(lang), dict) else seo.get("en")
+    if not isinstance(localized, dict):
+        localized = {}
+    title = str(localized.get("title") or site.get("displayName") or "Home").strip() or "Home"
+    description = str(localized.get("description") or "").strip()
+    return title, description
+
+
+def patch_section_head(source: str, *, title: str, description: str, canonical: str) -> str:
+    html_out = source
+    html_out = re.sub(
+        r"<title>.*?</title>",
+        f"<title>{html.escape(title)}</title>",
+        html_out,
+        count=1,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    attr_desc = html.escape(description, quote=True)
+    attr_canon = html.escape(canonical, quote=True)
+    attr_title = html.escape(title, quote=True)
+    replacements = [
+        (r'(<meta name="description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
+        (r'(<link rel="canonical" href=")[^"]*(")', rf"\1{attr_canon}\2"),
+        (r'(<meta property="og:title" content=")[^"]*(")', rf"\1{attr_title}\2"),
+        (r'(<meta property="og:description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
+        (r'(<meta property="og:url" content=")[^"]*(")', rf"\1{attr_canon}\2"),
+        (r'(<meta name="twitter:title" content=")[^"]*(")', rf"\1{attr_title}\2"),
+        (r'(<meta name="twitter:description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
+    ]
+    for pattern, repl in replacements:
+        html_out, n = re.subn(pattern, repl, html_out, count=1, flags=re.IGNORECASE)
+        if n != 1:
+            raise RuntimeError(f"Could not patch sitemap section head field: {pattern}")
+    return html_out
+
+
+def write_section_pages(root: Path) -> list[str]:
+    index_path = root / "index.html"
+    if not index_path.is_file():
+        return []
+    source = index_path.read_text(encoding="utf-8")
+    base = origin(root)
+    written = []
+    for spec in PUBLIC_SECTION_ROUTES:
+        if not spec["dir"]:
+            continue
+        title, description = section_copy(root, spec["id"])
+        canonical = f"{base}{spec['path']}"
+        html_out = patch_section_head(
+            source,
+            title=title,
+            description=description,
+            canonical=canonical,
+        )
+        dest = root / spec["dir"] / "index.html"
+        write_text(dest, html_out)
+        written.append(str(dest.relative_to(root)))
+    return written
+
+
 def generate(root: Path) -> dict:
     base = origin(root)
     brand = display_name(root)
     avatar_path(root)
     keep: set[Path] = set()
-    sitemap_entries = [
-        {"loc": f"{base}/", "alternates": {}},
-    ]
+    sitemap_entries = [{"loc": f"{base}{spec['path']}"} for spec in PUBLIC_SECTION_ROUTES]
     created = []
 
     for item in discover_writings(root):
@@ -672,6 +747,10 @@ def generate(root: Path) -> dict:
     sitemap_path = root / "sitemap.xml"
     write_text(sitemap_path, sitemap_xml(base, sitemap_entries))
     keep.add(sitemap_path.resolve())
+    for spec in PUBLIC_SECTION_ROUTES:
+        if spec["dir"]:
+            keep.add((root / spec["dir"] / "index.html").resolve())
+    section_pages = write_section_pages(root)
     removed = prune_generated(
         root,
         keep,
@@ -681,7 +760,11 @@ def generate(root: Path) -> dict:
             root / "assets/images/og",
         ],
     )
-    return {"created": created, "removed": removed, "sitemap": str(sitemap_path.relative_to(root))}
+    return {
+        "created": created + section_pages,
+        "removed": removed,
+        "sitemap": str(sitemap_path.relative_to(root)),
+    }
 
 
 def main() -> int:

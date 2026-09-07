@@ -79,6 +79,24 @@ def setup_root(tmp: Path) -> Path:
     )
     tiny_png(tmp / "assets" / "images" / "guides" / "covered-guide" / "hero.png", (180, 60, 40))
     write(tmp / "sitemap.xml", "old")
+    write(
+        tmp / "index.html",
+        """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>KolTigin</title>
+  <meta name="description" content="home">
+  <link rel="canonical" href="https://koltigin.xyz/">
+  <meta property="og:title" content="KolTigin">
+  <meta property="og:description" content="home">
+  <meta property="og:url" content="https://koltigin.xyz/">
+  <meta name="twitter:title" content="KolTigin">
+  <meta name="twitter:description" content="home">
+</head>
+<body></body>
+</html>
+""",
+    )
     return tmp
 
 
@@ -201,8 +219,28 @@ def main() -> None:
             fail("guide tr url sitemap")
         if any("tweet" in (loc or "") or "/admin" in (loc or "") for loc in locs):
             fail("external or admin url in sitemap")
-        if "tweet" in sitemap:
-            fail("external writing in sitemap")
+        expected_sections = [
+            "https://koltigin.xyz/",
+            "https://koltigin.xyz/about/",
+            "https://koltigin.xyz/resume/",
+            "https://koltigin.xyz/projects/",
+            "https://koltigin.xyz/writings/",
+            "https://koltigin.xyz/videos/",
+            "https://koltigin.xyz/contact/",
+        ]
+        for url in expected_sections:
+            if url not in locs:
+                fail(f"missing section sitemap {url}")
+        if len(locs) != len(set(locs)):
+            fail("duplicate sitemap urls")
+        about_html = read(tmp / "about" / "index.html")
+        if "https://koltigin.xyz/about/" not in about_html:
+            fail("about section canonical")
+        writings_shell = read(tmp / "writings" / "index.html")
+        if "koltigin-share-writing" in writings_shell:
+            fail("writings list must not be a share redirect")
+        if "https://koltigin.xyz/writings/" not in writings_shell:
+            fail("writings section canonical")
         ok("sitemap")
 
         write(

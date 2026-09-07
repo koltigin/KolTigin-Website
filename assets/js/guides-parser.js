@@ -1,5 +1,9 @@
 'use strict';
 
+function publicPath(path) {
+  return window.KolTiginRouter ? window.KolTiginRouter.publicPath(path) : String(path || '').replace(/^\.\//, '/');
+}
+
 class GuidesParser {
   constructor() {
     this.page = document.querySelector('[data-page="guide"]');
@@ -128,7 +132,7 @@ class GuidesParser {
   }
 
   async loadMarkdown(id, lang) {
-    const response = await fetch(`./guides/${id}/${lang}.md?t=${Date.now()}`, { cache: 'no-store' });
+    const response = await fetch(`${publicPath(`./guides/${id}/${lang}.md`)}?t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(this.t('guides.loadError', 'The guide could not be loaded.'));
     }

@@ -1,5 +1,9 @@
 'use strict';
 
+function publicPath(path) {
+  return window.KolTiginRouter ? window.KolTiginRouter.publicPath(path) : String(path || '').replace(/^\.\//, '/');
+}
+
 class ResumeParser {
   constructor() {
     this.resumeData = null;
@@ -17,7 +21,7 @@ class ResumeParser {
 
   contentPath() {
     const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
-    return `./content/resume/${lang}.md`;
+    return publicPath(`./content/resume/${lang}.md`);
   }
 
   t(key, fallback) {

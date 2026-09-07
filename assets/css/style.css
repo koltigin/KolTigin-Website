@@ -785,10 +785,12 @@ main {
 }
 
 .navbar-link {
+  font: inherit;
   color: var(--light-gray);
   font-size: var(--fs-8);
   padding: 20px 7px;
   transition: color var(--transition-1);
+  cursor: pointer;
 }
 
 .navbar-link:hover,

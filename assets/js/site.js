@@ -62,31 +62,59 @@ function setAttr(selector, attr, value) {
   if (el && value != null && value !== '') el.setAttribute(attr, value);
 }
 
+function publicPath(path) {
+  if (window.KolTiginRouter && typeof window.KolTiginRouter.publicPath === 'function') {
+    return window.KolTiginRouter.publicPath(path);
+  }
+  const raw = String(path || '').trim();
+  if (!raw) return raw;
+  if (raw.startsWith('/') || /^(https?:)?\/\//i.test(raw)) return raw;
+  return `/${raw.replace(/^\.\//, '')}`;
+}
+
+function originUrl(site) {
+  return canonicalUrl(site).replace(/\/+$/, '');
+}
+
+function routeSeo(site, lang) {
+  const router = window.KolTiginRouter;
+  const routeId = router ? router.sectionForPath(window.location.pathname).id : 'home';
+  const routes = site && site.seo && site.seo.routes;
+  const pageSeo = routes && routes[routeId];
+  const localized = pageSeo && (pageSeo[lang] || pageSeo.en);
+  const fallback = site && site.seo && (site.seo[lang] || site.seo.en || site.seo);
+  return {
+    routeId,
+    title: (localized && localized.title) || (fallback && fallback.title) || 'KolTigin',
+    description: (localized && localized.description) || (fallback && fallback.description) || '',
+    url: router ? `${originUrl(site)}${router.sectionForPath(window.location.pathname).path}` : canonicalUrl(site)
+  };
+}
+
 function applySeo() {
   const site = window.KolTiginI18n.site;
   const lang = window.KolTiginI18n.language;
-  const seo = site && site.seo && (site.seo[lang] || site.seo.en || site.seo);
-  if (!seo) return;
+  if (!site) return;
 
-  const title = seo.title || 'KolTigin';
-  const description = seo.description || '';
-  const url = canonicalUrl(site);
+  const seo = routeSeo(site, lang);
   const image = absoluteAssetUrl(site, site && site.ogImage);
 
-  document.title = title;
-  setAttr('meta[name="description"]', 'content', description);
-  setAttr('link[rel="canonical"]', 'href', url);
+  document.title = seo.title;
+  setAttr('meta[name="description"]', 'content', seo.description);
+  setAttr('link[rel="canonical"]', 'href', seo.url);
   setAttr('meta[property="og:type"]', 'content', 'website');
-  setAttr('meta[property="og:title"]', 'content', title);
-  setAttr('meta[property="og:description"]', 'content', description);
-  setAttr('meta[property="og:url"]', 'content', url);
+  setAttr('meta[property="og:title"]', 'content', seo.title);
+  setAttr('meta[property="og:description"]', 'content', seo.description);
+  setAttr('meta[property="og:url"]', 'content', seo.url);
   setAttr('meta[property="og:image"]', 'content', image);
   setAttr('meta[property="og:locale"]', 'content', lang === 'tr' ? 'tr_TR' : 'en_US');
   setAttr('meta[name="twitter:card"]', 'content', 'summary_large_image');
-  setAttr('meta[name="twitter:title"]', 'content', title);
-  setAttr('meta[name="twitter:description"]', 'content', description);
+  setAttr('meta[name="twitter:title"]', 'content', seo.title);
+  setAttr('meta[name="twitter:description"]', 'content', seo.description);
   setAttr('meta[name="twitter:image"]', 'content', image);
 }
+
+window.applyRouteSeo = applySeo;
 
 function applyLangSwitch() {
   const lang = window.KolTiginI18n.language;
@@ -113,7 +141,7 @@ function applySiteConfig() {
 
   const avatar = document.querySelector('.avatar-box img');
   if (avatar && site.avatar) {
-    avatar.src = site.avatar;
+    avatar.src = publicPath(site.avatar);
     avatar.alt = site.displayName || avatar.alt;
   }
 

@@ -75,6 +75,15 @@ assert(markup.includes('target="_blank"'), "external links open a new tab");
 assert(markup.includes('rel="noopener noreferrer"'), "external links are noopener");
 assert(!markup.includes("#/yazilar"), "markup does not share spa hashes");
 
+const css = readFileSync(join(root, "../css/style.css"), "utf8");
+assert(css.includes(".share-actions a.share-action:visited"), "share links scope visited color");
+assert(css.includes(".share-actions a.share-action:hover"), "share links scope hover");
+assert(css.includes(".share-actions a.share-action:focus"), "share links scope focus");
+assert(
+  css.includes(".share-actions a.share-action") && css.includes("text-decoration: none"),
+  "share links force no underline"
+);
+
 const cardFn = blog.slice(blog.indexOf("createCard("), blog.indexOf("renderList("));
 assert(!cardFn.includes("shareMarkup") && !cardFn.includes("data-share-actions"), "writing list cards have no share controls");
 assert(blog.includes("shareMarkup(item)"), "writing detail uses shared share helper");

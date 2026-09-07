@@ -2637,10 +2637,24 @@ main {
   transition: var(--transition-1);
 }
 
+.share-actions a.share-action,
+.share-actions a.share-action:link,
+.share-actions a.share-action:visited,
+.share-actions a.share-action:hover,
+.share-actions a.share-action:focus,
+.share-actions a.share-action:focus-visible,
+.share-actions a.share-action:active {
+  color: var(--light-gray);
+  text-decoration: none;
+}
+
+.share-actions a.share-action:hover,
+.share-actions a.share-action:focus-visible,
 .share-action:hover,
 .share-action:focus-visible {
   color: var(--orange-yellow-crayola);
   border-color: rgba(255, 216, 111, 0.55);
+  text-decoration: none;
 }
 
 .share-action.is-copied {

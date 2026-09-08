@@ -12,6 +12,13 @@ You can run nodes on multiple supported devices using the same OptimAI account.
 
 This guide is intended for users who want to run an **OptimAI Core CLI Node on an Ubuntu 24.04 VPS or server**.
 
+> [!IMPORTANT]
+> **OptimAI CLI authentication is designed to expire every 2 weeks (14 days).**
+>
+> When the authentication expires, the node will stop running. To keep the node running, you need to **manually log in to your OptimAI account again and restart the node**.
+>
+> You can find the re-authentication and restart instructions in the **Troubleshooting** section of this guide.
+
 ---
 
 ## System Requirements

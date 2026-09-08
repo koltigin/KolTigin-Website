@@ -12,6 +12,13 @@ Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabili
 
 Bu rehber, **Ubuntu 24.04 kullanan bir VPS veya sunucuda OptimAI Core CLI Node çalıştırmak isteyenler** için hazırlanmıştır.
 
+> [!IMPORTANT]
+> **OptimAI CLI authentication oturumu her 2 haftada (14 gün) bir sona erecek şekilde tasarlanmıştır.**
+>
+> Authentication süresi dolduğunda node çalışmayı durdurur. Node'un çalışmaya devam edebilmesi için OptimAI hesabınıza **manuel olarak yeniden giriş yapmanız ve node'u yeniden başlatmanız gerekir**.
+>
+> Yeniden giriş ve başlatma adımlarını bu rehberin **Sorunlar ve Çözümler** bölümünde bulabilirsiniz.
+
 ---
 
 ## Sistem Gereksinimleri

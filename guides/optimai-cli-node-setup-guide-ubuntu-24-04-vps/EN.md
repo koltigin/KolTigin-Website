@@ -401,14 +401,16 @@ https://node.optimai.network/register?ref=18ADBAE8
 
 ## Node Goes Offline / `Not authenticated` Error
 
-If your OptimAI CLI Node stops running and the following errors appear, the authentication session may no longer be valid:
+OptimAI CLI authentication is **designed to expire every 2 weeks (14 days)**.
+
+When the authentication expires, the node may stop running and you may see errors such as:
 
 ```text
 Not authenticated. Run `optimai-cli auth login` first.
 Authentication lost. Stopping node...
 ```
 
-In this situation, repeatedly restarting the systemd service will not solve the problem. You need to authenticate with OptimAI again.
+This is expected and intended behavior. To keep the node running, you need to manually authenticate with OptimAI again and restart the node.
 
 ### 1. Stop the OptimAI Service
 
@@ -462,4 +464,4 @@ A healthy service should show:
 Active: active (running)
 ```
 
-> **Note:** During testing across multiple VPS servers, authentication loss was observed approximately 14 days after the initial node identity was created. However, the current official OptimAI documentation does not explicitly document a 14-day authentication lifetime. Until this behavior is officially confirmed, it should be treated as an observed pattern rather than a confirmed token expiration policy.
+> **Important:** The OptimAI support team has confirmed that CLI authentication is **designed to expire every 2 weeks** and that you need to **manually log in again and restart the node** to keep it running. Therefore, you may need to repeat this process approximately every 14 days.

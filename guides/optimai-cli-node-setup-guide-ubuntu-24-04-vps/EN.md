@@ -396,3 +396,135 @@ https://node.optimai.network/register?ref=18ADBAE8
 - The node will process new tasks when they become available.
 - systemd allows the OptimAI node to start automatically after the VPS reboots.
 - Multiple supported devices can run under the same OptimAI account.
+
+# ## Node Aniden Offline Oluyor / `Not authenticated` Hatası
+
+Çalışmakta olan OptimAI CLI Node bazı durumlarda authentication oturumunu kaybedebilir. Bu durumda node çalışmayı durdurabilir ve systemd servisi node'u yeniden başlatmaya çalışsa bile authentication geçerli olmadığı için başlatma işlemi başarısız olabilir.
+
+Loglarda aşağıdaki mesajlardan biri veya birkaçı görülebilir:
+
+```text
+backend unreachable, skipping cycle: Not authenticated. Run `optimai-cli auth login` first.
+Authentication lost. Stopping node...
+heartbeat failed: Not authenticated. Run `optimai-cli auth login` first.
+```
+
+### 1. OptimAI Servisini Durdurun
+
+Öncelikle systemd'nin authentication olmadan sürekli olarak node'u yeniden başlatmaya çalışmasını durdurun:
+
+```bash
+systemctl stop optimai
+```
+
+### 2. OptimAI Hesabına Yeniden Giriş Yapın
+
+SSH veya uzak VPS ortamında aşağıdaki komutu kullanın:
+
+```bash
+optimai-cli auth login --paste
+```
+
+Terminal size bir OptimAI giriş bağlantısı verecektir.
+
+Bağlantıyı kendi bilgisayarınızdaki tarayıcıda açın ve OptimAI hesabınıza giriş yapın.
+
+Giriş tamamlandığında ekranda verilen kodu veya callback URL'yi kopyalayarak VPS terminalindeki:
+
+```text
+Paste the redirected URL (or just the `code` parameter):
+```
+
+satırına yapıştırın ve Enter'a basın.
+
+Başarılı authentication işleminden sonra:
+
+```text
+Signed in successfully.
+```
+
+mesajını görmelisiniz.
+
+### 3. OptimAI Servisini Yeniden Başlatın
+
+Authentication tamamlandıktan sonra:
+
+```bash
+systemctl start optimai
+```
+
+### 4. Node Durumunu Kontrol Edin
+
+```bash
+optimai-cli node status
+```
+
+Sağlıklı çalışan bir node için aşağıdakine benzer bir çıktı görülmelidir:
+
+```text
+Node running
+Docker: available
+```
+
+Systemd servisini de kontrol edin:
+
+```bash
+systemctl status optimai --no-pager -l
+```
+
+Servisin:
+
+```text
+Active: active (running)
+```
+
+durumunda olması gerekir.
+
+### 5. OptimAI Loglarını Kontrol Edin
+
+```bash
+journalctl -u optimai -n 30 --no-pager -l
+```
+
+Sağlıklı bağlantıda aşağıdakine benzer mesajlar görülebilir:
+
+```text
+Node is running normally. Connected to server, ready for tasks.
+Assignments fetched
+Uptime reward earned
+```
+
+Görev başarıyla tamamlandığında ayrıca:
+
+```text
+assignment ... submitted successfully
+```
+
+mesajı görülebilir.
+
+### Authentication Neden Kayboluyor?
+
+OptimAI'nin mevcut resmi dokümantasyonunda CLI authentication oturumunun belirli bir süre sonunda zorunlu olarak sona erdiğine veya node operatörünün aktifliğini kontrol etmek amacıyla periyodik olarak yeniden login yapılmasının gerektiğine dair açık bir bilgi bulunmamaktadır.
+
+Bu nedenle `Authentication lost` durumunun normal ve periyodik bir OptimAI davranışı olduğu varsayılmamalıdır.
+
+Olası nedenler arasında şunlar bulunabilir:
+
+- authentication veya refresh token süresinin dolması,
+- mevcut oturumun sunucu tarafında geçersiz kılınması,
+- OptimAI authentication/backend altyapısındaki geçici bir değişiklik veya sorun,
+- CLI sürümündeki token yenileme mekanizmasıyla ilgili bir problem.
+
+Kesin neden OptimAI tarafından belgelenmediği sürece bunlar olası açıklamalar olarak değerlendirilmelidir.
+
+Önemli olan, `Not authenticated` veya `Authentication lost` hatası görüldüğünde yalnızca systemd servisini yeniden başlatmanın yeterli olmayabileceğidir.
+
+Önce:
+
+```bash
+optimai-cli auth login --paste
+```
+
+ile authentication yenilenmeli, ardından OptimAI servisi yeniden başlatılmalıdır.
+
+> **Not:** systemd servisi node'u otomatik olarak yeniden başlatabilir ancak geçersiz veya kaybolmuş bir OptimAI authentication oturumunu kendi başına yenileyemez.

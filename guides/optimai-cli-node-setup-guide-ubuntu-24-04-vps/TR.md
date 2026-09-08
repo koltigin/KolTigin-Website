@@ -397,7 +397,7 @@ https://node.optimai.network/register?ref=18ADBAE8
 - systemd sayesinde VPS yeniden başlatıldığında OptimAI node otomatik olarak tekrar başlar.
 - Aynı hesapla birden fazla desteklenen cihazda node çalıştırılabilir.
 
-# Çözümler
+# Sorunlar ve Çözümler
 
 ## Node Aniden Offline Oluyor / `Not authenticated` Hatası
 

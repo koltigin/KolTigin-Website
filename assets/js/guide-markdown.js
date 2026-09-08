@@ -10,12 +10,30 @@ window.KolTiginGuideMarkdown = {
   },
 
   headingId(text) {
-    return String(text || '')
-      .toLowerCase()
+    const folded = String(text || '')
       .replace(/<[^>]+>/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 80);
+      .replace(/[çÇ]/g, 'c')
+      .replace(/[ğĞ]/g, 'g')
+      .replace(/[ıİ]/g, 'i')
+      .replace(/[öÖ]/g, 'o')
+      .replace(/[şŞ]/g, 's')
+      .replace(/[üÜ]/g, 'u')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    return folded.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'section';
+  },
+
+  uniqueHeadingId(text, used) {
+    const base = this.headingId(text);
+    let id = base;
+    let n = 2;
+    while (used.has(id)) {
+      id = `${base}-${n}`;
+      n += 1;
+    }
+    used.add(id);
+    return id;
   },
 
   parseInline(text, guideId) {
@@ -67,6 +85,7 @@ window.KolTiginGuideMarkdown = {
     }
     const lines = source.split('\n');
     const html = [];
+    const usedIds = new Set();
     let i = 0;
     while (i < lines.length) {
       const line = lines[i];
@@ -85,7 +104,7 @@ window.KolTiginGuideMarkdown = {
       if (/^#{1,6} /.test(line)) {
         const level = line.match(/^#+/)[0].length;
         const title = line.slice(level + 1);
-        const id = this.headingId(title);
+        const id = this.uniqueHeadingId(title, usedIds);
         html.push(`<h${level} id="${this.escapeHtml(id)}">${this.parseInline(title, guideId)}</h${level}>`);
         i += 1;
         continue;

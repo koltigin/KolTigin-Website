@@ -105,7 +105,8 @@
     "loading": "Rehber yükleniyor…",
     "loadError": "Rehber yüklenemedi.",
     "copy": "Kopyala",
-    "copied": "Kopyalandı!"
+    "copied": "Kopyalandı!",
+    "contents": "İçindekiler"
   },
   "contact": {
     "title": "İletişim",

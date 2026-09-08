@@ -105,7 +105,8 @@
     "loading": "Loading guide…",
     "loadError": "The guide could not be loaded.",
     "copy": "Copy",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "contents": "Contents"
   },
   "contact": {
     "title": "Contact",

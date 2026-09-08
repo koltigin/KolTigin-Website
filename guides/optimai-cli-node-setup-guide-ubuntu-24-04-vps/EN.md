@@ -397,7 +397,9 @@ https://node.optimai.network/register?ref=18ADBAE8
 - systemd allows the OptimAI node to start automatically after the VPS reboots.
 - Multiple supported devices can run under the same OptimAI account.
 
-# ## Node Aniden Offline Oluyor / `Not authenticated` Hatası
+# Sorunlar ve Çözümler
+
+## Node Aniden Offline Oluyor / `Not authenticated` Hatası
 
 Çalışmakta olan OptimAI CLI Node bazı durumlarda authentication oturumunu kaybedebilir. Bu durumda node çalışmayı durdurabilir ve systemd servisi node'u yeniden başlatmaya çalışsa bile authentication geçerli olmadığı için başlatma işlemi başarısız olabilir.
 

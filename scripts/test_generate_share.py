@@ -149,6 +149,9 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
         setup_root(tmp)
+        leftover = tmp / "guide" / "en" / "demo-guide" / "index.html"
+        leftover.parent.mkdir(parents=True, exist_ok=True)
+        leftover.write_text("<html>stale</html>", encoding="utf-8")
         generate_share.generate(tmp)
 
         note_html = tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"
@@ -233,18 +236,16 @@ def main() -> None:
         ok("external writings skipped")
 
         spa_html = tmp / "guides" / "demo-guide" / "EN" / "index.html"
-        guide_html = tmp / "guide" / "en" / "demo-guide" / "index.html"
         guide_og = tmp / "assets" / "images" / "og" / "guides" / "en" / "demo-guide.png"
         ghtml = read(spa_html)
-        legacy = read(guide_html)
         if "Demo Guide" not in ghtml or "koltigin-share-guide" not in ghtml:
             fail("guide spa html")
         if "/guides/demo-guide/EN" not in ghtml:
             fail("guide spa canonical path")
         if "#/guides/demo-guide/EN" in ghtml:
             fail("guide spa must not bounce to hash")
-        if "/guides/demo-guide/EN" not in legacy:
-            fail("legacy guide share redirects to new url")
+        if (tmp / "guide" / "en" / "demo-guide" / "index.html").exists():
+            fail("generator must not recreate legacy /guide/ stubs")
         if Image.open(guide_og).size != (1200, 630):
             fail("guide fallback size")
         ok("guide without cover")
@@ -364,8 +365,6 @@ def main() -> None:
             fail("deleted writing share html remains")
         if (tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png").exists():
             fail("deleted writing og remains")
-        if (tmp / "guide" / "en" / "demo-guide" / "index.html").exists():
-            fail("deleted guide share html remains")
         if (tmp / "guides" / "demo-guide" / "EN" / "index.html").exists():
             fail("deleted guide spa html remains")
         sitemap2 = read(tmp / "sitemap.xml")
@@ -464,8 +463,10 @@ def main() -> None:
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     workflow = (ROOT / ".github" / "workflows" / "generate-share.yml").read_text(encoding="utf-8")
-    if "if [ -d guides ]; then git add guides; fi" not in workflow:
+    if "git add writings guides" not in workflow:
         fail("share workflow must commit generated /guides/ html")
+    if "git add -u -- guide" not in workflow:
+        fail("share workflow must stage leftover /guide/ deletions")
     ofl = ROOT / "assets" / "fonts" / "OFL.txt"
     if "displayName" not in readme or "SIL Open Font License" not in readme:
         fail("README must document identity config and Poppins OFL")

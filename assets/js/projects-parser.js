@@ -303,7 +303,6 @@ class ProjectsParser {
         }
         return;
       }
-      if (href.startsWith('/guide/')) return;
       event.preventDefault();
       if (window.guidesParser && typeof window.guidesParser.open === 'function') {
         window.guidesParser.open(link.dataset.guide, { sourceUrl: link.dataset.guideSource || '' });

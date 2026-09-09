@@ -408,10 +408,6 @@ def guide_share_path(lang: str, item_id: str) -> str:
     return f"guides/{item_id}/{code}/index.html"
 
 
-def guide_legacy_share_path(lang: str, item_id: str) -> str:
-    return f"guide/{lang}/{item_id}/index.html"
-
-
 def guide_public_url(base: str, item_id: str, lang: str) -> str:
     code = "TR" if lang == "tr" else "EN"
     return abs_url(base, f"guides/{item_id}/{code}")
@@ -872,10 +868,8 @@ def generate(root: Path) -> dict:
         alternates = {lang: guide_public_url(base, item_id, lang) for lang in langs}
         for lang, data in langs.items():
             html_rel = guide_share_path(lang, item_id)
-            legacy_rel = guide_legacy_share_path(lang, item_id)
             og_rel = guide_og_path(lang, item_id)
             html_path = root / html_rel
-            legacy_path = root / legacy_rel
             og_path = root / og_rel
             cover = resolve_cover(root, data["cover"], guide_id=item_id)
             used_cover = bool(cover and render_cover_png(cover, og_path))
@@ -890,7 +884,6 @@ def generate(root: Path) -> dict:
                 )
             canonical = alternates[lang]
             image = abs_url(base, og_rel)
-            spa_path = f"/guides/{item_id}/{'TR' if lang == 'tr' else 'EN'}"
             payload = json_ld_payload(
                 schema_type="TechArticle",
                 headline=data["title"],
@@ -915,28 +908,9 @@ def generate(root: Path) -> dict:
                         json_ld=payload,
                     ),
                 )
-            write_text(
-                legacy_path,
-                share_html(
-                    lang=lang,
-                    title=data["title"],
-                    description=data["description"] or data["title"],
-                    canonical=canonical,
-                    image=image,
-                    spa_hash=spa_path,
-                    alternates=alternates,
-                    marker=GUIDES_MARKER,
-                    brand=brand,
-                    schema_type="TechArticle",
-                    author=brand,
-                    date_published=None,
-                ),
-            )
             keep.add(html_path.resolve())
-            keep.add(legacy_path.resolve())
             keep.add(og_path.resolve())
             created.append(html_rel)
-            created.append(legacy_rel)
             sitemap_entries.append({"loc": canonical, "alternates": alternates})
 
     sitemap_path = root / "sitemap.xml"

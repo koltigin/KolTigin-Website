@@ -616,7 +616,7 @@
         <div class="item-actions">
           <button class="btn btn-ghost" data-go="#/edit/guides/${esc(item.id)}">${esc(t('writings.editBtn'))}</button>
           <a class="btn btn-ghost" href="/#/guides/${esc(item.id)}" target="_blank" rel="noopener">${esc(t('writings.preview'))}</a>
-          <a class="btn btn-ghost" href="/guide/${H().uiLang() === 'tr' && item.existsTr ? 'tr' : 'en'}/${esc(item.id)}/" target="_blank" rel="noopener">${esc(t('writings.sharePage'))}</a>
+          <a class="btn btn-ghost" href="/guides/${esc(item.id)}/${H().uiLang() === 'tr' && item.existsTr ? 'TR' : 'EN'}" target="_blank" rel="noopener">${esc(t('writings.sharePage'))}</a>
           ${H().entityDeleteButton({ family: 'guide', id: item.id, title: Sync().guideListTitle(item, H().uiLang()) })}
         </div>
       </article>

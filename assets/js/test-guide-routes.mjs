@@ -62,10 +62,13 @@ assert(share.includes("/guides/${encodeURIComponent(slug)}/${code}"), "share can
 assert(md.includes('href="/guides/${this.escapeHtml(guideId)}/${lang}"'), "in-guide locale links use public paths");
 assert(generate.includes("guides/{item_id}/{code}/index.html"), "share generator writes guides/id/EN");
 assert(generate.includes('root / "content" / "guides"'), "share generator reads guide markdown from content/guides");
-assert(generate.includes("guide_legacy_share_path"), "legacy /guide/en/id stubs remain");
+assert(!generate.includes("guide_legacy_share_path"), "share generator no longer writes /guide/ stubs");
+assert(!generate.includes('f"guide/{lang}/{item_id}/index.html"'), "share generator has no singular /guide/ path helper");
+assert(adminCms.includes('href="/guides/${esc(item.id)}/${H().uiLang() === \'tr\' && item.existsTr ? \'TR\' : \'EN\'}"'), "admin share page uses public /guides/{id}/EN|TR");
 assert(adminCms.includes('href="/#/guides/${esc(item.id)}"'), "admin preview still uses legacy hash");
 assert(worker.includes("content/guides/${id}/") && workerPaths.includes("content/guides/${id}/${file}"), "worker writes guide markdown under content/guides");
-assert(shareWorkflow.includes("if [ -d guides ]; then git add guides; fi"), "share workflow commits generated /guides/ html");
+assert(shareWorkflow.includes("git add writings guides"), "share workflow commits generated /guides/ html");
+assert(shareWorkflow.includes("git add -u -- guide"), "share workflow stages leftover /guide/ deletions");
 
 if (failed) {
   console.error(`${failed} failed`);

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import json
 import re
 import shutil
@@ -11,7 +12,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("generate_share", ROOT / "scripts" / "generate-share.py")
@@ -44,6 +45,10 @@ def setup_root(tmp: Path) -> Path:
     dest_avatar = tmp / "assets" / "images" / "profile" / "koltigin-at.png"
     dest_avatar.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(avatar_src, dest_avatar)
+    bg_dest = tmp / "assets" / "images" / "og" / "backgrounds"
+    bg_dest.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "assets" / "images" / "og" / "backgrounds" / "writing-og-background.png", bg_dest / "writing-og-background.png")
+    shutil.copy2(ROOT / "assets" / "images" / "og" / "backgrounds" / "guide-og-background.png", bg_dest / "guide-og-background.png")
     write(
         tmp / "config" / "site.json",
         '{"displayName":"KolTigin","canonicalUrl":"https://koltigin.xyz/","avatar":"./assets/images/profile/koltigin-at.png","ogImage":"./assets/images/social/og-koltigin.png","seo":{"routes":{"resume":{"ogImage":"./assets/images/social/og-resume.png"}}}}\n',
@@ -176,6 +181,8 @@ def main() -> None:
         ok("writing without cover share html")
         if Image.open(note_og).size != (1200, 630):
             fail("fallback og size")
+        if str(note_og.relative_to(tmp)) != "assets/images/og/writings/en/notes/no-cover.png":
+            fail("writing og output path")
         ok("writing without cover 1200x630 png")
 
         tr_html = read(tmp / "writings" / "tr" / "notes" / "no-cover" / "index.html")
@@ -248,6 +255,14 @@ def main() -> None:
             fail("generator must not recreate legacy /guide/ stubs")
         if Image.open(guide_og).size != (1200, 630):
             fail("guide fallback size")
+        if str(guide_og.relative_to(tmp)) != "assets/images/og/guides/en/demo-guide.png":
+            fail("guide og output path")
+        if generate_share.og_background_rel("notes") != generate_share.WRITING_OG_BACKGROUND:
+            fail("writing kinds must use the writing master background")
+        if generate_share.og_background_rel("articles") != generate_share.WRITING_OG_BACKGROUND:
+            fail("articles must use the writing master background")
+        if generate_share.og_background_rel("guide") != generate_share.GUIDE_OG_BACKGROUND:
+            fail("guides must use the guide master background")
         ok("guide without cover")
 
         guide_ld = json_ld(ghtml)
@@ -377,8 +392,20 @@ def main() -> None:
         src = (ROOT / "scripts" / "generate-share.py").read_text(encoding="utf-8")
         if 'or "KolTigin"' in src or "koltigin-at.png" in src:
             fail("generator must not hardcode KolTigin identity fallbacks")
-        if "max_text = int(round(0.68 * og_w))" not in src:
-            fail("approved title max width 816px / 68% must remain")
+        if "KOLTIGIN" in src:
+            fail("OG raster identity must not use uppercase KOLTIGIN")
+        fallback_src = inspect.getsource(generate_share.render_fallback_png)
+        identity_src = inspect.getsource(generate_share.identity_row_geometry)
+        if "display_name" in fallback_src:
+            fail("render_fallback_png must get identity text from the shared geometry helper")
+        if "display_name(root)" not in identity_src:
+            fail("identity block must use config displayName")
+        if "identity_row_geometry" not in fallback_src:
+            fail("fallback raster must use the shared identity overlay")
+        if "paint_card_background" in fallback_src or "paste_ionicon" in fallback_src:
+            fail("old procedural fallback drawing must not remain in render_fallback_png")
+        if "OG_TITLE_MAX_RATIO" not in src or "title_max_width" not in src:
+            fail("title width must stay margin/ratio constrained")
         ok("generator identity and title width stay config-driven")
 
         if generate_share.display_name(tmp) != "KolTigin":
@@ -430,6 +457,76 @@ def main() -> None:
         cover = Image.open(tmp / "assets" / "images" / "og" / "writings" / "en" / "articles" / "with-cover.png")
         if (40, 80, 180) not in list(cover.getdata())[:80] and not any(p[2] > 150 for p in list(cover.getdata())[::80]):
             fail("custom cover raster must stay independent of fallback avatar")
+        writing_color = (12, 48, 96)
+        guide_color = (18, 90, 40)
+        Image.new("RGB", (1800, 940), writing_color).save(
+            tmp / "assets" / "images" / "og" / "backgrounds" / "writing-og-background.png"
+        )
+        Image.new("RGB", (1800, 940), guide_color).save(
+            tmp / "assets" / "images" / "og" / "backgrounds" / "guide-og-background.png"
+        )
+        writing_probe = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "probe-writing.png"
+        guide_probe = tmp / "assets" / "images" / "og" / "guides" / "en" / "probe-guide.png"
+        generate_share.render_fallback_png(
+            tmp, writing_probe, title="Validator notes", kicker="Technical Note", kind="notes"
+        )
+        generate_share.render_fallback_png(
+            tmp, guide_probe, title="Demo Guide", kicker="Guide", kind="guide"
+        )
+        if writing_color not in {px[:3] for px in Image.open(writing_probe).getdata()}:
+            fail("writing fallback must composite onto the writing master background")
+        if guide_color not in {px[:3] for px in Image.open(guide_probe).getdata()}:
+            fail("guide fallback must composite onto the guide master background")
+        if writing_color in {px[:3] for px in Image.open(guide_probe).getdata()}:
+            fail("guide fallback must not use the writing master background")
+        writing_spec = generate_share.identity_row_geometry(ImageDraw.Draw(Image.new("RGB", generate_share.OG_SIZE)), tmp, 1200, 630)
+        guide_spec = generate_share.identity_row_geometry(ImageDraw.Draw(Image.new("RGB", generate_share.OG_SIZE)), tmp, 1200, 630)
+        for key in ("title_top", "category_pt", "avatar_size", "avatar_xy", "divider", "brand_xy", "brand", "divider_width", "row_width"):
+            if writing_spec[key] != guide_spec[key]:
+                fail(f"writing/guide overlay geometry diverged at {key}")
+        if writing_spec["title_top"] != generate_share.OG_TITLE_TOP:
+            fail("title_top must stay at the approved overlay value")
+        if writing_spec["category_pt"] != generate_share.OG_CATEGORY_PT:
+            fail("category size must stay at the approved overlay value")
+        if writing_spec["avatar_size"] != 114:
+            fail("identity avatar must be 114px")
+        x0, y0, x1, y1 = writing_spec["divider"]
+        if x0 != x1:
+            fail("identity divider must be vertical")
+        if y1 <= y0:
+            fail("vertical divider must have height")
+        div_h = y1 - y0
+        lo = int(round(writing_spec["avatar_size"] * 0.65))
+        hi = int(round(writing_spec["avatar_size"] * 0.75))
+        if not (lo <= div_h <= hi):
+            fail("vertical divider height must be 65–75% of avatar")
+        if writing_spec["row_width"] >= 1200 - 80:
+            fail("identity block must stay compact, not full-canvas")
+        if writing_spec["brand_pt"] != 33:
+            fail("KolTigin identity type must be 33pt")
+        x0, y0, x1, y1 = writing_spec["divider"]
+        if writing_spec["divider_width"] != 3 or (y1 - y0) != 80:
+            fail("identity divider must scale to 3×80")
+        if writing_spec["brand"] != generate_share.display_name(tmp):
+            fail("identity text must follow config displayName")
+        fallback_fn = inspect.getsource(generate_share.render_fallback_png)
+        if "OG_TITLE_TOP" not in fallback_fn or "identity_row_geometry" not in fallback_fn:
+            fail("Writing and Guide must share the same overlay geometry helper")
+        if ".upper()" not in fallback_fn:
+            fail("category labels should render uppercase")
+        long_title = "Ubuntu VPS üzerinde dağıtık altyapı ve doğrulayıcı operasyonu için ayrıntılı kurulum " * 4
+        long_dest = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "long-title.png"
+        generate_share.render_fallback_png(
+            tmp, long_dest, title=long_title, kicker="Teknik Not", kind="notes"
+        )
+        if Image.open(long_dest).size != (1200, 630):
+            fail("long title fallback must stay 1200x630")
+        probe = Image.new("RGB", generate_share.OG_SIZE)
+        probe_draw = ImageDraw.Draw(probe)
+        max_w = generate_share.title_max_width(1200)
+        font, lines, _lead = generate_share.fit_og_title(probe_draw, tmp, long_title, max_w)
+        if any(probe_draw.textlength(line, font=font) > max_w + 1 for line in lines):
+            fail("long titles must wrap inside the safe title width")
         ok("config identity changes the fallback signature only")
 
         write(
@@ -467,6 +564,8 @@ def main() -> None:
         fail("share workflow must commit generated /guides/ html")
     if "git add -u -- guide" not in workflow:
         fail("share workflow must stage leftover /guide/ deletions")
+    if "assets/images/og/backgrounds/**" not in workflow:
+        fail("share workflow must watch OG master backgrounds")
     ofl = ROOT / "assets" / "fonts" / "OFL.txt"
     if "displayName" not in readme or "SIL Open Font License" not in readme:
         fail("README must document identity config and Poppins OFL")

@@ -87,7 +87,7 @@ assert(
 const cardFn = blog.slice(blog.indexOf("createCard("), blog.indexOf("renderList("));
 assert(!cardFn.includes("shareMarkup") && !cardFn.includes("data-share-actions"), "writing list cards have no share controls");
 assert(blog.includes("shareMarkup(item)"), "writing detail uses shared share helper");
-const showItem = blog.slice(blog.indexOf("showItem(id)"), blog.indexOf("contentLang()"));
+const showItem = blog.slice(blog.indexOf("showItem(id)"), blog.indexOf("\n  contentLang()"));
 const writingShareCalls = showItem.match(/this\.shareMarkup\(item\)/g) || [];
 assert(writingShareCalls.length === 2, "writing detail has top and bottom share groups");
 assert(showItem.indexOf("shareMarkup(item)") < showItem.indexOf("writings-detail-cover") || showItem.includes("writings-detail-title"), "writing top share stays after title");

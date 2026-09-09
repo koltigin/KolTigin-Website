@@ -24,7 +24,21 @@ OG_SIZE = (1200, 630)
 GOLD = (255, 216, 111, 255)
 WHITE = (250, 250, 250, 255)
 WHITE2 = (214, 214, 214, 255)
-DIVIDER = (255, 216, 111, 107)
+DIVIDER = (255, 216, 111, 220)
+WRITING_OG_BACKGROUND = "assets/images/og/backgrounds/writing-og-background.png"
+GUIDE_OG_BACKGROUND = "assets/images/og/backgrounds/guide-og-background.png"
+OG_MARGIN_X = 72
+OG_TITLE_MAX_RATIO = 0.74
+OG_TITLE_TOP = 168
+OG_CATEGORY_PT = 34
+OG_TITLE_CATEGORY_GAP = 18
+OG_AVATAR_SIZE = 114
+OG_IDENTITY_BOTTOM = 81
+OG_IDENTITY_GAP = 21
+OG_DIVIDER_WIDTH = 3
+OG_DIVIDER_HEIGHT_RATIO = 0.70
+OG_BRAND_PT = 33
+OG_BG_CENTERING = (0.5, 0.34)
 
 WRITINGS_MARKER = "koltigin-share-writing"
 GUIDES_MARKER = "koltigin-share-guide"
@@ -221,9 +235,29 @@ def wrap_lines(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, 
     words = str(text or "").split()
     if not words:
         return [""]
+
+    def split_token(token: str) -> list[str]:
+        if draw.textlength(token, font=font) <= max_width:
+            return [token]
+        parts: list[str] = []
+        buf = ""
+        for ch in token:
+            trial = buf + ch
+            if buf and draw.textlength(trial, font=font) > max_width:
+                parts.append(buf)
+                buf = ch
+            else:
+                buf = trial
+        if buf:
+            parts.append(buf)
+        return parts or [token]
+
+    tokens: list[str] = []
+    for word in words:
+        tokens.extend(split_token(word))
     lines: list[str] = []
     current = ""
-    for word in words:
+    for word in tokens:
         trial = f"{current} {word}".strip()
         if draw.textlength(trial, font=font) <= max_width:
             current = trial
@@ -314,63 +348,145 @@ def paint_card_background(img: Image.Image) -> None:
             )
 
 
+def og_background_rel(kind: str) -> str:
+    if str(kind or "") == "guide":
+        return GUIDE_OG_BACKGROUND
+    return WRITING_OG_BACKGROUND
+
+
+def load_og_background(root: Path, kind: str) -> Image.Image:
+    rel = og_background_rel(kind)
+    path = root / rel
+    if not path.is_file():
+        raise RuntimeError(
+            f"OG master background not found: {rel}. "
+            "Place the Writing/Guide master PNG under assets/images/og/backgrounds/."
+        )
+    try:
+        source = Image.open(path)
+        source.load()
+    except OSError as exc:
+        raise RuntimeError(f"OG master background could not be read: {rel}") from exc
+    return ImageOps.fit(source.convert("RGB"), OG_SIZE, method=Image.Resampling.LANCZOS, centering=OG_BG_CENTERING)
+
+
+def title_max_width(og_w: int) -> int:
+    ratio_w = int(round(OG_TITLE_MAX_RATIO * og_w))
+    margin_w = og_w - 2 * OG_MARGIN_X
+    return max(320, min(ratio_w, margin_w))
+
+
+def fit_og_title(
+    draw: ImageDraw.ImageDraw, root: Path, title: str, max_width: int
+) -> tuple[ImageFont.FreeTypeFont, list[str], int]:
+    max_lines = 3
+    max_block = 188
+    for size in range(48, 27, -2):
+        font = load_font(root, "semibold", size)
+        lead = int(round(size * 1.22))
+        lines = wrap_lines(draw, title, font, max_width, max_lines)
+        if lead * len(lines) > max_block:
+            continue
+        if all(draw.textlength(line, font=font) <= max_width for line in lines):
+            return font, lines, lead
+    font = load_font(root, "semibold", 28)
+    lead = int(round(28 * 1.22))
+    return font, wrap_lines(draw, title, font, max_width, max_lines), lead
+
+
+def draw_text_with_shadow(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int],
+    text: str,
+    font: ImageFont.ImageFont,
+    fill,
+    anchor: str,
+) -> None:
+    x, y = xy
+    shadow = (18, 16, 14)
+    for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1)):
+        draw.text((x + dx, y + dy), text, font=font, fill=shadow, anchor=anchor)
+    draw.text(xy, text, font=font, fill=fill, anchor=anchor)
+
+
+def identity_row_geometry(draw: ImageDraw.ImageDraw, root: Path, og_w: int, og_h: int) -> dict:
+    brand = display_name(root)
+    brand_font = load_font(root, "regular", OG_BRAND_PT)
+    brand_w = int(draw.textlength(brand, font=brand_font))
+    identity_y = og_h - OG_IDENTITY_BOTTOM - OG_AVATAR_SIZE
+    divider_h = int(round(OG_AVATAR_SIZE * OG_DIVIDER_HEIGHT_RATIO))
+    row_w = OG_AVATAR_SIZE + OG_IDENTITY_GAP + OG_DIVIDER_WIDTH + OG_IDENTITY_GAP + brand_w
+    row_x = (og_w - row_w) // 2
+    x_avatar = row_x
+    div_x = x_avatar + OG_AVATAR_SIZE + OG_IDENTITY_GAP
+    div_y0 = identity_y + (OG_AVATAR_SIZE - divider_h) // 2
+    div_y1 = div_y0 + divider_h
+    brand_x = div_x + OG_DIVIDER_WIDTH + OG_IDENTITY_GAP
+    brand_y = identity_y + OG_AVATAR_SIZE // 2
+    return {
+        "title_top": OG_TITLE_TOP,
+        "category_pt": OG_CATEGORY_PT,
+        "avatar_size": OG_AVATAR_SIZE,
+        "avatar_xy": (x_avatar, identity_y),
+        "divider": (div_x, div_y0, div_x, div_y1),
+        "brand_xy": (brand_x, brand_y),
+        "brand": brand,
+        "brand_pt": OG_BRAND_PT,
+        "divider_width": OG_DIVIDER_WIDTH,
+        "row_width": row_w,
+        "brand_font": brand_font,
+    }
+
+
 def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str) -> None:
-    # Live Writings 2-col fallback COVER (1440×900, validator note), cover area only:
-    # 404 × 227.25. Scale X from cover width, Y from cover height. Do not invent sizes.
-    ref_w, ref_h = 404.0, 227.25
     og_w, og_h = OG_SIZE
-    sx = og_w / ref_w
-    sy = og_h / ref_h
-    img = Image.new("RGB", OG_SIZE, "#121212")
-    paint_card_background(img)
+    img = load_og_background(root, kind)
     draw = ImageDraw.Draw(img)
+    max_text = title_max_width(og_w)
+    title_font, lines, title_lead = fit_og_title(draw, root, title, max_text)
+    kicker_font = load_font(root, "regular", OG_CATEGORY_PT)
+    spec = identity_row_geometry(draw, root, og_w, og_h)
     cx = og_w // 2
+    kicker_h = int(round(OG_CATEGORY_PT * 1.2))
+    title_top = OG_TITLE_TOP
+    category = str(kicker or "").strip().upper()
 
-    icon_size = int(round(28 * sy))
-    title_size = 20 * sy
-    title_lead = 26 * sy
-    kicker_size = 15 * sy
-    kind_box_h = 23 * sy
-    author_size = 15.2 * sy
-    avatar_size = int(round(42 * sy))
-    divider_h = int(round(30 * sy))
-    gap = 10 * sy
-    sig_gap = int(round(10 * sy))
-    divider_w = max(1, int(round(1 * sx)))
-    max_text = int(round(0.68 * og_w))
-    content_h = 169.25 * sy
-    pad_top = 16 * sy
-    pad_bottom = 8 * sy
-    sig_bottom = 14 * sy
-
-    title_font = load_font(root, "semibold", title_size)
-    kicker_font = load_font(root, "regular", kicker_size)
-    name_font = load_font(root, "regular", author_size)
-    lines = wrap_lines(draw, title, title_font, max_text, 4)
-    title_h = title_lead * len(lines)
-    flex_h = icon_size + gap + title_h + gap + kind_box_h
-    y = pad_top + max(0.0, (content_h - pad_top - pad_bottom - flex_h) / 2)
-
-    paste_ionicon(img, kind, cx, int(round(y)), icon_size)
-    draw = ImageDraw.Draw(img)
-    y += icon_size + gap
+    y = title_top
     for line in lines:
-        draw.text((cx, int(round(y + title_lead / 2))), line, font=title_font, fill=WHITE, anchor="mm")
+        draw_text_with_shadow(
+            draw,
+            (cx, int(round(y + title_lead / 2))),
+            line,
+            title_font,
+            WHITE,
+            "mm",
+        )
         y += title_lead
-    y += gap
-    draw.text((cx, int(round(y + kind_box_h / 2))), kicker.upper(), font=kicker_font, fill=GOLD[:3], anchor="mm")
+    if category:
+        y += OG_TITLE_CATEGORY_GAP
+        draw_text_with_shadow(
+            draw,
+            (cx, int(round(y + kicker_h / 2))),
+            category,
+            kicker_font,
+            GOLD[:3],
+            "mm",
+        )
 
-    sig_y = int(round(og_h - sig_bottom - avatar_size))
-    avatar = circular_avatar(avatar_path(root), avatar_size)
-    name = display_name(root)
-    name_w = int(draw.textlength(name, font=name_font))
-    row_w = avatar_size + sig_gap + divider_w + sig_gap + name_w
-    row_x = cx - row_w // 2
-    img.paste(avatar, (row_x, sig_y), avatar)
-    dx = row_x + avatar_size + sig_gap
-    dy = int(round(sig_y + (avatar_size - divider_h) / 2))
-    draw.line((dx, dy, dx, dy + divider_h), fill=DIVIDER, width=divider_w)
-    draw.text((dx + sig_gap + divider_w, int(round(sig_y + avatar_size / 2))), name, font=name_font, fill=(250, 250, 250), anchor="lm")
+    avatar = circular_avatar(avatar_path(root), spec["avatar_size"])
+    x_avatar, ay = spec["avatar_xy"]
+    img.paste(avatar, (x_avatar, ay), avatar)
+    x0, y0, x1, y1 = spec["divider"]
+    if y1 > y0:
+        draw.line((x0, y0, x1, y1), fill=GOLD[:3], width=spec["divider_width"])
+    draw_text_with_shadow(
+        draw,
+        spec["brand_xy"],
+        spec["brand"],
+        spec["brand_font"],
+        WHITE,
+        "lm",
+    )
     dest.parent.mkdir(parents=True, exist_ok=True)
     img.save(dest, format="PNG", optimize=True)
 
@@ -623,6 +739,8 @@ def prune_generated(root: Path, keep: set[Path], bases: list[Path]) -> list[str]
             continue
         for path in sorted(base.rglob("*"), reverse=True):
             resolved = path.resolve()
+            if "backgrounds" in path.parts and path.parent.name == "backgrounds":
+                continue
             if path.is_file() and resolved not in keep:
                 if path.name == "index.html" or path.suffix.lower() in {".png", ".md"} or path.name == "index.json":
                     path.unlink()

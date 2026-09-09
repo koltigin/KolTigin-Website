@@ -162,6 +162,7 @@ class BlogParser {
       return;
     }
     const extra = detailCover ? 'writings-detail-cover' : '';
+    if (!this.hasCover(item)) return;
     const holder = document.createElement('div');
     holder.innerHTML = this.coverFallback(item, extra).trim();
     const fallback = holder.firstElementChild;
@@ -539,13 +540,30 @@ class BlogParser {
     `;
   }
 
+  generatedCoverSrc(item) {
+    const loc = this.contentLang();
+    const kind = String(item?.kind || '').trim();
+    const slug = String(item?.slug || '').trim();
+    if (!kind || !slug) return '';
+    return publicPath(`./assets/images/og/writings/${loc}/${kind}/${slug}.png`);
+  }
+
   coverMarkup(item) {
-    if (!this.hasCover(item)) return this.coverFallback(item);
-    return `
+    if (this.hasCover(item)) {
+      return `
       <figure class="blog-banner-box writings-cover" data-cover-for="${this.escapeHtml(item.id)}">
         <img src="${this.escapeHtml(this.coverSrc(item.cover))}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
       </figure>
     `;
+    }
+    if (!this.isExternal(item) && this.generatedCoverSrc(item)) {
+      return `
+      <figure class="blog-banner-box writings-cover" data-cover-for="${this.escapeHtml(item.id)}">
+        <img src="${this.escapeHtml(this.generatedCoverSrc(item))}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
+      </figure>
+    `;
+    }
+    return this.coverFallback(item);
   }
 
   cardAction(item) {
@@ -649,7 +667,9 @@ class BlogParser {
       ? `<figure class="writings-detail-cover" data-cover-for="${this.escapeHtml(item.id)}">
            <img src="${this.escapeHtml(this.coverSrc(item.cover))}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
          </figure>`
-      : this.coverFallback(item, 'writings-detail-cover');
+      : `<figure class="writings-detail-cover" data-cover-for="${this.escapeHtml(item.id)}">
+           <img src="${this.escapeHtml(this.generatedCoverSrc(item))}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
+         </figure>`;
 
     this.view.innerHTML = `
       <section class="blog-post-detail">

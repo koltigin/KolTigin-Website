@@ -18,36 +18,22 @@ function assert(cond, msg) {
   }
 }
 
-const fallbackStart = blogSrc.indexOf("coverFallback(item, extraClass");
-const fallbackEnd = blogSrc.indexOf("coverMarkup(item)");
-const fallbackFn = blogSrc.slice(fallbackStart, fallbackEnd);
-const markupFn = blogSrc.slice(fallbackEnd, blogSrc.indexOf("cardAction(item)"));
-const signatureFn = blogSrc.slice(blogSrc.indexOf("coverFallbackSignature()"), fallbackStart);
+const markupFn = blogSrc.slice(blogSrc.indexOf("coverMarkup(item)"), blogSrc.indexOf("cardAction(item)"));
+const generatedFn = blogSrc.slice(blogSrc.indexOf("generatedCoverSrc(item)"), blogSrc.indexOf("coverMarkup(item)"));
+const brokenFn = blogSrc.slice(blogSrc.indexOf("replaceBrokenCover(img)"), blogSrc.indexOf("escapeHtml(value)"));
 
-assert(fallbackStart !== -1 && fallbackEnd !== -1, "shared coverFallback and coverMarkup exist");
-assert(fallbackFn.includes("coverFallbackSignature()"), "list/detail fallback uses the shared signature helper");
-assert(signatureFn.includes("cover-fallback-signature"), "signature markup class exists");
-assert(signatureFn.includes("cover-fallback-avatar"), "signature includes circular avatar image");
-assert(signatureFn.includes("cover-fallback-divider"), "signature includes a divider between avatar and name");
-assert(fallbackFn.includes("coverFallbackSignature()") && !fallbackFn.slice(fallbackFn.indexOf("<div class=\"cover-fallback\">"), fallbackFn.indexOf("</div>")).includes("coverFallbackSignature"), "signature is a sibling of the title block, not nested inside it");
-assert(cssSrc.includes(".blog-banner-box > img"), "banner cover photos are direct-child images only");
-assert(!cssSrc.includes(".blog-banner-box img {"), "banner img rule no longer swallows nested avatars");
-assert(cssSrc.includes(".writings-detail-cover > img"), "detail cover photos are direct-child images only");
-assert(!cssSrc.includes(".writings-cover img {") && !cssSrc.includes(".writings-cover img{\n"), "broad writings-cover img rule is gone");
-assert(cssSrc.includes("border-radius: 50%"), "avatar is circular");
-assert(cssSrc.includes(".cover-fallback-divider"), "divider is styled");
-assert(cssSrc.includes("width: 42px"), "card avatar is large enough to read as a portrait");
-assert(blogSrc.includes("coverAuthorAvatarSrc") && blogSrc.slice(blogSrc.indexOf("coverAuthorAvatarSrc()"), blogSrc.indexOf("coverFallbackSignature()")).includes("return publicPath(raw)"), "fallback avatar uses publicPath so /writings/ does not 404 ./assets");
-assert(blogSrc.includes("site.avatar"), "avatar comes from config/site.json avatar");
-assert(!signatureFn.includes("KolTigin") && !blogSrc.slice(blogSrc.indexOf("coverAuthorName()"), blogSrc.indexOf("coverFallbackSignature()")).includes("koltigin-at.png"), "fallback identity has no hardcoded KolTigin defaults");
-assert(markupFn.includes("if (!this.hasCover(item)) return this.coverFallback(item)"), "items without a cover use the fallback");
+assert(generatedFn.includes("./assets/images/og/writings/${loc}/${kind}/${slug}.png"), "coverless writings use generated OG rasters");
+assert(markupFn.includes("generatedCoverSrc(item)"), "coverMarkup uses generated OG when there is no custom cover");
+assert(markupFn.includes("this.hasCover(item)"), "custom covers still win over generated OG");
 assert(markupFn.includes("<figure") && markupFn.includes("<img src="), "custom covers still render as images");
 assert(!markupFn.includes("coverFallbackSignature"), "uploaded covers do not inject the signature");
-assert(cssSrc.includes(".cover-fallback-signature"), "signature is styled");
-assert(cssSrc.includes(".cover-fallback-avatar") && cssSrc.includes("border-radius: 50%"), "avatar is circular");
-assert(cssSrc.includes("bottom: 12px"), "signature sits near the bottom");
-assert(cssSrc.includes("inset: 0 0 58px"), "title block leaves a reserved band for the signature");
-assert(!guidesSrc.includes("coverFallback") && !guidesSrc.includes("cover-fallback"), "Guides do not share the writings fallback-cover renderer");
+assert(blogSrc.includes("this.coverFallback(item, extra).trim()"), "broken custom covers can still swap to the CSS fallback");
+assert(brokenFn.includes("if (!this.hasCover(item)) return;"), "generated OG cards do not fall back to the procedural CSS cover");
+assert(blogSrc.includes("generatedCoverSrc(item)") && blogSrc.includes("writings-detail-cover"), "writing detail without cover uses the generated raster");
+assert(guidesSrc.includes("./assets/images/og/guides/${loc}/${id}.png"), "/guides/ cards use generated Guide rasters");
+assert(!guidesSrc.includes("coverFallback") && !guidesSrc.includes("cover-fallback"), "Guides do not share the writings CSS fallback-cover renderer");
+assert(cssSrc.includes(".blog-banner-box > img"), "banner cover photos are direct-child images only");
+assert(!cssSrc.includes(".blog-banner-box img {"), "banner img rule no longer swallows nested avatars");
 assert(siteSrc.includes("site.avatar"), "sidebar already uses the site avatar asset");
 
 if (failed) {

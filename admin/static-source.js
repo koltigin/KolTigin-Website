@@ -220,7 +220,7 @@
   async function loadGuides(projects) {
     let ids = [];
     try {
-      const index = await fetchJson('/guides/index.json');
+      const index = await fetchJson('/content/guides/index.json');
       ids = Array.isArray(index.guides) ? index.guides : [];
     } catch {
       ids = [];
@@ -238,8 +238,8 @@
     for (const id of ids) {
       let en = '';
       let tr = '';
-      try { en = await fetchText(`/guides/${id}/EN.md`); } catch { /* missing */ }
-      try { tr = await fetchText(`/guides/${id}/TR.md`); } catch { /* missing */ }
+      try { en = await fetchText(`/content/guides/${id}/EN.md`); } catch { /* missing */ }
+      try { tr = await fetchText(`/content/guides/${id}/TR.md`); } catch { /* missing */ }
       if (!en && !tr) continue;
       const related = (projects || [])
         .filter((project) => (project.links || []).some((link) => link && link.guide === id))
@@ -310,8 +310,8 @@
       const id = query.get('id') || '';
       let en = '';
       let tr = '';
-      try { en = await fetchText(`/guides/${id}/EN.md`); } catch { /* missing */ }
-      try { tr = await fetchText(`/guides/${id}/TR.md`); } catch { /* missing */ }
+      try { en = await fetchText(`/content/guides/${id}/EN.md`); } catch { /* missing */ }
+      try { tr = await fetchText(`/content/guides/${id}/TR.md`); } catch { /* missing */ }
       const pack = await read('/admin/api/guides');
       const meta = (pack.guides || []).find((item) => item.id === id) || {};
       return { id, exists: Boolean(en || tr), en, tr, meta };

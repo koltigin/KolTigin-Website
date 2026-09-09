@@ -6,8 +6,7 @@ on:
     paths:
       - "content/**/*.md"
       - "content/index.json"
-      - "guides/**/*.md"
-      - "guides/index.json"
+      - "content/guides/**"
       - "config/writing-types.json"
       - "index.html"
       - "config/site.json"
@@ -51,6 +50,7 @@ jobs:
           git add sitemap.xml
           git add about/index.html resume/index.html projects/index.html writings/index.html videos/index.html contact/index.html 2>/dev/null || true
           if [ -d writings ]; then git add writings; fi
+          if [ -d guides ]; then git add guides; fi
           if [ -d guide ]; then git add guide; fi
           if [ -d assets/images/og ]; then git add assets/images/og; fi
           if git diff --cached --quiet; then

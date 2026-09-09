@@ -32,7 +32,7 @@ Public schema matches the Python generators:
 | --- | --- | --- | --- |
 | Writing / video / writing-types | `content/**/*.md`, `config/writing-types.json` | `content/index.json` (`types`, per-kind `{en,tr}` filename lists, `videos`) | `blog-parser.js` / `videos-parser-new.js` load Markdown from those names, then sort by date |
 | Project / project-categories | `content/projects/**/*.md`, `config/project-categories.json` | `projects/projects.json` (same public fields as `generate-projects.py`) | `projects-parser.js` renders the JSON |
-| Guide | `guides/{id}/EN.md`, `TR.md` | `guides/index.json` `{ guides: [id…] }` | admin + optional listing |
+| Guide | `content/guides/{id}/EN.md`, `TR.md` | `content/guides/index.json` `{ guides: [id…] }` | admin + `/guides/` landing/detail via `content/guides/` |
 
 ### Limitation (not an admin-write blocker)
 

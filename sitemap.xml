@@ -22,6 +22,9 @@
     <loc>https://koltigin.xyz/contact/</loc>
   </url>
   <url>
+    <loc>https://koltigin.xyz/guides/</loc>
+  </url>
+  <url>
     <loc>https://koltigin.xyz/writings/en/articles/2026-08-31-soulmemory/</loc>
   </url>
   <url>
@@ -40,15 +43,15 @@
     <loc>https://koltigin.xyz/writings/tr/notes/2026-08-29-validator-notlari/</loc>
   </url>
   <url>
-    <loc>https://koltigin.xyz/guide/en/aro-network-depin-ubuntu-vps-installation-guide/</loc>
+    <loc>https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-installation-guide/EN</loc>
   </url>
   <url>
-    <loc>https://koltigin.xyz/guide/tr/aro-network-depin-ubuntu-vps-installation-guide/</loc>
+    <loc>https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-installation-guide/TR</loc>
   </url>
   <url>
-    <loc>https://koltigin.xyz/guide/en/optimai-cli-node-setup-guide-ubuntu-24-04-vps/</loc>
+    <loc>https://koltigin.xyz/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/EN</loc>
   </url>
   <url>
-    <loc>https://koltigin.xyz/guide/tr/optimai-cli-node-setup-guide-ubuntu-24-04-vps/</loc>
+    <loc>https://koltigin.xyz/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/TR</loc>
   </url>
 </urlset>

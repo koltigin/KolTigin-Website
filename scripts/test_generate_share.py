@@ -77,10 +77,10 @@ def setup_root(tmp: Path) -> Path:
         tmp / "content" / "notes" / "en" / "undated.md",
         '---\ntitle: "Undated note"\nsummary: "No calendar date."\n---\n\nBody.\n',
     )
-    write(tmp / "guides" / "demo-guide" / "EN.md", "# Demo Guide\n\nInstall the node.\n")
-    write(tmp / "guides" / "demo-guide" / "TR.md", "# Demo Rehber\n\nDüğümü kurun.\n")
+    write(tmp / "content" / "guides" / "demo-guide" / "EN.md", "# Demo Guide\n\nInstall the node.\n")
+    write(tmp / "content" / "guides" / "demo-guide" / "TR.md", "# Demo Rehber\n\nDüğümü kurun.\n")
     write(
-        tmp / "guides" / "covered-guide" / "EN.md",
+        tmp / "content" / "guides" / "covered-guide" / "EN.md",
         "---\ncover: hero.png\n---\n\n# Covered Guide\n\nWith art.\n",
     )
     tiny_png(tmp / "assets" / "images" / "guides" / "covered-guide" / "hero.png", (180, 60, 40))
@@ -93,10 +93,12 @@ def setup_root(tmp: Path) -> Path:
   <title>KolTigin</title>
   <meta name="description" content="home">
   <link rel="canonical" href="https://koltigin.xyz/">
+  <meta property="og:type" content="website">
   <meta property="og:title" content="KolTigin">
   <meta property="og:description" content="home">
   <meta property="og:url" content="https://koltigin.xyz/">
   <meta property="og:image" content="https://koltigin.xyz/assets/images/common/og-image.png">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="KolTigin">
   <meta name="twitter:description" content="home">
@@ -230,11 +232,19 @@ def main() -> None:
             fail("external x posts must not get share pages")
         ok("external writings skipped")
 
+        spa_html = tmp / "guides" / "demo-guide" / "EN" / "index.html"
         guide_html = tmp / "guide" / "en" / "demo-guide" / "index.html"
         guide_og = tmp / "assets" / "images" / "og" / "guides" / "en" / "demo-guide.png"
-        ghtml = read(guide_html)
-        if "Demo Guide" not in ghtml or "#/guides/demo-guide/EN" not in ghtml:
-            fail("guide share html")
+        ghtml = read(spa_html)
+        legacy = read(guide_html)
+        if "Demo Guide" not in ghtml or "koltigin-share-guide" not in ghtml:
+            fail("guide spa html")
+        if "/guides/demo-guide/EN" not in ghtml:
+            fail("guide spa canonical path")
+        if "#/guides/demo-guide/EN" in ghtml:
+            fail("guide spa must not bounce to hash")
+        if "/guides/demo-guide/EN" not in legacy:
+            fail("legacy guide share redirects to new url")
         if Image.open(guide_og).size != (1200, 630):
             fail("guide fallback size")
         ok("guide without cover")
@@ -248,7 +258,7 @@ def main() -> None:
             fail("guide json-ld description")
         if guide_ld.get("inLanguage") != "en":
             fail("guide json-ld language")
-        if guide_ld.get("url") != "https://koltigin.xyz/guide/en/demo-guide/":
+        if guide_ld.get("url") != "https://koltigin.xyz/guides/demo-guide/EN":
             fail("guide json-ld url")
         if guide_ld.get("mainEntityOfPage") != guide_ld.get("url"):
             fail("guide json-ld mainEntityOfPage")
@@ -256,8 +266,8 @@ def main() -> None:
             fail("guide json-ld image")
         if "datePublished" in guide_ld:
             fail("guide json-ld must omit datePublished")
-        guide_tr = json_ld(read(tmp / "guide" / "tr" / "demo-guide" / "index.html"))
-        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guide/tr/demo-guide/":
+        guide_tr = json_ld(read(tmp / "guides" / "demo-guide" / "TR" / "index.html"))
+        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guides/demo-guide/TR":
             fail("tr guide json-ld locale url")
         if guide_tr.get("headline") != "Demo Rehber":
             fail("tr guide json-ld headline")
@@ -293,9 +303,9 @@ def main() -> None:
             fail("writing url sitemap")
         if not any(loc.endswith("/writings/tr/notes/no-cover/") for loc in locs):
             fail("writing tr url sitemap")
-        if not any(loc.endswith("/guide/en/demo-guide/") for loc in locs):
+        if not any(loc.endswith("/guides/demo-guide/EN") for loc in locs):
             fail("guide url sitemap")
-        if not any(loc.endswith("/guide/tr/demo-guide/") for loc in locs):
+        if not any(loc.endswith("/guides/demo-guide/TR") for loc in locs):
             fail("guide tr url sitemap")
         if any("tweet" in (loc or "") or "/admin" in (loc or "") for loc in locs):
             fail("external or admin url in sitemap")
@@ -307,6 +317,7 @@ def main() -> None:
             "https://koltigin.xyz/writings/",
             "https://koltigin.xyz/videos/",
             "https://koltigin.xyz/contact/",
+            "https://koltigin.xyz/guides/",
         ]
         for url in expected_sections:
             if url not in locs:
@@ -347,7 +358,7 @@ def main() -> None:
         ok("update regenerates metadata")
 
         shutil.rmtree(tmp / "content" / "notes")
-        shutil.rmtree(tmp / "guides" / "demo-guide")
+        shutil.rmtree(tmp / "content" / "guides" / "demo-guide")
         generate_share.generate(tmp)
         if (tmp / "writings" / "en" / "notes" / "no-cover" / "index.html").exists():
             fail("deleted writing share html remains")
@@ -355,8 +366,10 @@ def main() -> None:
             fail("deleted writing og remains")
         if (tmp / "guide" / "en" / "demo-guide" / "index.html").exists():
             fail("deleted guide share html remains")
+        if (tmp / "guides" / "demo-guide" / "EN" / "index.html").exists():
+            fail("deleted guide spa html remains")
         sitemap2 = read(tmp / "sitemap.xml")
-        if "/writings/en/notes/no-cover/" in sitemap2 or "/guide/en/demo-guide/" in sitemap2:
+        if "/writings/en/notes/no-cover/" in sitemap2 or "/guides/demo-guide/EN" in sitemap2:
             fail("deleted urls remain in sitemap")
         if (tmp / "writings" / "en" / "articles" / "with-cover" / "index.html").exists() is False:
             fail("unrelated writing share should remain")
@@ -450,6 +463,9 @@ def main() -> None:
         ok("missing avatar fails clearly")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "generate-share.yml").read_text(encoding="utf-8")
+    if "if [ -d guides ]; then git add guides; fi" not in workflow:
+        fail("share workflow must commit generated /guides/ html")
     ofl = ROOT / "assets" / "fonts" / "OFL.txt"
     if "displayName" not in readme or "SIL Open Font License" not in readme:
         fail("README must document identity config and Poppins OFL")
@@ -461,7 +477,7 @@ def main() -> None:
     if r"^#\/yazilar\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([^/]+)$" not in hash_src and "#/yazilar/" not in hash_src:
         fail("writing hashes")
     guide_src = (ROOT / "assets" / "js" / "guides-parser.js").read_text(encoding="utf-8")
-    if "#/guides/" not in guide_src:
+    if "#\\/guides/" not in guide_src and "parseGuideHash" not in guide_src:
         fail("guide hashes")
     ok("backward compatible hashes still present")
     print("all generate-share tests passed")

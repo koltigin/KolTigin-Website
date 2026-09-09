@@ -37,6 +37,7 @@ PUBLIC_SECTION_ROUTES = [
     {"id": "writings", "path": "/writings/", "dir": "writings"},
     {"id": "videos", "path": "/videos/", "dir": "videos"},
     {"id": "contact", "path": "/contact/", "dir": "contact"},
+    {"id": "guides", "path": "/guides/", "dir": "guides"},
 ]
 
 
@@ -403,7 +404,17 @@ def writing_og_path(lang: str, kind: str, item_id: str) -> str:
 
 
 def guide_share_path(lang: str, item_id: str) -> str:
+    code = "TR" if lang == "tr" else "EN"
+    return f"guides/{item_id}/{code}/index.html"
+
+
+def guide_legacy_share_path(lang: str, item_id: str) -> str:
     return f"guide/{lang}/{item_id}/index.html"
+
+
+def guide_public_url(base: str, item_id: str, lang: str) -> str:
+    code = "TR" if lang == "tr" else "EN"
+    return abs_url(base, f"guides/{item_id}/{code}")
 
 
 def guide_og_path(lang: str, item_id: str) -> str:
@@ -572,7 +583,7 @@ def discover_writings(root: Path) -> list[dict]:
 
 
 def discover_guides(root: Path) -> list[dict]:
-    guides_root = root / "guides"
+    guides_root = root / "content" / "guides"
     items = []
     if not guides_root.is_dir():
         return items
@@ -617,7 +628,7 @@ def prune_generated(root: Path, keep: set[Path], bases: list[Path]) -> list[str]
         for path in sorted(base.rglob("*"), reverse=True):
             resolved = path.resolve()
             if path.is_file() and resolved not in keep:
-                if path.name == "index.html" or path.suffix.lower() == ".png":
+                if path.name == "index.html" or path.suffix.lower() in {".png", ".md"} or path.name == "index.json":
                     path.unlink()
                     removed.append(str(path.relative_to(root)))
             elif path.is_dir():
@@ -714,6 +725,64 @@ def patch_section_head(
     return html_out
 
 
+def patch_guide_spa_page(
+    source: str,
+    *,
+    lang: str,
+    title: str,
+    description: str,
+    canonical: str,
+    image: str,
+    alternates: dict[str, str],
+    json_ld: dict,
+) -> str:
+    html_out = patch_section_head(
+        source,
+        title=title,
+        description=description,
+        canonical=canonical,
+        image=image,
+    )
+    html_out = re.sub(
+        r'(<html[^>]*\blang=")[^"]*(")',
+        rf"\1{html.escape(lang)}\2",
+        html_out,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    html_out = re.sub(
+        r'(<meta property="og:type" content=")[^"]*(")',
+        r"\1article\2",
+        html_out,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    html_out = re.sub(
+        r'(<meta property="og:locale" content=")[^"]*(")',
+        rf'\1{"tr_TR" if lang == "tr" else "en_US"}\2',
+        html_out,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    extras = ['  <meta name="koltigin-share-guide" content="1">']
+    for code, url in alternates.items():
+        extras.append(
+            f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
+        )
+    if "en" in alternates:
+        extras.append(
+            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">'
+        )
+    extras.append('  <meta property="og:image:width" content="1200">')
+    extras.append('  <meta property="og:image:height" content="630">')
+    extras.append(json_ld_script(json_ld))
+    extras.append(
+        f'  <script>try{{localStorage.setItem("siteLang","{html.escape(lang)}");}}catch(e){{}}</script>'
+    )
+    html_out = html_out.replace("</head>", "\n".join(extras) + "\n</head>", 1)
+    return html_out
+
+
 def write_section_pages(root: Path) -> list[str]:
     index_path = root / "index.html"
     if not index_path.is_file():
@@ -795,14 +864,18 @@ def generate(root: Path) -> dict:
             created.append(html_rel)
             sitemap_entries.append({"loc": canonical, "alternates": alternates})
 
+    index_source = (root / "index.html").read_text(encoding="utf-8") if (root / "index.html").is_file() else ""
+
     for item in discover_guides(root):
         item_id = item["id"]
         langs = item["langs"]
-        alternates = {lang: abs_url(base, f"guide/{lang}/{item_id}/") for lang in langs}
+        alternates = {lang: guide_public_url(base, item_id, lang) for lang in langs}
         for lang, data in langs.items():
             html_rel = guide_share_path(lang, item_id)
+            legacy_rel = guide_legacy_share_path(lang, item_id)
             og_rel = guide_og_path(lang, item_id)
             html_path = root / html_rel
+            legacy_path = root / legacy_rel
             og_path = root / og_rel
             cover = resolve_cover(root, data["cover"], guide_id=item_id)
             used_cover = bool(cover and render_cover_png(cover, og_path))
@@ -817,16 +890,40 @@ def generate(root: Path) -> dict:
                 )
             canonical = alternates[lang]
             image = abs_url(base, og_rel)
-            spa = f"#/guides/{item_id}/{'EN' if lang == 'en' else 'TR'}"
+            spa_path = f"/guides/{item_id}/{'TR' if lang == 'tr' else 'EN'}"
+            payload = json_ld_payload(
+                schema_type="TechArticle",
+                headline=data["title"],
+                description=data["description"] or data["title"],
+                author=brand,
+                image=image,
+                url=canonical,
+                in_language="tr" if lang == "tr" else "en",
+                date_published=None,
+            )
+            if index_source:
+                write_text(
+                    html_path,
+                    patch_guide_spa_page(
+                        index_source,
+                        lang=lang,
+                        title=data["title"],
+                        description=data["description"] or data["title"],
+                        canonical=canonical,
+                        image=image,
+                        alternates=alternates,
+                        json_ld=payload,
+                    ),
+                )
             write_text(
-                html_path,
+                legacy_path,
                 share_html(
                     lang=lang,
                     title=data["title"],
                     description=data["description"] or data["title"],
                     canonical=canonical,
                     image=image,
-                    spa_hash=spa,
+                    spa_hash=spa_path,
                     alternates=alternates,
                     marker=GUIDES_MARKER,
                     brand=brand,
@@ -836,8 +933,10 @@ def generate(root: Path) -> dict:
                 ),
             )
             keep.add(html_path.resolve())
+            keep.add(legacy_path.resolve())
             keep.add(og_path.resolve())
             created.append(html_rel)
+            created.append(legacy_rel)
             sitemap_entries.append({"loc": canonical, "alternates": alternates})
 
     sitemap_path = root / "sitemap.xml"
@@ -853,6 +952,7 @@ def generate(root: Path) -> dict:
         [
             root / "writings",
             root / "guide",
+            root / "guides",
             root / "assets/images/og",
         ],
     )

@@ -12,6 +12,8 @@ export function writingShareArtifacts(kind, id) {
 export function guideShareArtifacts(id) {
   const paths = [];
   for (const lang of SHARE_LANGS) {
+    const code = lang === "tr" ? "TR" : "EN";
+    paths.push(`guides/${id}/${code}/index.html`);
     paths.push(`guide/${lang}/${id}/index.html`);
     paths.push(`assets/images/og/guides/${lang}/${id}.png`);
   }

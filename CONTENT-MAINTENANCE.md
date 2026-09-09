@@ -140,7 +140,7 @@ Do not duplicate the 36 files.
 
 ## Guides
 
-`guides/{id}/EN.md` and `guides/{id}/TR.md`. The global EN | TR control chooses the file. Point a project link at `"guide": "{id}"`.
+`content/guides/{id}/EN.md` and `content/guides/{id}/TR.md`. Public pages are generated under `/guides/{id}/EN` and `/guides/{id}/TR`. The global EN | TR control chooses the file. Point a project link at `"guide": "{id}"`.
 
 ## Production files that are not everyday content
 

@@ -106,6 +106,17 @@
           "title": "İletişim · KolTigin",
           "description": "Node operasyonu, geliştirme ve Web3 araştırması için KolTigin ile iletişim."
         }
+      },
+      "guides": {
+        "ogImage": "./assets/images/social/og-projects.png",
+        "en": {
+          "title": "Guides · KolTigin",
+          "description": "Setup and installation guides for KolTigin’s node, testnet, and DePIN projects."
+        },
+        "tr": {
+          "title": "Rehberler · KolTigin",
+          "description": "KolTigin’in node, testnet ve DePIN projeleri için kurulum rehberleri."
+        }
       }
     }
   },

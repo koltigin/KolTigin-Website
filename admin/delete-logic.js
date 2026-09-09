@@ -22,7 +22,7 @@
       return [`content/${kind}/en/${id}.md`, `content/${kind}/tr/${id}.md`];
     }
     if (family === 'video' && id) return [`content/videos/${id}.md`];
-    if (family === 'guide' && id) return [`guides/${id}/EN.md`, `guides/${id}/TR.md`];
+    if (family === 'guide' && id) return [`content/guides/${id}/EN.md`, `content/guides/${id}/TR.md`];
     if (family === 'project' && id) return [`content/projects/*/${id}.md`];
     return [];
   }

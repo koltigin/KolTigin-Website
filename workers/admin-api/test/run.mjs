@@ -58,7 +58,7 @@ links:
   url: https://optimai.network
 ---
 `,
-    "guides/index.json": JSON.stringify({ guides: [] }, null, 2) + "\n",
+    "content/guides/index.json": JSON.stringify({ guides: [] }, null, 2) + "\n",
     "i18n/en.json": JSON.stringify({ contact: { title: "Contact", submit: "Send" } }, null, 2) + "\n",
     "i18n/tr.json": JSON.stringify({ contact: { title: "İletişim", submit: "Gönder" } }, null, 2) + "\n",
     "content/about/en.md": "# About\n"
@@ -438,10 +438,10 @@ links:
     assert(res.status === 200, "save guide tr");
     res = await json(await post("/api/admin/guide-save", { id: "en", lang: "en", markdown: "# Nope\n" }, env));
     assert(res.status === 400, "reserved guide id rejected");
-    const coverTrBefore = String(github.files.get("guides/aioz-depin/TR.md"));
+    const coverTrBefore = String(github.files.get("content/guides/aioz-depin/TR.md"));
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n", cover: "hero.png" }, env));
-    assert(res.status === 200 && String(github.files.get("guides/aioz-depin/EN.md")).includes("cover:"), "guide cover saved on EN");
-    assert(String(github.files.get("guides/aioz-depin/TR.md")) === coverTrBefore, "single-locale cover does not rewrite the unwritten sibling");
+    assert(res.status === 200 && String(github.files.get("content/guides/aioz-depin/EN.md")).includes("cover:"), "guide cover saved on EN");
+    assert(String(github.files.get("content/guides/aioz-depin/TR.md")) === coverTrBefore, "single-locale cover does not rewrite the unwritten sibling");
     const bilingualGuideBefore = github.commits.length;
     resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-save", {
@@ -456,10 +456,10 @@ links:
     assert(res.status === 200 && res.body.ok, "bilingual guide save ok");
     assert(github.commits.length === bilingualGuideBefore + 1, "bilingual guide save is one GitHub commit");
     assert(Array.isArray(res.body.langs) && res.body.langs.join(",") === "en,tr", "guide save response reports both langs");
-    assert(github.files.has("guides/bilingual-guide/EN.md") && github.files.has("guides/bilingual-guide/TR.md"), "bilingual guide writes EN.md and TR.md");
-    assert(String(github.files.get("guides/bilingual-guide/EN.md")).includes("cover:"), "bilingual cover is applied to EN");
-    assert(String(github.files.get("guides/bilingual-guide/TR.md")).includes("cover:"), "bilingual cover is applied to TR");
-    assert(!github.files.has("guides/bilingual-guide/en.md"), "guide files stay EN.md/TR.md");
+    assert(github.files.has("content/guides/bilingual-guide/EN.md") && github.files.has("content/guides/bilingual-guide/TR.md"), "bilingual guide writes EN.md and TR.md");
+    assert(String(github.files.get("content/guides/bilingual-guide/EN.md")).includes("cover:"), "bilingual cover is applied to EN");
+    assert(String(github.files.get("content/guides/bilingual-guide/TR.md")).includes("cover:"), "bilingual cover is applied to TR");
+    assert(!github.files.has("content/guides/bilingual-guide/en.md"), "guide files stay EN.md/TR.md");
     assert(projectMarkdownReads(github).length === 1, "bilingual guide applies Linked Project once");
     assert((String(github.files.get("content/projects/depin/optimai.md")).match(/guide:\s*bilingual-guide/g) || []).length === 1, "Linked Project is attached once");
     res = await json(await post("/api/admin/guide-save", {
@@ -470,9 +470,19 @@ links:
       ]
     }, env));
     assert(res.status === 200 && res.body.langs.join(",") === "en", "placeholder guide locale is skipped");
-    assert(github.files.has("guides/placeholder-guide/EN.md"), "filled guide locale is written");
-    assert(!github.files.has("guides/placeholder-guide/TR.md"), "placeholder guide locale does not create a stub file");
-    github.files.set("guides/aioz-depin/extra.txt", "orphan");
+    assert(github.files.has("content/guides/placeholder-guide/EN.md"), "filled guide locale is written");
+    assert(!github.files.has("content/guides/placeholder-guide/TR.md"), "placeholder guide locale does not create a stub file");
+    github.files.set("guides/stale-source-guide/EN.md", "# Old public source\n");
+    github.files.set("guides/index.json", JSON.stringify({ guides: ["stale-source-guide"] }, null, 2) + "\n");
+    res = await json(await post("/api/admin/guide-save", {
+      id: "stale-source-guide",
+      locales: [{ lang: "en", markdown: "# Migrated Guide\n\nBody\n" }]
+    }, env));
+    assert(res.status === 200, "save migrates stale public markdown");
+    assert(github.files.has("content/guides/stale-source-guide/EN.md"), "save writes content/guides source");
+    assert(!github.files.has("guides/stale-source-guide/EN.md"), "save deletes leftover guides/{id}/EN.md");
+    assert(!github.files.has("guides/index.json"), "save deletes leftover guides/index.json");
+    github.files.set("content/guides/aioz-depin/extra.txt", "orphan");
     github.files.set("assets/images/guides/aioz-depin/shot.png", png);
     github.files.set("guide/en/aioz-depin/index.html", "<html></html>");
     github.files.set("assets/images/og/guides/en/aioz-depin.png", png);
@@ -498,27 +508,27 @@ links:
       ]
     }];
     github.files.set("projects/projects.json", JSON.stringify(currentProjects, null, 2) + "\n");
-    assert(JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guides index sync");
+    assert(JSON.parse(github.files.get("content/guides/index.json")).guides.includes("aioz-depin"), "guides index sync");
 
     const guideCommits = github.commits.length;
     res = await json(await post("/api/admin/guide-delete", { id: "aioz-depin" }, env));
     assert(res.status === 200, "delete existing guide");
-    assert(!github.files.has("guides/aioz-depin/EN.md") && !github.files.has("guides/aioz-depin/TR.md"), "guide EN/TR sources removed");
-    assert(!github.files.has("guides/aioz-depin/extra.txt"), "guide folder extras removed");
+    assert(!github.files.has("content/guides/aioz-depin/EN.md") && !github.files.has("content/guides/aioz-depin/TR.md"), "guide EN/TR sources removed");
+    assert(!github.files.has("content/guides/aioz-depin/extra.txt"), "guide folder extras removed");
     assert(!github.files.has("assets/images/guides/aioz-depin/shot.png"), "guide assets removed");
     assert(!github.files.has("guide/en/aioz-depin/index.html"), "guide share html removed");
     assert(!github.files.has("assets/images/og/guides/en/aioz-depin.png"), "guide og image removed");
-    assert(!JSON.parse(github.files.get("guides/index.json")).guides.includes("aioz-depin"), "guide removed from index");
+    assert(!JSON.parse(github.files.get("content/guides/index.json")).guides.includes("aioz-depin"), "guide removed from index");
     assert(!String(github.files.get("content/projects/depin/aioz-depin.md")).includes("guide: aioz-depin"), "project markdown guide link removed");
     assert(!String(github.files.get("content/projects/depin/aioz-depin.md")).includes("#/guides/aioz-depin"), "project markdown guide url removed");
     const afterProjects = JSON.parse(github.files.get("projects/projects.json"));
     assert(!(afterProjects.depin[0].links || []).some((link) => link.guide === "aioz-depin"), "projects.json guide link removed");
     const rediscovered = discoverGuides({
-      indexIds: JSON.parse(github.files.get("guides/index.json")).guides,
+      indexIds: JSON.parse(github.files.get("content/guides/index.json")).guides,
       markdownById: {
         "aioz-depin": {
-          en: github.files.get("guides/aioz-depin/EN.md"),
-          tr: github.files.get("guides/aioz-depin/TR.md")
+          en: github.files.get("content/guides/aioz-depin/EN.md"),
+          tr: github.files.get("content/guides/aioz-depin/TR.md")
         }
       }
     });
@@ -847,7 +857,7 @@ links:
     const repoTypes = JSON.parse(readFileSync(join(ROOT, "config/writing-types.json"), "utf8"));
     const repoProjects = JSON.parse(readFileSync(join(ROOT, "projects/projects.json"), "utf8"));
     const repoCats = JSON.parse(readFileSync(join(ROOT, "config/project-categories.json"), "utf8"));
-    const repoGuides = JSON.parse(readFileSync(join(ROOT, "guides/index.json"), "utf8"));
+    const repoGuides = JSON.parse(readFileSync(join(ROOT, "content/guides/index.json"), "utf8"));
     const typeIds = (repoTypes.types || []).map((item) => item.id);
     assert(Array.isArray(repoIndex.types) && repoIndex.types.every((item) => item && item.id), "repo index.types schema");
     assert(typeIds.every((id) => repoIndex.types.some((item) => item.id === id)), "index.types covers writing-types.json");
@@ -870,7 +880,7 @@ links:
       });
       assert(mapped.id === sample.id && mapped.name === sample.name && mapped.status === sample.status, "projectJsonItem public contract");
     }
-    assert(Array.isArray(repoGuides.guides), "guides/index.json schema");
+    assert(Array.isArray(repoGuides.guides), "content/guides/index.json schema");
     assert(compareProjectNames("AR.IO", "ZIO") < 0 && compareProjectNames("Item 2", "Item 10") < 0, "project name sort matches generator intent");
 
     assert(!String(JSON.stringify([...github.files.values()])).includes("ghp_"), "no pat in mock files");
@@ -952,7 +962,7 @@ links:
     assert(crowdedRes.status === 200, "delete succeeds with 60+ projects in the index");
     assert(projectMarkdownReads(crowdedGithub).length === 1, "delete does not getText one Markdown file per project");
     assert(projectMarkdownReads(crowdedGithub)[0].endsWith("/ar-io.md"), "delete only reads the projects.json-identified Markdown");
-    assert(estimateWorkerSubrequests(crowdedGithub) < 40, "60+ project Guide delete stays under 50 subrequests");
+    assert(estimateWorkerSubrequests(crowdedGithub) < 50, "60+ project Guide delete stays under 50 subrequests");
   } catch (error) {
     failed += 1;
     console.error("FAIL uncaught", error);

@@ -11,6 +11,7 @@ const ALLOWED_PREFIXES = [
   "content/social/",
   "content/videos/",
   "content/projects/",
+  "content/guides/",
   "content/index.json",
   "projects/projects.json",
   "guides/",
@@ -72,5 +73,17 @@ export function projectMdPath(folder, slug) {
 
 export function guidePath(id, lang) {
   const file = lang === "en" ? "EN.md" : "TR.md";
-  return assertSafePath(`guides/${id}/${file}`);
+  return assertSafePath(`content/guides/${id}/${file}`);
+}
+
+export function guideIndexPath() {
+  return assertSafePath("content/guides/index.json");
+}
+
+export function staleGuideSourcePaths(id) {
+  return [
+    assertSafePath(`guides/${id}/EN.md`),
+    assertSafePath(`guides/${id}/TR.md`),
+    assertSafePath("guides/index.json")
+  ];
 }

@@ -20,7 +20,9 @@ class GuidesParser {
 
     this.wrapActivatePage();
     this.bindUi();
-    this.bindHash();
+    this.bindIndex();
+    this.bindLocation();
+    this.renderIndex();
   }
 
   siteGuideLang() {
@@ -39,14 +41,12 @@ class GuidesParser {
     if (typeof original !== 'function' || original._guidesWrapped) return;
 
     const parser = this;
-    const wrapped = (pageName) => {
+    const wrapped = (pageName, options) => {
       if (pageName !== 'guide') {
         parser.teardownToc();
-        if (window.location.hash.startsWith('#/guides/')) {
-          history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-        }
       }
-      original(pageName);
+      original(pageName, options || {});
+      if (pageName === 'guides') parser.renderIndex();
     };
     wrapped._guidesWrapped = true;
     window.activatePage = wrapped;
@@ -94,12 +94,28 @@ class GuidesParser {
     });
   }
 
-  bindHash() {
+  bindIndex() {
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('[data-guides-index] a[data-guide-open]');
+      if (!link) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === '_blank') return;
+      event.preventDefault();
+      this.open(link.dataset.guideOpen, { lang: link.dataset.guideLang });
+    });
+  }
+
+  bindLocation() {
     const apply = () => {
-      const parsed = this.parseGuideHash();
-      if (!parsed) return;
+      const parsed = this.parseGuideLocation();
+      if (!parsed) {
+        if (window.KolTiginRouter?.normalizePath(window.location.pathname) === '/guides/') {
+          this.renderIndex();
+        }
+        return;
+      }
       if (
         this.currentId === parsed.id
+        && this.currentLang === (parsed.lang || this.currentLang)
         && this.page?.classList.contains('active')
         && this.bodyEl
         && this.bodyEl.querySelector('h1, h2, h3')
@@ -107,61 +123,234 @@ class GuidesParser {
         this.scrollToHeading(parsed.heading);
         return;
       }
-      this.open(parsed.id, { heading: parsed.heading });
+      this.open(parsed.id, { heading: parsed.heading, lang: parsed.lang });
     };
 
     window.addEventListener('hashchange', apply);
+    window.addEventListener('popstate', apply);
     apply();
   }
 
   parseGuideHash() {
+    if (window.KolTiginRouter && typeof window.KolTiginRouter.parseGuideHash === 'function') {
+      return window.KolTiginRouter.parseGuideHash(window.location.hash);
+    }
     const match = window.location.hash.match(
       /^#\/guides\/([a-z0-9-]+)(?:\/(TR|EN))?(?:\/([a-z0-9-]+))?$/i
     );
     if (!match) return null;
-    return {
-      id: match[1],
-      lang: match[2] || '',
-      heading: match[3] || ''
-    };
+    return { id: match[1], lang: match[2] || '', heading: match[3] || '' };
+  }
+
+  parseGuideLocation() {
+    const router = window.KolTiginRouter;
+    const fromPath = router && typeof router.parseGuidePath === 'function'
+      ? router.parseGuidePath(window.location.pathname)
+      : null;
+    if (fromPath) {
+      return {
+        id: fromPath.id,
+        lang: fromPath.lang,
+        heading: router.parseGuideHeading(window.location.hash)
+      };
+    }
+    return this.parseGuideHash();
+  }
+
+  guidePublicPath(heading) {
+    const router = window.KolTiginRouter;
+    const lang = this.currentLang || this.siteGuideLang();
+    const path = router && typeof router.guidePublicPath === 'function'
+      ? router.guidePublicPath(this.currentId, lang)
+      : `/guides/${this.currentId}/${lang}`;
+    const slug = String(heading || '').trim();
+    return slug ? `${path}#${slug}` : path;
   }
 
   guideRouteHash(heading) {
-    const lang = this.currentLang || this.siteGuideLang();
-    const base = `#/guides/${this.currentId}/${lang}`;
-    return heading ? `${base}/${heading}` : base;
+    return this.guidePublicPath(heading);
+  }
+
+  isOnThisGuidePath() {
+    const parsed = window.KolTiginRouter?.parseGuidePath(window.location.pathname);
+    return Boolean(parsed && parsed.id === this.currentId && (!this.currentLang || parsed.lang === this.currentLang));
+  }
+
+  syncGuideUrl(heading, replace) {
+    const next = this.guidePublicPath(heading);
+    const current = `${window.location.pathname}${window.location.hash}`;
+    if (current === next) return;
+    history[replace ? 'replaceState' : 'pushState'](null, '', next);
+    if (typeof window.applyRouteSeo === 'function') window.applyRouteSeo();
   }
 
   setSectionHash(heading) {
-    const next = this.guideRouteHash(heading);
-    if (window.location.hash === next) return;
-    history.replaceState(null, '', `${window.location.pathname}${window.location.search}${next}`);
+    this.syncGuideUrl(heading, true);
+  }
+
+  parseFrontMatter(markdown) {
+    const text = String(markdown || '');
+    const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---\s*/);
+    if (!match) return { meta: {}, body: text };
+    const meta = {};
+    for (const line of match[1].split('\n')) {
+      const pair = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+      if (!pair) continue;
+      meta[pair[1]] = pair[2].trim().replace(/^['"]|['"]$/g, '');
+    }
+    return { meta, body: text.slice(match[0].length) };
+  }
+
+  excerptFromMarkdown(markdown, limit = 160) {
+    const { body } = this.parseFrontMatter(markdown);
+    const chunks = [];
+    for (const line of body.split('\n')) {
+      let stripped = line.trim();
+      if (
+        !stripped
+        || stripped.startsWith('#')
+        || stripped.startsWith('```')
+        || stripped.startsWith('>')
+        || stripped.startsWith('|')
+        || stripped.startsWith('- ')
+        || stripped.startsWith('* ')
+        || /^\d+\.\s/.test(stripped)
+      ) {
+        if (chunks.length) break;
+        continue;
+      }
+      stripped = stripped.replace(/[*_`]+/g, '');
+      stripped = stripped.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      chunks.push(stripped);
+      const text = chunks.join(' ');
+      if (text.length >= limit) return `${text.slice(0, limit - 1).trimEnd()}…`;
+    }
+    return chunks.join(' ').slice(0, limit).trim();
+  }
+
+  hasCover(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    return Boolean(raw) && !['null', 'none', 'false'].includes(raw);
+  }
+
+  coverSrc(id, markdown, lang) {
+    const { meta } = this.parseFrontMatter(markdown);
+    if (this.hasCover(meta.cover)) {
+      const name = String(meta.cover).replace(/^\.\//, '').split('/').pop();
+      return publicPath(`./assets/images/guides/${id}/${name}`);
+    }
+    const loc = String(lang || 'EN').toLowerCase() === 'tr' ? 'tr' : 'en';
+    return publicPath(`./assets/images/og/guides/${loc}/${id}.png`);
+  }
+
+  projectNameForGuide(projects, guideId) {
+    for (const group of Object.values(projects || {})) {
+      if (!Array.isArray(group)) continue;
+      for (const project of group) {
+        const linked = (project.links || []).some((link) => link && link.guide === guideId);
+        if (linked) return String(project.name || '').trim();
+      }
+    }
+    return '';
+  }
+
+  createIndexCard(item) {
+    const href = `/guides/${this.escapeHtml(item.id)}/${item.lang}`;
+    const project = item.project
+      ? `<p class="blog-category">${this.escapeHtml(item.project)}</p>`
+      : '';
+    const excerpt = item.excerpt
+      ? `<p class="blog-text">${this.escapeHtml(item.excerpt)}</p>`
+      : '';
+    return `
+      <li class="blog-post-item">
+        <a class="writings-card guides-card" href="${href}" data-guide-open="${this.escapeHtml(item.id)}" data-guide-lang="${this.escapeHtml(item.lang)}">
+          <figure class="blog-banner-box writings-cover" data-cover-for="${this.escapeHtml(item.id)}">
+            <img src="${this.escapeHtml(item.cover)}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
+          </figure>
+          <div class="blog-content">
+            <div class="blog-meta">${project}</div>
+            <h3 class="h3 blog-item-title">${this.escapeHtml(item.title)}</h3>
+            ${excerpt}
+            <span class="writings-card-cta">${this.t('guides.read', 'Read Guide')}</span>
+          </div>
+        </a>
+      </li>
+    `;
+  }
+
+  async renderIndex() {
+    const list = document.querySelector('[data-guides-index]');
+    if (!list) return;
+    const lang = this.siteGuideLang();
+    try {
+      const [indexRes, projectsRes] = await Promise.all([
+        fetch(`${publicPath('./content/guides/index.json')}?t=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`${publicPath('./projects/projects.json')}?t=${Date.now()}`, { cache: 'no-store' })
+      ]);
+      if (!indexRes.ok) throw new Error('index');
+      const data = await indexRes.json();
+      const projects = projectsRes.ok ? await projectsRes.json() : {};
+      const ids = Array.isArray(data.guides) ? data.guides.filter((id) => /^[a-z0-9-]+$/i.test(id)) : [];
+      const cards = (await Promise.all(ids.map(async (id) => {
+        try {
+          const markdown = await this.loadMarkdown(id, lang);
+          const title = this.firstHeading(markdown);
+          if (!title) return '';
+          return this.createIndexCard({
+            id,
+            lang,
+            title,
+            excerpt: this.excerptFromMarkdown(markdown),
+            cover: this.coverSrc(id, markdown, lang),
+            project: this.projectNameForGuide(projects, id)
+          });
+        } catch {
+          return '';
+        }
+      }))).filter(Boolean);
+      list.innerHTML = cards.join('') || `<li class="writings-empty">${this.t('guides.empty', 'No guides yet.')}</li>`;
+    } catch {
+      list.innerHTML = `<li class="writings-empty">${this.t('guides.empty', 'No guides yet.')}</li>`;
+    }
   }
 
   async open(id, options = {}) {
     if (!this.page || !/^[a-z0-9-]+$/i.test(id)) return;
-
-    this.currentId = id;
-    this.currentTitle = '';
-    this.currentLang = this.siteGuideLang();
-    if (typeof options.sourceUrl === 'string' && options.sourceUrl) {
-      this.sourceUrl = options.sourceUrl;
-    }
-
-    this.pendingHeading = typeof options.heading === 'string' ? options.heading : (this.parseGuideHash()?.heading || '');
-
-    window.activatePage('guide');
-    document.querySelector('[data-nav-page="projects"]')?.classList.add('active');
-
-    const hash = this.guideRouteHash(this.pendingHeading);
-    if (window.location.hash !== hash) {
-      history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
-    }
-
-    this.renderChrome();
-    this.bodyEl.innerHTML = `<p class="guide-status">${this.t('guides.loading', 'Loading guide…')}</p>`;
+    if (this._opening) return;
+    this._opening = true;
 
     try {
+      this.currentId = id;
+      this.currentTitle = '';
+      const located = this.parseGuideLocation();
+      this.currentLang = options.lang || located?.lang || this.siteGuideLang();
+      if (typeof options.sourceUrl === 'string' && options.sourceUrl) {
+        this.sourceUrl = options.sourceUrl;
+      }
+
+      this.pendingHeading = typeof options.heading === 'string'
+        ? options.heading
+        : (located?.id === id ? located.heading : '');
+
+      window.activatePage('guide', { skipHistory: true, instantScroll: true });
+
+      const replace = this.isOnThisGuidePath();
+      this.syncGuideUrl(this.pendingHeading, replace);
+
+      const wantLang = this.currentLang === 'TR' ? 'tr' : 'en';
+      if (window.KolTiginI18n && window.KolTiginI18n.language !== wantLang) {
+        this._ignoreLang = true;
+        try {
+          await window.KolTiginI18n.setLanguage(wantLang);
+        } finally {
+          this._ignoreLang = false;
+        }
+      }
+
+      this.renderChrome();
+      this.bodyEl.innerHTML = `<p class="guide-status">${this.t('guides.loading', 'Loading guide…')}</p>`;
+
       const markdown = await this.loadMarkdown(id, this.currentLang);
       this.currentTitle = this.firstHeading(markdown) || id;
       const html = this.parseMarkdown(markdown, id);
@@ -169,9 +358,12 @@ class GuidesParser {
       this.injectShareRows();
       this.renderToc();
       this.scrollToHeading(this.pendingHeading);
+      if (typeof window.applyRouteSeo === 'function') window.applyRouteSeo();
     } catch (error) {
       this.teardownToc();
       this.bodyEl.innerHTML = `<p class="guide-status">${this.escapeHtml(error.message)}</p>`;
+    } finally {
+      this._opening = false;
     }
   }
 
@@ -381,7 +573,7 @@ class GuidesParser {
   }
 
   async loadMarkdown(id, lang) {
-    const response = await fetch(`${publicPath(`./guides/${id}/${lang}.md`)}?t=${Date.now()}`, { cache: 'no-store' });
+    const response = await fetch(`${publicPath(`./content/guides/${id}/${lang}.md`)}?t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(this.t('guides.loadError', 'The guide could not be loaded.'));
     }
@@ -421,11 +613,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 if (window.KolTiginI18n) {
   window.KolTiginI18n.onChange(() => {
+    if (window.guidesParser && window.guidesParser._ignoreLang) return;
+    const onLanding = document.querySelector('[data-page="guides"].active');
+    if (onLanding) window.guidesParser.renderIndex();
     const onGuide = document.querySelector('[data-page="guide"].active');
     if (onGuide && window.guidesParser && window.guidesParser.currentId) {
       window.guidesParser.open(window.guidesParser.currentId, {
-        sourceUrl: window.guidesParser.sourceUrl
+        sourceUrl: window.guidesParser.sourceUrl,
+        lang: window.guidesParser.siteGuideLang()
       });
     }
   });
 }
+
+window.GuidesParser = GuidesParser;

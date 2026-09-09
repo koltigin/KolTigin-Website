@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ABOUT_ROOT = ROOT / "content" / "about"
 RESUME_ROOT = ROOT / "content" / "resume"
 PROJECTS_ROOT = ROOT / "content" / "projects"
-GUIDES_ROOT = ROOT / "guides"
+GUIDES_ROOT = ROOT / "content" / "guides"
+GUIDES_PUBLIC = ROOT / "guides"
 PROJECT_CATS_PATH = ROOT / "config" / "project-categories.json"
 SITE_PATH = ROOT / "config" / "site.json"
 I18N_DIR = ROOT / "i18n"
@@ -153,6 +154,7 @@ def list_project_records() -> list[dict]:
 
 def write_guides_index() -> None:
     ids = []
+    GUIDES_ROOT.mkdir(parents=True, exist_ok=True)
     if GUIDES_ROOT.is_dir():
         for folder in sorted(GUIDES_ROOT.iterdir()):
             if not folder.is_dir() or folder.name in {"en", "tr"} or not ID_RE.match(folder.name):
@@ -164,6 +166,9 @@ def write_guides_index() -> None:
         json.dumps({"guides": ids}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    stale = ROOT / "guides" / "index.json"
+    if stale.is_file():
+        stale.unlink()
 
 
 def first_heading(markdown: str) -> str:
@@ -814,6 +819,9 @@ def handle_guide_delete(handler, body, json_ok, json_error) -> None:
         return json_error(handler, HTTPStatus.NOT_FOUND, "Guide not found")
     changed = strip_guide_from_projects(item_id)
     shutil.rmtree(folder)
+    public_folder = GUIDES_PUBLIC / item_id
+    if public_folder.is_dir():
+        shutil.rmtree(public_folder)
     assets = GUIDE_ASSETS / item_id
     if assets.is_dir():
         shutil.rmtree(assets)

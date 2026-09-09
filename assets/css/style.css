@@ -3225,7 +3225,7 @@ textarea.form-input::-webkit-resizer { display: none; }
 /**
  * PAGE HEADER (phone / tablet)
  * Same integrated sticky header as desktop: title + underline + page subnav.
- * Desktop (>=1024px) keeps its existing header/nav overlay rules.
+ * Desktop (>=1024px) keeps the navbar on its own row above the section H1.
  */
 
 @media (max-width: 1023px) {
@@ -3333,27 +3333,28 @@ textarea.form-input::-webkit-resizer { display: none; }
 
 
   /**
-   * PAGE HEADER + NAVBAR (sticky as one block)
+   * PAGE HEADER + NAVBAR (navbar row, then full-width section H1)
    */
 
   article {
     overflow: visible;
+    border-radius: 0 0 20px 20px;
   }
 
   article.active > header {
     position: sticky;
-    top: 0;
+    top: 65px;
     z-index: 9;
     margin: -30px -30px 0;
-    padding: 30px 30px 12px;
+    padding: 20px 30px 12px;
     background: var(--eerie-black-2);
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 8px 14px -10px hsla(0, 0%, 0%, 0.4);
+    border-radius: 0;
+    box-shadow: none;
   }
 
   article.active > header .article-title {
     margin-bottom: 0;
-    padding-right: 420px;
+    padding-right: 0;
   }
 
   article.active > header + * {
@@ -3369,22 +3370,25 @@ textarea.form-input::-webkit-resizer { display: none; }
     bottom: auto;
     top: 0;
     left: auto;
-    right: 0;
-    width: max-content;
-    margin-left: auto;
-    margin-bottom: -65px;
-    border-radius: 0 20px;
-    padding: 0 20px;
+    right: auto;
+    width: 100%;
+    margin-left: 0;
+    margin-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    padding: 0 16px;
     background: var(--eerie-black-2);
     backdrop-filter: none;
     box-shadow: none;
     z-index: 10;
+    box-sizing: border-box;
+    justify-content: flex-end;
   }
 
   .navbar-list {
-    gap: 18px;
-    padding: 0 12px;
-    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 0 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     overflow: visible;
   }
 
@@ -3446,7 +3450,7 @@ textarea.form-input::-webkit-resizer { display: none; }
   }
 
   .guide-page {
-    padding-top: 72px;
+    padding-top: 0;
   }
 
 }
@@ -3510,6 +3514,10 @@ textarea.form-input::-webkit-resizer { display: none; }
     min-width: 75%;
     width: 75%;
     margin: 0;
+  }
+
+  .navbar-list {
+    gap: 16px;
   }
 
 
@@ -3817,11 +3825,25 @@ textarea.form-input::-webkit-resizer { display: none; }
   gap: 20px;
 }
 
-article.guide-page.active > header {
-  padding-bottom: 10px;
+.guides-landing {
+  margin-top: 12px;
+}
+
+.guides-landing > p {
+  color: var(--light-gray);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.blog-posts-list.guides-posts-list {
+  grid-template-columns: 1fr;
 }
 
 @media (min-width: 1024px) {
+  .blog-posts-list.guides-posts-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
   article.guide-page.active > header {
     padding-top: 16px;
     padding-bottom: 10px;
@@ -4211,12 +4233,8 @@ article.guide-page.active > header .article-title {
     gap: 0;
   }
 
-  article.active > header .article-title {
-    padding-right: 560px;
-  }
-
   .navbar-list {
-    gap: 18px;
+    gap: 14px;
     overflow: visible;
   }
 }

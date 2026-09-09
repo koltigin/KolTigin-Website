@@ -1,5 +1,5 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
-import { writingPath, videoPath, pagePath, projectMdPath, guidePath, assertSafePath } from "./paths.js";
+import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
 import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
 
@@ -575,12 +575,17 @@ export async function handleGuideSave(body, github) {
     upserts.push({ path: guidePath(id, item.lang), text: mdText(markdown) });
     savedLangs.push(item.lang);
   }
-  const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id });
-  upserts.push({ path: "guides/index.json", text: pretty(index) });
+  const index = applyGuideIndex(await readJson(github, guideIndexPath(), { guides: [] }), { id });
+  upserts.push({ path: guideIndexPath(), text: pretty(index) });
   await applyGuideProjectRelationships(github, { guideId: id, nextProjectId: projectId, upserts });
+  const deletes = [];
+  for (const path of staleGuideSourcePaths(id)) {
+    if (await github.exists(path)) deletes.push(path);
+  }
   const result = await github.commit({
     message: commitMsg("save guide", `${id}/${savedLangs.join("+")}`),
-    upserts
+    upserts,
+    deletes
   });
   return { id, langs: savedLangs, path: guidePath(id, savedLangs[0]), sha: result.sha };
 }
@@ -593,18 +598,23 @@ export async function handleGuideDelete(body, github) {
     const path = guidePath(id, lang);
     if (await github.exists(path)) deletes.push(path);
   }
+  for (const path of staleGuideSourcePaths(id)) {
+    if (await github.exists(path) && !deletes.includes(path)) deletes.push(path);
+  }
   if (!deletes.some((path) => path.endsWith("/EN.md") || path.endsWith("/TR.md"))) {
     throw new HttpError(404, "Guide not found");
   }
-  const extra = await github.listPrefix(`guides/${id}/`);
-  for (const path of extra) {
-    if (!deletes.includes(path)) deletes.push(path);
+  for (const prefix of [`content/guides/${id}/`, `guides/${id}/`]) {
+    const extra = await github.listPrefix(prefix);
+    for (const path of extra) {
+      if (!deletes.includes(path)) deletes.push(path);
+    }
   }
   const assets = await github.listPrefix(`assets/images/guides/${id}/`);
   deletes.push(...assets);
   await collectExisting(github, guideShareArtifacts(id), deletes);
-  const index = applyGuideIndex(await readJson(github, "guides/index.json", { guides: [] }), { id, remove: true });
-  const upserts = [{ path: "guides/index.json", text: pretty(index) }];
+  const index = applyGuideIndex(await readJson(github, guideIndexPath(), { guides: [] }), { id, remove: true });
+  const upserts = [{ path: guideIndexPath(), text: pretty(index) }];
   await applyGuideProjectRelationships(github, { guideId: id, nextProjectId: "", upserts });
   const result = await github.commit({
     message: commitMsg("delete guide", id),

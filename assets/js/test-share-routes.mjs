@@ -20,7 +20,8 @@ function assert(cond, msg) {
 
 assert(blog.includes("#/yazilar/"), "writing detail hashes still use #/yazilar");
 assert(blog.includes("openFromHash"), "writing hash opener remains");
-assert(guides.includes("#/guides/"), "guide hashes still use #/guides");
+assert(guides.includes("parseGuideHash"), "legacy guide hashes remain for migration");
+assert(guides.includes("guidePublicPath"), "guides write real public paths");
 assert(/#\\\/guides\\\/\(\[a-z0-9-\]+\)/.test(guides) || guides.includes("^#\\/guides\\/"), "guide hash parser remains");
 assert(share.includes("writingShareUrl") && share.includes("guideShareUrl"), "canonical share helpers exist");
 assert(!share.includes("location.href"), "share helpers do not use location.href");

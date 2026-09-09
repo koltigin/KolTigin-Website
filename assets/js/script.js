@@ -54,7 +54,8 @@ function activatePage(pageName, options = {}) {
   });
   navigationLinks.forEach((link) => {
     const target = link.dataset.navPage || link.innerHTML.trim().toLowerCase();
-    link.classList.toggle("active", target === pageName);
+    const highlight = (pageName === "guide" || pageName === "guides") ? "guides" : pageName;
+    link.classList.toggle("active", target === highlight);
   });
   if (!options.skipHistory) {
     syncDocumentUrl(pageName, {
@@ -93,6 +94,10 @@ function applyLegacyHashRedirect() {
 function activateFromLocation(options = {}) {
   if (router && router.isWritingDetailHash(window.location.hash)) {
     activatePage("blog", { skipHistory: true, instantScroll: true, ...options });
+    return;
+  }
+  if (router && router.parseGuidePath(window.location.pathname)) {
+    activatePage("guide", { skipHistory: true, instantScroll: true, ...options });
     return;
   }
   if (router && router.isGuideHash(window.location.hash)) {

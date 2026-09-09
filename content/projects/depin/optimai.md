@@ -8,10 +8,10 @@ summary:
   en: Decentralized AI infrastructure powered by distributed computing resources.
   tr: Dağıtık bilgi işlem kaynaklarıyla çalışan merkeziyetsiz yapay zeka altyapısı.
 links:
-  - label: Setup Guide
-    guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps
 - label: Website
   url: https://optimai.network
+- label: Setup Guide
+  guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps
 referral_url: https://node.optimai.network/register?ref=18ADBAE8
 referral_code: 18ADBAE8
 ---

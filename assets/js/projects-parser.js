@@ -141,7 +141,8 @@ class ProjectsParser {
   }
 
   guideShareHref(guideId) {
-    return `/guide/${this.currentLang()}/${encodeURIComponent(guideId)}/`;
+    const code = this.currentLang() === 'tr' ? 'TR' : 'EN';
+    return `/guides/${encodeURIComponent(guideId)}/${code}`;
   }
 
   normalizeLinks(links) {
@@ -294,6 +295,14 @@ class ProjectsParser {
       const link = event.target.closest('[data-guide]');
       if (!link) return;
       const href = link.getAttribute('href') || '';
+      if (/^\/guides\/[a-z0-9-]+\/(EN|TR)\/?$/i.test(href)) {
+        event.preventDefault();
+        if (window.guidesParser && typeof window.guidesParser.open === 'function') {
+          const parts = href.split('/').filter(Boolean);
+          window.guidesParser.open(parts[1], { lang: parts[2].toUpperCase() });
+        }
+        return;
+      }
       if (href.startsWith('/guide/')) return;
       event.preventDefault();
       if (window.guidesParser && typeof window.guidesParser.open === 'function') {

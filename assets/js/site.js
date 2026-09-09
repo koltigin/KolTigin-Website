@@ -78,6 +78,20 @@ function originUrl(site) {
 
 function routeSeo(site, lang) {
   const router = window.KolTiginRouter;
+  const guide = router && router.parseGuidePath(window.location.pathname);
+  if (guide) {
+    const loc = guide.lang === 'TR' ? 'tr' : 'en';
+    const parser = window.guidesParser;
+    const title = (parser && parser.currentTitle) || document.title || 'Guide';
+    return {
+      routeId: 'guide',
+      type: 'article',
+      title,
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+      url: `${originUrl(site)}${router.guidePublicPath(guide.id, guide.lang)}`,
+      image: absoluteAssetUrl(site, `./assets/images/og/guides/${loc}/${guide.id}.png`)
+    };
+  }
   const routeId = router ? router.sectionForPath(window.location.pathname).id : 'home';
   const routes = site && site.seo && site.seo.routes;
   const pageSeo = routes && routes[routeId];
@@ -86,6 +100,7 @@ function routeSeo(site, lang) {
   const ogImage = (pageSeo && pageSeo.ogImage) || (site && site.ogImage);
   return {
     routeId,
+    type: 'website',
     title: (localized && localized.title) || (fallback && fallback.title) || 'KolTigin',
     description: (localized && localized.description) || (fallback && fallback.description) || '',
     url: router ? `${originUrl(site)}${router.sectionForPath(window.location.pathname).path}` : canonicalUrl(site),
@@ -104,7 +119,7 @@ function applySeo() {
   document.title = seo.title;
   setAttr('meta[name="description"]', 'content', seo.description);
   setAttr('link[rel="canonical"]', 'href', seo.url);
-  setAttr('meta[property="og:type"]', 'content', 'website');
+  setAttr('meta[property="og:type"]', 'content', seo.type || 'website');
   setAttr('meta[property="og:title"]', 'content', seo.title);
   setAttr('meta[property="og:description"]', 'content', seo.description);
   setAttr('meta[property="og:url"]', 'content', seo.url);
@@ -205,25 +220,12 @@ function bindLangSwitch() {
   });
 }
 
-function syncDesktopTitleClearance() {
-  const nav = document.querySelector('.navbar');
-  const titles = document.querySelectorAll('article > header .article-title');
-  const desktop = window.matchMedia('(min-width: 1024px)').matches;
-  const pad = desktop && nav
-    ? Math.ceil(nav.getBoundingClientRect().width + 18) + 'px'
-    : '';
-  titles.forEach((title) => {
-    title.style.paddingRight = pad;
-  });
-}
-
 function refreshChrome() {
   applyI18n();
   applySiteConfig();
   if (window.KolTiginLastUpdate && typeof window.KolTiginLastUpdate.setLocale === 'function') {
     window.KolTiginLastUpdate.setLocale(window.KolTiginI18n.language);
   }
-  requestAnimationFrame(syncDesktopTitleClearance);
 }
 
 if (window.KolTiginI18n && window.KolTiginI18n.ready) {
@@ -233,7 +235,3 @@ if (window.KolTiginI18n && window.KolTiginI18n.ready) {
   });
   window.KolTiginI18n.onChange(refreshChrome);
 }
-
-window.addEventListener('resize', () => {
-  requestAnimationFrame(syncDesktopTitleClearance);
-});

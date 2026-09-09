@@ -10,7 +10,8 @@
     { id: 'projects', path: '/projects/', page: 'projects', nav: 'projects' },
     { id: 'writings', path: '/writings/', page: 'blog', nav: 'blog' },
     { id: 'videos', path: '/videos/', page: 'videos', nav: 'videos' },
-    { id: 'contact', path: '/contact/', page: 'contact', nav: 'contact' }
+    { id: 'contact', path: '/contact/', page: 'contact', nav: 'contact' },
+    { id: 'guides', path: '/guides/', page: 'guides', nav: 'guides' }
   ];
 
   const PAGE_TO_PATH = {
@@ -19,7 +20,8 @@
     projects: '/projects/',
     blog: '/writings/',
     videos: '/videos/',
-    contact: '/contact/'
+    contact: '/contact/',
+    guides: '/guides/'
   };
 
   const HASH_SECTION = {
@@ -29,7 +31,8 @@
     blog: '/writings/',
     writings: '/writings/',
     videos: '/videos/',
-    contact: '/contact/'
+    contact: '/contact/',
+    guides: '/guides/'
   };
 
   function normalizePath(pathname) {
@@ -40,17 +43,27 @@
   }
 
   function sectionForPath(pathname) {
+    const guide = parseGuidePath(pathname);
+    if (guide) {
+      return { id: 'guides', path: guidePublicPath(guide.id, guide.lang), page: 'guide', nav: 'guides' };
+    }
     const path = normalizePath(pathname);
     return SECTIONS.find((item) => item.path === path) || SECTIONS[0];
   }
 
   function pathForPage(pageName, currentPath) {
-    if (pageName === 'guide') return normalizePath(currentPath || global.location.pathname);
+    if (pageName === 'guide') {
+      const parsed = parseGuidePath(currentPath || global.location?.pathname);
+      if (parsed) return guidePublicPath(parsed.id, parsed.lang);
+      return normalizePath(currentPath || global.location?.pathname);
+    }
     if (pageName === 'about') return '/about/';
     return PAGE_TO_PATH[pageName] || '/';
   }
 
   function canonicalForPath(pathname) {
+    const guide = parseGuidePath(pathname);
+    if (guide) return `${ORIGIN}${guidePublicPath(guide.id, guide.lang)}`;
     const section = sectionForPath(pathname);
     return `${ORIGIN}${section.path}`;
   }
@@ -63,11 +76,51 @@
     return /^#\/guides\/[a-z0-9-]+/i.test(String(hash || ''));
   }
 
+  function parseGuideHash(hash) {
+    const match = String(hash || '').match(
+      /^#\/guides\/([a-z0-9-]+)(?:\/(TR|EN))?(?:\/([a-z0-9-]+))?$/i
+    );
+    if (!match) return null;
+    return {
+      id: match[1],
+      lang: match[2] ? match[2].toUpperCase() : '',
+      heading: match[3] || ''
+    };
+  }
+
+  function parseGuidePath(pathname) {
+    const parts = String(pathname || '').split('?')[0].split('#')[0].split('/').filter(Boolean);
+    if (parts.length !== 3 || parts[0] !== 'guides') return null;
+    if (!/^[a-z0-9-]+$/i.test(parts[1]) || !/^(EN|TR)$/i.test(parts[2])) return null;
+    return {
+      id: parts[1],
+      lang: parts[2].toUpperCase() === 'TR' ? 'TR' : 'EN'
+    };
+  }
+
+  function guidePublicPath(id, lang) {
+    const code = String(lang || 'EN').toUpperCase() === 'TR' ? 'TR' : 'EN';
+    return `/guides/${id}/${code}`;
+  }
+
+  function parseGuideHeading(hash) {
+    const value = String(hash || '');
+    if (!value || value === '#') return '';
+    const legacy = parseGuideHash(value);
+    if (legacy) return legacy.heading || '';
+    const slug = value.replace(/^#/, '');
+    return /^[a-z0-9-]+$/i.test(slug) ? slug : '';
+  }
+
   function legacyTarget(hash) {
     const value = String(hash || '');
     if (isWritingDetailHash(value)) return `/writings/${value}`;
     if (value === '#/yazilar' || value === '#yazilar') return '/writings/';
-    if (isGuideHash(value)) return `/projects/${value}`;
+    const guide = parseGuideHash(value);
+    if (guide) {
+      const path = guidePublicPath(guide.id, guide.lang || 'EN');
+      return guide.heading ? `${path}#${guide.heading}` : path;
+    }
     const key = value.replace(/^#\/?/, '').split('/')[0].toLowerCase();
     const path = HASH_SECTION[key];
     return path || null;
@@ -93,6 +146,10 @@
     canonicalForPath,
     isWritingDetailHash,
     isGuideHash,
+    parseGuideHash,
+    parseGuidePath,
+    parseGuideHeading,
+    guidePublicPath,
     legacyTarget,
     publicPath
   };

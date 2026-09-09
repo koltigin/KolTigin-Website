@@ -4,6 +4,7 @@
     "resume": "Özgeçmiş",
     "projects": "Projeler",
     "blog": "Yazılar",
+    "guides": "Rehberler",
     "videos": "Videolar",
     "contact": "İletişim"
   },
@@ -16,7 +17,8 @@
     "writingsNav": "Yazı kategorileri",
     "videos": "Videolar",
     "contact": "İletişim",
-    "guide": "Rehber"
+    "guide": "Rehber",
+    "guides": "Rehberler"
   },
   "sidebar": {
     "contact": "İletişim",
@@ -102,6 +104,9 @@
   },
   "guides": {
     "back": "Projelere dön",
+    "landing": "KolTigin’in node, testnet ve DePIN projeleri için kurulum rehberleri.",
+    "read": "Rehberi Aç",
+    "empty": "Henüz rehber yok.",
     "loading": "Rehber yükleniyor…",
     "loadError": "Rehber yüklenemedi.",
     "copy": "Kopyala",

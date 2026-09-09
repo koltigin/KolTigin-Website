@@ -22,7 +22,7 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 CATEGORIES_PATH = ROOT / "config" / "project-categories.json"
 CONTENT_ROOT = ROOT / "content" / "projects"
-GUIDES_ROOT = ROOT / "guides"
+GUIDES_ROOT = ROOT / "content" / "guides"
 OUTPUT_PATH = ROOT / "projects" / "projects.json"
 SOURCE_JSON = ROOT / "projects" / "projects.json"
 

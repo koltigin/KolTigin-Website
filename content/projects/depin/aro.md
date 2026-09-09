@@ -8,10 +8,10 @@ summary:
   en: Decentralized edge network for bandwidth and distributed infrastructure.
   tr: Bant genişliği ve dağıtık altyapı için merkeziyetsiz uç ağı.
 links:
-  - label: Setup Guide
-    guide: aro-network-depin-ubuntu-vps-installation-guide
 - label: Website
   url: https://aro.network
+- label: Setup Guide
+  guide: aro-network-depin-ubuntu-vps-installation-guide
 referral_url: https://dashboard.aro.network/signup?referral=9KAG
 referral_code: 9KAG
 ---

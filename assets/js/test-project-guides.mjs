@@ -34,8 +34,8 @@ assert((optimai.links || []).some((link) => link.label === "Website" && link.url
 assert(en.projects.links.setupGuide === "Setup Guide", "EN project renders Setup Guide");
 assert(tr.projects.links.setupGuide === "Kurulum Rehberi", "TR project renders Kurulum Rehberi");
 assert(parser.includes("guideShareHref"), "parser derives locale share URLs");
-assert(parser.includes("`/guide/${this.currentLang()}/${encodeURIComponent(guideId)}/`"), "correct locale share URL shape");
-assert(parser.includes("if (href.startsWith('/guide/')) return;"), "share URLs are not intercepted as SPA hashes");
+assert(parser.includes("`/guides/${encodeURIComponent(guideId)}/${code}`"), "correct locale share URL shape");
+assert(parser.includes("if (href.startsWith('/guide/')) return;"), "legacy /guide/ urls are not intercepted as spa hashes");
 assert(parser.includes("if (!url && !guide) return null;"), "guide links do not require a manual URL");
 assert(cms.includes("cms.guidesManagedHint"), "project editor has a managed Guides area");
 assert(!cms.includes('data-pfield="guideId"'), "project editor no longer asks for a single guide URL/id field");

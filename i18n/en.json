@@ -4,6 +4,7 @@
     "resume": "Resume",
     "projects": "Projects",
     "blog": "Writings",
+    "guides": "Guides",
     "videos": "Videos",
     "contact": "Contact"
   },
@@ -16,7 +17,8 @@
     "writingsNav": "Writing categories",
     "videos": "Videos",
     "contact": "Contact",
-    "guide": "Guide"
+    "guide": "Guide",
+    "guides": "Guides"
   },
   "sidebar": {
     "contact": "Contact",
@@ -102,6 +104,9 @@
   },
   "guides": {
     "back": "Back to projects",
+    "landing": "Setup and installation guides for KolTigin’s node, testnet, and DePIN projects.",
+    "read": "Read Guide",
+    "empty": "No guides yet.",
     "loading": "Loading guide…",
     "loadError": "The guide could not be loaded.",
     "copy": "Copy",

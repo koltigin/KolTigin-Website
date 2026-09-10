@@ -69,6 +69,10 @@
         {
           "label": "Setup Guide",
           "guide": "redbelly-mainnet-node-installation-guide"
+        },
+        {
+          "label": "Setup Guide",
+          "guide": "redbelly-mainnet-node-update-guide"
         }
       ]
     }

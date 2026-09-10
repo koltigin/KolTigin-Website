@@ -79,6 +79,18 @@ assert(parser.excerptFromMarkdown(aroTr).startsWith("ARO Network, kullanılabili
 assert(parser.projectNameForGuide(projects, ARO) === "ARO", "related project name comes from projects.json");
 assert(parser.coverSrc(ARO, aroEn, "EN") === `/assets/images/og/guides/en/${ARO}.png`, "EN card uses existing guide OG fallback");
 assert(parser.coverSrc(ARO, aroTr, "TR") === `/assets/images/og/guides/tr/${ARO}.png`, "TR card uses existing guide OG fallback");
+const installId = "redbelly-mainnet-node-installation-guide";
+const updateId = "redbelly-mainnet-node-update-guide";
+const troubleId = "redbelly-node-troubleshooting";
+const installTr = readFileSync(join(repo, "content/guides", installId, "TR.md"), "utf8");
+const updateTr = readFileSync(join(repo, "content/guides", updateId, "TR.md"), "utf8");
+const troubleTr = readFileSync(join(repo, "content/guides", troubleId, "TR.md"), "utf8");
+assert(parser.coverSrc(installId, installTr, "TR") === `/assets/images/og/guides/tr/${installId}.png`, "Redbelly install card uses generated OG");
+assert(parser.coverSrc(updateId, updateTr, "TR") === `/assets/images/og/guides/tr/${updateId}.png`, "Redbelly update card uses generated OG");
+assert(parser.coverSrc(troubleId, troubleTr, "TR") === `/assets/images/og/guides/tr/${troubleId}.png`, "Redbelly troubleshooting card uses generated OG");
+assert(parser.coverFallbackSrc(installId, installTr, "TR") === `/assets/images/og/guides/en/${installId}.png`, "missing TR OG can fall back to EN raster");
+assert(parser.coverSrc(installId, "---\nimage: hero.png\n---\n# Title\n", "TR") === `/assets/images/guides/${installId}/hero.png`, "cover aliases include image");
+assert(parser.coverFallbackSrc(installId, "---\ncover: missing.png\n---\n# Title\n", "TR") === `/assets/images/og/guides/tr/${installId}.png`, "broken custom cover falls back to generated OG");
 
 const enCard = parser.createIndexCard({
   id: ARO,

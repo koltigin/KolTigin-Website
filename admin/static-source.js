@@ -243,7 +243,10 @@
       if (!en && !tr) continue;
       const related = (projects || [])
         .filter((project) => (project.links || []).some((link) => link && link.guide === id))
-        .map((project) => ({ id: project.id, name: project.name }));
+        .map((project) => {
+          const link = (project.links || []).find((entry) => entry && entry.guide === id);
+          return { id: project.id, name: project.name, label: link ? link.label : undefined };
+        });
       guides.push({
         id,
         titleEn: firstHeading(en) || id,

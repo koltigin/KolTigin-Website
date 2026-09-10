@@ -89,7 +89,10 @@
 
   function linkLabelParts(label) {
     if (label && typeof label === 'object') {
-      return { en: label.en || '', tr: label.tr || label.en || '' };
+      return {
+        en: label.en || label.labelEN || '',
+        tr: label.tr || label.labelTR || label.en || label.labelEN || ''
+      };
     }
     const text = String(label || '').trim();
     if (LINK_LABEL_I18N[text]) return { ...LINK_LABEL_I18N[text] };
@@ -360,13 +363,21 @@
     const p = H().state.projectDraft;
     const app = document.getElementById('app');
     app.querySelectorAll('[data-pfield]').forEach((field) => { p[field.dataset.pfield] = field.value; });
-    const guideLinks = (p.links || []).filter((link) => link && link.guide);
+    const guideLinks = (p.links || []).filter((link) => link && link.guide).map((link) => ({ ...link }));
     const manual = [];
     app.querySelectorAll('[data-plink]').forEach((row) => {
       manual.push({
         label: { en: row.querySelector('[data-plabel-en]').value, tr: row.querySelector('[data-plabel-tr]').value },
         url: row.querySelector('[data-purl]').value
       });
+    });
+    app.querySelectorAll('[data-glink]').forEach((row, index) => {
+      if (!guideLinks[index]) return;
+      const en = row.querySelector('[data-glabel-en]')?.value || '';
+      const tr = row.querySelector('[data-glabel-tr]')?.value || '';
+      if (en.trim() || tr.trim()) {
+        guideLinks[index].label = { en: en.trim() || tr.trim(), tr: tr.trim() || en.trim() };
+      }
     });
     p.links = [...guideLinks, ...manual];
   }
@@ -399,10 +410,13 @@
         : (g.titleEn || g.titleTr || link.guide);
       const enMark = g.existsEn ? 'EN ✓' : 'EN —';
       const trMark = g.existsTr ? 'TR ✓' : 'TR —';
+      const labels = linkLabelParts(link.label);
       return `
-        <article class="social-row">
+        <article class="social-row" data-glink>
           <p><strong>${esc(title)}</strong></p>
           <p class="hint">${esc(enMark)} · ${esc(trMark)}</p>
+          <div class="field"><label>${esc(t('cms.labelEn'))}</label><input data-glabel-en type="text" value="${esc(labels.en)}" placeholder="Setup Guide"></div>
+          <div class="field"><label>${esc(t('cms.labelTr'))}</label><input data-glabel-tr type="text" value="${esc(labels.tr)}" placeholder="Kurulum Rehberi"></div>
           <div class="item-actions">
             <button class="btn btn-ghost" type="button" data-go="#/edit/guides/${esc(link.guide)}">${esc(t('writings.editBtn'))}</button>
           </div>
@@ -680,6 +694,13 @@
           ${projects.map((p) => `<option value="${esc(p.id)}" ${g.projectId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
         </select>
       </div>
+      <div class="field"><label>${esc(t('cms.labelEn'))}</label>
+        <input data-gfield="buttonLabelEn" type="text" value="${esc(g.buttonLabelEn || '')}" placeholder="Setup Guide">
+      </div>
+      <div class="field"><label>${esc(t('cms.labelTr'))}</label>
+        <input data-gfield="buttonLabelTr" type="text" value="${esc(g.buttonLabelTr || '')}" placeholder="Kurulum Rehberi">
+        <span class="hint">${esc(t('cms.guideButtonHint'))}</span>
+      </div>
       ${guideCoverPicker(g)}
       <form>
         <div class="field">
@@ -706,7 +727,7 @@
       projects: Sync().mergeRemoteList(pack.projects || [], prevProjects.projects || [])
     };
     if (!id) {
-      H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '', cover: '', coverFile: null, coverPreview: '' };
+      H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '', buttonLabelEn: '', buttonLabelTr: '', cover: '', coverFile: null, coverPreview: '' };
       renderGuideEditor();
       return;
     }
@@ -721,12 +742,15 @@
       return;
     }
     const related = ((data.meta && data.meta.projects) || [])[0];
+    const relatedLabels = linkLabelParts(related && related.label);
     H().state.guideDraft = {
       id,
       locked: true,
       lang: data.en ? 'en' : 'tr',
       langs: { en: data.en || '', tr: data.tr || '' },
       projectId: related ? related.id : '',
+      buttonLabelEn: relatedLabels.en,
+      buttonLabelTr: relatedLabels.tr,
       cover: (data.meta && data.meta.cover) || '',
       coverFile: null,
       coverPreview: ''
@@ -740,9 +764,13 @@
     if (!g) return;
     const ta = document.querySelector('[data-guide-md]');
     const sel = document.querySelector('[data-gfield="projectId"]');
+    const labelEn = document.querySelector('[data-gfield="buttonLabelEn"]');
+    const labelTr = document.querySelector('[data-gfield="buttonLabelTr"]');
     CmsSave().syncGuideEditorFields(g, {
       ...(ta ? { markdown: ta.value } : {}),
-      ...(sel ? { projectId: sel.value } : {})
+      ...(sel ? { projectId: sel.value } : {}),
+      ...(labelEn ? { buttonLabelEn: labelEn.value } : {}),
+      ...(labelTr ? { buttonLabelTr: labelTr.value } : {})
     });
   }
 
@@ -1130,6 +1158,14 @@
       }
       if (event.target.matches('[data-gfield="projectId"]') && H().state.guideDraft) {
         CmsSave().syncGuideEditorFields(H().state.guideDraft, { projectId: event.target.value });
+        if (H().state.authed) H().markDirty();
+        return;
+      }
+      if (event.target.matches('[data-gfield="buttonLabelEn"], [data-gfield="buttonLabelTr"]') && H().state.guideDraft) {
+        CmsSave().syncGuideEditorFields(H().state.guideDraft, {
+          buttonLabelEn: document.querySelector('[data-gfield="buttonLabelEn"]')?.value || '',
+          buttonLabelTr: document.querySelector('[data-gfield="buttonLabelTr"]')?.value || ''
+        });
         if (H().state.authed) H().markDirty();
         return;
       }

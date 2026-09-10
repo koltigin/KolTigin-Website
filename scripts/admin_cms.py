@@ -352,7 +352,7 @@ def strip_guide_from_projects(guide_id: str) -> list[str]:
     return changed
 
 
-def attach_guide_to_project(project_id: str, guide_id: str) -> None:
+def attach_guide_to_project(project_id: str, guide_id: str, label: object | None = None) -> None:
     records = [item for item in list_project_records() if item["id"] == project_id]
     if not records:
         raise ValueError("Unknown project")
@@ -360,9 +360,16 @@ def attach_guide_to_project(project_id: str, guide_id: str) -> None:
     path = ROOT / rec["path"]
     data = parse_project_file(path)
     links = list(data.get("links") or [])
-    if any(isinstance(link, dict) and str(link.get("guide") or "") == guide_id for link in links):
+    existing = next((link for link in links if isinstance(link, dict) and str(link.get("guide") or "") == guide_id), None)
+    stored = label if label not in (None, "") else "Setup Guide"
+    if existing:
+        if label not in (None, ""):
+            existing["label"] = stored if isinstance(stored, dict) else stored
+            existing["guide"] = guide_id
+            existing.pop("url", None)
+            path.write_text("---\n" + dump_project_yaml(data) + "---\n", encoding="utf-8")
         return
-    links.append({"label": "Setup Guide", "guide": guide_id})
+    links.append({"label": stored, "guide": guide_id})
     data["links"] = links
     path.write_text("---\n" + dump_project_yaml(data) + "---\n", encoding="utf-8")
 

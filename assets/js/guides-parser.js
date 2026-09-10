@@ -233,14 +233,34 @@ class GuidesParser {
     return Boolean(raw) && !['null', 'none', 'false'].includes(raw);
   }
 
+  coverField(meta) {
+    const src = meta || {};
+    return src.cover || src.coverImage || src.image || src.thumbnail || '';
+  }
+
   coverSrc(id, markdown, lang) {
+    const generated = this.generatedCoverSrc(id, lang);
     const { meta } = this.parseFrontMatter(markdown);
-    if (this.hasCover(meta.cover)) {
-      const name = String(meta.cover).replace(/^\.\//, '').split('/').pop();
-      return publicPath(`./assets/images/guides/${id}/${name}`);
+    const cover = this.coverField(meta);
+    if (this.hasCover(cover)) {
+      const name = String(cover).replace(/^\.\//, '').split('/').pop();
+      return encodeURI(publicPath(`./assets/images/guides/${id}/${name}`));
     }
+    return generated;
+  }
+
+  generatedCoverSrc(id, lang) {
     const loc = String(lang || 'EN').toLowerCase() === 'tr' ? 'tr' : 'en';
-    return publicPath(`./assets/images/og/guides/${loc}/${id}.png`);
+    return encodeURI(publicPath(`./assets/images/og/guides/${loc}/${id}.png`));
+  }
+
+  coverFallbackSrc(id, markdown, lang) {
+    const cover = this.coverSrc(id, markdown, lang);
+    const generated = this.generatedCoverSrc(id, lang);
+    if (cover !== generated) return generated;
+    const other = String(lang || 'EN').toLowerCase() === 'tr' ? 'EN' : 'TR';
+    const alt = this.generatedCoverSrc(id, other);
+    return alt !== cover ? alt : '';
   }
 
   projectNameForGuide(projects, guideId) {
@@ -266,7 +286,7 @@ class GuidesParser {
       <li class="blog-post-item">
         <a class="writings-card guides-card" href="${href}" data-guide-open="${this.escapeHtml(item.id)}" data-guide-lang="${this.escapeHtml(item.lang)}">
           <figure class="blog-banner-box writings-cover" data-cover-for="${this.escapeHtml(item.id)}">
-            <img src="${this.escapeHtml(item.cover)}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async">
+            <img src="${this.escapeHtml(item.cover)}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async"${item.coverFallback && item.coverFallback !== item.cover ? ` onerror="this.onerror=null;this.src='${this.escapeHtml(item.coverFallback)}'"` : ''}>
           </figure>
           <div class="blog-content">
             <div class="blog-meta">${project}</div>
@@ -303,6 +323,7 @@ class GuidesParser {
             title,
             excerpt: this.excerptFromMarkdown(markdown),
             cover: this.coverSrc(id, markdown, lang),
+            coverFallback: this.coverFallbackSrc(id, markdown, lang),
             project: this.projectNameForGuide(projects, id)
           });
         } catch {

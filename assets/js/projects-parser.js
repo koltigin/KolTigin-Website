@@ -89,8 +89,8 @@ class ProjectsParser {
 
   displayLinkLabel(label) {
     if (label && typeof label === 'object') {
-      const lang = (window.KolTiginI18n && window.KolTiginI18n.language) || 'en';
-      label = label[lang] || label.en || label.tr || '';
+      const lang = this.currentLang();
+      label = label[lang] || label.en || label.tr || label.labelEN || label.labelTR || '';
     }
     const map = {
       Website: 'projects.links.website',
@@ -155,7 +155,11 @@ class ProjectsParser {
         : '';
       const url = typeof link.url === 'string' ? link.url.trim() : '';
       if (!url && !guide) return null;
-      const rawLabel = link.label;
+      const rawLabel = (link.label && typeof link.label === 'object')
+        ? link.label
+        : ((link.labelEN || link.labelTR)
+          ? { en: link.labelEN || link.label, tr: link.labelTR || link.labelEN || link.label }
+          : link.label);
       const label = rawLabel && typeof rawLabel === 'object'
         ? (rawLabel.en || rawLabel.tr || this.t('projects.links.link', null, 'Link'))
         : (typeof rawLabel === 'string' && rawLabel.trim()

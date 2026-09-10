@@ -55,7 +55,7 @@ assert(indexHtml.includes("/assets/js/router.js"), "router script");
 assert(indexHtml.includes("/assets/js/share-actions.js?v=prod3"), "share actions script");
 assert(indexHtml.includes("/assets/js/blog-parser.js?v=prod15"), "blog parser cache bust");
 assert(siteSrc.includes("parseWritingPath(window.location.pathname)"), "route seo keeps writing detail metadata");
-assert(indexHtml.includes("/assets/js/guides-parser.js?v=prod15"), "guides parser cache bust");
+assert(indexHtml.includes("/assets/js/guides-parser.js?v=prod17"), "guides parser cache bust");
 assert(indexHtml.includes("/assets/css/style.css?v=prod29"), "css cache bust");
 assert(indexHtml.includes("/assets/js/script.js?v=prod7"), "script cache bust");
 assert(indexHtml.includes("/assets/js/router.js?v=prod5"), "router cache bust");

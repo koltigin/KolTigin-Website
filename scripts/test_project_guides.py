@@ -43,14 +43,14 @@ assert_true(guide_link["label"] == "Setup Guide", "single Guide uses Setup Guide
 multi = mod.normalize_links(
     [
         {"label": "Website", "url": "https://optimai.network"},
-        {"label": "Setup Guide", "guide": GUIDE},
+        {"label": {"en": "Update Guide", "tr": "Güncelleme Rehberi"}, "guide": GUIDE},
         {"label": "Setup Guide", "guide": GUIDE},
     ],
     path,
 )
-# Duplicate same id still counts as one after... no, enrich doesn't dedupe. Use a second existing? Only one live guide.
-# Two entries with same existing id: both kept, labels become titles because count>1.
 assert_true(sum(1 for link in multi if link.get("guide")) == 2, "multiple Guides can be associated with one Project")
+custom = next(link for link in multi if link.get("guide") and isinstance(link.get("label"), dict))
+assert_true(custom["label"]["en"] == "Update Guide" and custom["label"]["tr"] == "Güncelleme Rehberi", "custom bilingual Guide labels are preserved")
 
 generated = mod.build_projects()
 optimai = next(item for item in generated["depin"] if item["id"] == "optimai")

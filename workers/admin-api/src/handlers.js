@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -33,6 +33,14 @@ function compactProjectId(value) {
   return String(value || "").replace(/-/g, "").toLowerCase();
 }
 
+function optionalGuideButtonLabel(body) {
+  const src = (body && (body.linkLabel || body.buttonLabel)) || {};
+  const en = String(src.en || body.labelEn || "").trim();
+  const tr = String(src.tr || body.labelTr || "").trim();
+  if (!en && !tr) return undefined;
+  return normalizeGuideLinkLabel({ en, tr });
+}
+
 async function loadProjectMarkdown(github, { projectId, categoryId, cats, treeHolder, required }) {
   const cat = (cats || []).find((item) => item && item.id === categoryId);
   const folder = (cat && cat.folder) || categoryId || "";
@@ -61,13 +69,21 @@ async function loadProjectMarkdown(github, { projectId, categoryId, cats, treeHo
   return null;
 }
 
-async function applyGuideProjectRelationships(github, { guideId, nextProjectId, upserts }) {
+async function applyGuideProjectRelationships(github, { guideId, nextProjectId, upserts, label }) {
   const projectsJson = await readJson(github, "projects/projects.json", {});
   const cats = await readJson(github, "config/project-categories.json", []);
   const oldHits = findProjectsWithGuide(projectsJson, guideId);
   if (nextProjectId && !findProjectInJson(projectsJson, nextProjectId)) {
     throw new HttpError(400, "Unknown project");
   }
+  const previous = oldHits
+    .map((hit) => {
+      const item = (projectsJson[hit.categoryId] || []).find((entry) => entry && entry.id === hit.id);
+      const link = ((item && item.links) || []).find((entry) => String(entry.guide || "") === guideId);
+      return link && link.label;
+    })
+    .find((value) => value != null);
+  const nextLabel = label != null ? label : previous;
   const treeHolder = { list: null };
   const wanted = new Map();
   for (const hit of oldHits) {
@@ -89,11 +105,11 @@ async function applyGuideProjectRelationships(github, { guideId, nextProjectId, 
     if (!file || seenPaths.has(file.path)) continue;
     seenPaths.add(file.path);
     let next = stripGuideFromProjectMarkdown(file.text, guideId);
-    if (meta.attach) next = attachGuideToProjectMarkdown(next, guideId);
+    if (meta.attach) next = attachGuideToProjectMarkdown(next, guideId, nextLabel);
     if (next !== file.text) upserts.push({ path: file.path, text: next.endsWith("\n") ? next : `${next}\n` });
   }
   const nextJson = nextProjectId
-    ? attachGuideToProjectsJson(projectsJson, nextProjectId, guideId)
+    ? attachGuideToProjectsJson(projectsJson, nextProjectId, guideId, nextLabel)
     : stripGuideFromProjectsJson(projectsJson, guideId);
   if (nextJson.changed) upserts.push({ path: "projects/projects.json", text: pretty(nextJson.data) });
 }
@@ -530,9 +546,17 @@ export async function handleProjectSave(body, github) {
     }
     links.push({ label: storedLabel, url });
   }
-  const guideLinks = extractGuideIdsFromMarkdown(existingMd).map((guide) => ({
-    label: "Setup Guide",
-    guide
+  const incomingGuideLabels = new Map();
+  for (const raw of Array.isArray(body.links) ? body.links : []) {
+    if (!raw || typeof raw !== "object") continue;
+    const guide = String(raw.guide || "").trim();
+    if (!guide) continue;
+    if (raw.label == null || raw.label === '') continue;
+    incomingGuideLabels.set(guide, normalizeGuideLinkLabel(raw.label));
+  }
+  const guideLinks = extractGuideLinksFromMarkdown(existingMd).map((link) => ({
+    label: incomingGuideLabels.has(link.guide) ? incomingGuideLabels.get(link.guide) : link.label,
+    guide: link.guide
   }));
   const mergedLinks = [...links, ...guideLinks];
   if (mergedLinks.length) data.links = mergedLinks;
@@ -577,7 +601,12 @@ export async function handleGuideSave(body, github) {
   }
   const index = applyGuideIndex(await readJson(github, guideIndexPath(), { guides: [] }), { id });
   upserts.push({ path: guideIndexPath(), text: pretty(index) });
-  await applyGuideProjectRelationships(github, { guideId: id, nextProjectId: projectId, upserts });
+  await applyGuideProjectRelationships(github, {
+    guideId: id,
+    nextProjectId: projectId,
+    upserts,
+    label: optionalGuideButtonLabel(body)
+  });
   const deletes = [];
   for (const path of staleGuideSourcePaths(id)) {
     if (await github.exists(path)) deletes.push(path);

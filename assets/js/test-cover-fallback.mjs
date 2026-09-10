@@ -31,7 +31,9 @@ assert(blogSrc.includes("this.coverFallback(item, extra).trim()"), "broken custo
 assert(brokenFn.includes("if (!this.hasCover(item)) return;"), "generated OG cards do not fall back to the procedural CSS cover");
 assert(blogSrc.includes("generatedCoverSrc(item)") && blogSrc.includes("writings-detail-cover"), "writing detail without cover uses the generated raster");
 assert(guidesSrc.includes("./assets/images/og/guides/${loc}/${id}.png"), "/guides/ cards use generated Guide rasters");
-assert(!guidesSrc.includes("coverFallback") && !guidesSrc.includes("cover-fallback"), "Guides do not share the writings CSS fallback-cover renderer");
+assert(!guidesSrc.includes("cover-fallback") && !guidesSrc.includes("coverFallbackSignature"), "Guides do not use the writings CSS fallback-cover renderer");
+assert(guidesSrc.includes("generatedCoverSrc"), "broken custom guide covers can fall back to generated OG rasters");
+assert(guidesSrc.includes("coverFallbackSrc") && guidesSrc.includes("coverImage"), "guide covers accept cover aliases and locale OG fallback");
 assert(cssSrc.includes(".blog-banner-box > img"), "banner cover photos are direct-child images only");
 assert(!cssSrc.includes(".blog-banner-box img {"), "banner img rule no longer swallows nested avatars");
 assert(siteSrc.includes("site.avatar"), "sidebar already uses the site avatar asset");

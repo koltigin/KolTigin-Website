@@ -35,6 +35,12 @@
     if ('projectId' in src) {
       draft.projectId = String(src.projectId || '');
     }
+    if ('buttonLabelEn' in src) {
+      draft.buttonLabelEn = String(src.buttonLabelEn || '');
+    }
+    if ('buttonLabelTr' in src) {
+      draft.buttonLabelTr = String(src.buttonLabelTr || '');
+    }
   }
 
   function switchGuideLang(draft, nextLang) {
@@ -45,12 +51,16 @@
   function guideSaveRequest(draft) {
     const locales = localesFromLangs((draft && draft.langs) || {});
     if (!locales.length) return null;
-    return {
+    const en = String((draft && draft.buttonLabelEn) || '').trim();
+    const tr = String((draft && draft.buttonLabelTr) || '').trim();
+    const payload = {
       id: String((draft && draft.id) || ''),
       projectId: String((draft && draft.projectId) || ''),
       cover: (draft && draft.cover) || '',
       locales
     };
+    if (en || tr) payload.linkLabel = { en: en || tr, tr: tr || en };
+    return payload;
   }
 
   function pageSaveRequest(draft) {

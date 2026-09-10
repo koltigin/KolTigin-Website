@@ -140,6 +140,20 @@ async function main() {
       indexIds: ["aioz-depin"],
       markdownById: { "aioz-depin": { en: "", tr: "" } }
     }).includes("aioz-depin"), "orphan slug without sources is not listed");
+    const labeled = attachGuideToProjectMarkdown(`---
+name: Redbelly
+links:
+- label: Website
+  url: https://redbelly.network
+---
+`, "redbelly-mainnet-node-update-guide", { en: "Update Guide", tr: "Güncelleme Rehberi" });
+    assert(labeled.includes("guide: redbelly-mainnet-node-update-guide"), "bilingual attach still writes guide id");
+    assert(labeled.includes("Update Guide") && labeled.includes("Güncelleme Rehberi"), "attach stores per-guide EN/TR button labels");
+    const labeledJson = attachGuideToProjectsJson({
+      mainnet: [{ id: "redbelly-network", links: [{ label: "Website", url: "https://redbelly.network" }] }]
+    }, "redbelly-network", "redbelly-mainnet-node-update-guide", { en: "Update Guide", tr: "Güncelleme Rehberi" });
+    const rbGuide = labeledJson.data.mainnet[0].links.find((link) => link.guide === "redbelly-mainnet-node-update-guide");
+    assert(rbGuide && rbGuide.label.en === "Update Guide" && rbGuide.label.tr === "Güncelleme Rehberi", "projects.json stores bilingual guide labels");
     const attached = attachGuideToProjectMarkdown(`---
 name: OptimAI
 links:

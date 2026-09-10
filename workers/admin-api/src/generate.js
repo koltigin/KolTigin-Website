@@ -1,3 +1,5 @@
+import { yamlQuote } from "./util.js";
+
 export const SHARE_LANGS = ["en", "tr"];
 
 export function writingShareArtifacts(kind, id) {
@@ -146,22 +148,104 @@ export function projectMarkdownId(text, path = "") {
   return base.replace(/\.md$/i, "");
 }
 
-export function extractGuideIdsFromMarkdown(text) {
-  const ids = [];
-  for (const line of String(text || "").split("\n")) {
-    const match = line.match(/^\s*guide:\s*['"]?([A-Za-z0-9-]+)['"]?\s*$/);
-    if (match && !ids.includes(match[1])) ids.push(match[1]);
+function unquoteYaml(value) {
+  const raw = String(value || "").trim();
+  if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+    return raw.slice(1, -1);
   }
-  return ids;
+  return raw;
 }
 
-export function attachGuideToProjectMarkdown(text, guideId) {
+export function normalizeGuideLinkLabel(label) {
+  if (label && typeof label === "object" && !Array.isArray(label)) {
+    const en = String(label.en || label.labelEN || "").trim();
+    const tr = String(label.tr || label.labelTR || "").trim();
+    if (en || tr) return { en: en || tr, tr: tr || en };
+  }
+  const text = String(label || "").trim();
+  return text || "Setup Guide";
+}
+
+function guideLabelsEqual(a, b) {
+  const left = normalizeGuideLinkLabel(a);
+  const right = normalizeGuideLinkLabel(b);
+  if (typeof left === "object" || typeof right === "object") {
+    const leftObj = typeof left === "object" ? left : { en: left, tr: left };
+    const rightObj = typeof right === "object" ? right : { en: right, tr: right };
+    return leftObj.en === rightObj.en && leftObj.tr === rightObj.tr;
+  }
+  return left === right;
+}
+
+function yamlGuideLinkLines(id, label) {
+  const resolved = normalizeGuideLinkLabel(label);
+  if (resolved && typeof resolved === "object") {
+    return [
+      "  - label:",
+      `      en: ${yamlQuote(resolved.en)}`,
+      `      tr: ${yamlQuote(resolved.tr)}`,
+      `    guide: ${id}`
+    ];
+  }
+  const text = String(resolved);
+  const rendered = text === "Setup Guide" ? "Setup Guide" : yamlQuote(text);
+  return [`  - label: ${rendered}`, `    guide: ${id}`];
+}
+
+function parseGuideListItemLabel(lines) {
+  const text = lines.join("\n");
+  const en = text.match(/^\s+en:\s*(.+)$/m);
+  const tr = text.match(/^\s+tr:\s*(.+)$/m);
+  if (en || tr) {
+    return normalizeGuideLinkLabel({
+      en: unquoteYaml(en && en[1]),
+      tr: unquoteYaml(tr && tr[1])
+    });
+  }
+  const labelLine = text.match(/^\s*-?\s*label:\s*(.*)$/m);
+  const rest = labelLine ? String(labelLine[1] || "").trim() : "";
+  return rest ? unquoteYaml(rest) : "Setup Guide";
+}
+
+export function extractGuideLinksFromMarkdown(text) {
+  const links = [];
+  const raw = String(text || "").replace(/\r\n/g, "\n");
+  if (!raw.startsWith("---")) return links;
+  const close = raw.indexOf("\n---", 3);
+  if (close === -1) return links;
+  const fm = raw.slice(4, close).split("\n");
+  let i = 0;
+  while (i < fm.length) {
+    if (!/^\s*-\s/.test(fm[i])) {
+      i += 1;
+      continue;
+    }
+    const item = [fm[i]];
+    i += 1;
+    while (i < fm.length && /^ +/.test(fm[i]) && !/^\s*-\s/.test(fm[i])) {
+      item.push(fm[i]);
+      i += 1;
+    }
+    const joined = item.join("\n");
+    const guideMatch = joined.match(/^\s*guide:\s*['"]?([A-Za-z0-9-]+)['"]?\s*$/m);
+    if (!guideMatch) continue;
+    links.push({ guide: guideMatch[1], label: parseGuideListItemLabel(item) });
+  }
+  return links;
+}
+
+export function extractGuideIdsFromMarkdown(text) {
+  return extractGuideLinksFromMarkdown(text).map((link) => link.guide);
+}
+
+export function attachGuideToProjectMarkdown(text, guideId, label) {
   const id = String(guideId || "");
+  if (!id) return String(text || "");
+  const current = extractGuideLinksFromMarkdown(text).find((link) => link.guide === id);
+  const nextLabel = label != null ? normalizeGuideLinkLabel(label) : (current ? current.label : "Setup Guide");
+  if (current && guideLabelsEqual(current.label, nextLabel)) return String(text || "");
   const raw = stripGuideFromProjectMarkdown(text, id);
-  if (!id) return raw;
-  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  if (new RegExp(`^\\s*guide:\\s*['"]?${escaped}['"]?\\s*$`, "m").test(raw)) return raw;
-  const blockLines = [`  - label: Setup Guide`, `    guide: ${id}`];
+  const blockLines = yamlGuideLinkLines(id, nextLabel);
   const parts = String(raw || "").split("\n");
   if (parts[0] !== "---") {
     return `---\nlinks:\n${blockLines.join("\n")}\n---\n${raw}`;
@@ -175,18 +259,38 @@ export function attachGuideToProjectMarkdown(text, guideId) {
   return ["---", ...fm, "---", ...parts.slice(end + 1)].join("\n");
 }
 
-export function attachGuideToProjectsJson(json, projectId, guideId) {
-  const stripped = stripGuideFromProjectsJson(json, guideId);
-  const data = stripped.data;
-  if (!projectId) return { data, changed: stripped.changed };
-  let changed = stripped.changed;
+export function attachGuideToProjectsJson(json, projectId, guideId, label) {
+  const data = JSON.parse(JSON.stringify(json || {}));
+  let changed = false;
+  const nextLabel = normalizeGuideLinkLabel(label);
+  for (const key of Object.keys(data)) {
+    if (!Array.isArray(data[key])) continue;
+    for (const item of data[key]) {
+      if (!item || item.id === projectId || !Array.isArray(item.links)) continue;
+      const next = item.links.filter((link) => !isGuideLink(link, guideId));
+      if (next.length === item.links.length) continue;
+      changed = true;
+      if (next.length) item.links = next;
+      else delete item.links;
+    }
+  }
+  if (!projectId) return { data, changed };
   for (const key of Object.keys(data)) {
     if (!Array.isArray(data[key])) continue;
     for (const item of data[key]) {
       if (!item || item.id !== projectId) continue;
       const links = Array.isArray(item.links) ? item.links.slice() : [];
-      if (!links.some((link) => isGuideLink(link, guideId))) {
-        links.push({ label: "Setup Guide", guide: guideId });
+      const existing = links.find((link) => isGuideLink(link, guideId));
+      if (existing) {
+        if (!guideLabelsEqual(existing.label, nextLabel)) {
+          existing.label = nextLabel;
+          existing.guide = guideId;
+          delete existing.url;
+          item.links = links;
+          changed = true;
+        }
+      } else {
+        links.push({ label: nextLabel, guide: guideId });
         item.links = links;
         changed = true;
       }

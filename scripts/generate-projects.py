@@ -169,14 +169,19 @@ def enrich_guide_links(links: list[dict]) -> list[dict]:
             continue
         cleaned = {key: value for key, value in link.items() if key != "url"}
         cleaned["guide"] = guide
+        cleaned["label"] = keep_guide_label(cleaned.get("label"))
         kept.append(cleaned)
-    guide_items = [link for link in kept if link.get("guide")]
-    if len(guide_items) == 1:
-        guide_items[0]["label"] = "Setup Guide"
-    elif len(guide_items) > 1:
-        for link in guide_items:
-            link["label"] = guide_titles(str(link["guide"]))
     return kept
+
+
+def keep_guide_label(label) -> dict | str:
+    if isinstance(label, dict):
+        en = str(label.get("en") or "").strip()
+        tr = str(label.get("tr") or "").strip()
+        if en or tr:
+            return {"en": en or tr, "tr": tr or en}
+    text = str(label or "").strip()
+    return text or "Setup Guide"
 
 
 def normalize_links(value: object, path: Path) -> list[dict] | None:

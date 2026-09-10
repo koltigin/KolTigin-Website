@@ -91,6 +91,10 @@ def setup_root(tmp: Path) -> Path:
         tmp / "content" / "notes" / "en" / "undated.md",
         '---\ntitle: "Undated note"\nsummary: "No calendar date."\n---\n\nBody.\n',
     )
+    write(
+        tmp / "content" / "notes" / "en" / "revised.md",
+        '---\ntitle: "Revised note"\ndate: "2026-01-01"\nupdated: "2026-08-01"\nsummary: "Has a real updated date."\n---\n\nBody.\n',
+    )
     write(tmp / "content" / "guides" / "demo-guide" / "EN.md", "# Demo Guide\n\nInstall the node.\n")
     write(tmp / "content" / "guides" / "demo-guide" / "TR.md", "# Demo Rehber\n\nDüğümü kurun.\n")
     write(
@@ -261,6 +265,15 @@ def main() -> None:
             fail("undated writing must omit datePublished")
         if undated_ld.get("@type") != "BlogPosting":
             fail("undated writing json-ld type")
+        if "dateModified" in note_ld:
+            fail("writing must not copy datePublished onto dateModified")
+        revised_ld = json_ld(read(tmp / "writings" / "en" / "notes" / "revised" / "index.html"))
+        if revised_ld.get("datePublished") != "2026-01-01":
+            fail("revised writing datePublished")
+        if revised_ld.get("dateModified") != "2026-08-01":
+            fail("revised writing dateModified must use updated metadata")
+        if "data-homepage-graph" in html:
+            fail("writing html must not copy homepage json-ld")
         ok("writing json-ld")
 
         cover_og = tmp / "assets" / "images" / "og" / "writings" / "en" / "articles" / "with-cover.png"
@@ -288,8 +301,12 @@ def main() -> None:
         ghtml = read(spa_html)
         if "Demo Guide" not in ghtml or "koltigin-share-guide" not in ghtml:
             fail("guide spa html")
-        if "/guides/demo-guide/EN" not in ghtml:
+        if "/guides/demo-guide/EN/" not in ghtml:
             fail("guide spa canonical path")
+        if 'hreflang="en" href="https://koltigin.xyz/guides/demo-guide/EN/"' not in ghtml:
+            fail("guide hreflang must use trailing slash")
+        if "data-homepage-graph" in ghtml:
+            fail("guide html must not copy homepage json-ld")
         if "#/guides/demo-guide/EN" in ghtml:
             fail("guide spa must not bounce to hash")
         if (tmp / "guide" / "en" / "demo-guide" / "index.html").exists():
@@ -315,16 +332,16 @@ def main() -> None:
             fail("guide json-ld description")
         if guide_ld.get("inLanguage") != "en":
             fail("guide json-ld language")
-        if guide_ld.get("url") != "https://koltigin.xyz/guides/demo-guide/EN":
+        if guide_ld.get("url") != "https://koltigin.xyz/guides/demo-guide/EN/":
             fail("guide json-ld url")
         if guide_ld.get("mainEntityOfPage") != guide_ld.get("url"):
             fail("guide json-ld mainEntityOfPage")
         if guide_ld.get("image") != "https://koltigin.xyz/assets/images/og/guides/en/demo-guide.png":
             fail("guide json-ld image")
-        if "datePublished" in guide_ld:
-            fail("guide json-ld must omit datePublished")
+        if "datePublished" in guide_ld or "dateModified" in guide_ld:
+            fail("guide json-ld must omit dates without source metadata")
         guide_tr = json_ld(read(tmp / "guides" / "demo-guide" / "TR" / "index.html"))
-        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guides/demo-guide/TR":
+        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guides/demo-guide/TR/":
             fail("tr guide json-ld locale url")
         if guide_tr.get("headline") != "Demo Rehber":
             fail("tr guide json-ld headline")
@@ -360,10 +377,12 @@ def main() -> None:
             fail("writing url sitemap")
         if not any(loc.endswith("/writings/tr/notes/no-cover/") for loc in locs):
             fail("writing tr url sitemap")
-        if not any(loc.endswith("/guides/demo-guide/EN") for loc in locs):
+        if not any(loc.endswith("/guides/demo-guide/EN/") for loc in locs):
             fail("guide url sitemap")
-        if not any(loc.endswith("/guides/demo-guide/TR") for loc in locs):
+        if not any(loc.endswith("/guides/demo-guide/TR/") for loc in locs):
             fail("guide tr url sitemap")
+        if any(loc.endswith("/guides/demo-guide/EN") or loc.endswith("/guides/demo-guide/TR") for loc in locs):
+            fail("guide sitemap urls must keep trailing slash")
         if any("tweet" in (loc or "") or "/admin" in (loc or "") for loc in locs):
             fail("external or admin url in sitemap")
         expected_sections = [
@@ -381,9 +400,33 @@ def main() -> None:
                 fail(f"missing section sitemap {url}")
         if len(locs) != len(set(locs)):
             fail("duplicate sitemap urls")
+        ns = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
+        lastmods = {}
+        for url_el in root.findall(f"{ns}url"):
+            loc = url_el.find(f"{ns}loc").text
+            lm = url_el.find(f"{ns}lastmod")
+            lastmods[loc] = lm.text if lm is not None else None
+        if lastmods.get("https://koltigin.xyz/writings/en/notes/no-cover/") != "2026-08-29":
+            fail("dated writing lastmod must come from front matter date")
+        if lastmods.get("https://koltigin.xyz/writings/en/notes/revised/") != "2026-08-01":
+            fail("updated writing lastmod must come from updated metadata")
+        if lastmods.get("https://koltigin.xyz/writings/en/notes/undated/") is not None:
+            fail("undated writing must omit lastmod")
+        if lastmods.get("https://koltigin.xyz/") is not None:
+            fail("homepage must omit lastmod")
+        if lastmods.get("https://koltigin.xyz/about/") is not None:
+            fail("section pages must omit lastmod")
+        if lastmods.get("https://koltigin.xyz/guides/demo-guide/EN/") is not None:
+            fail("undated guide must omit lastmod")
+        src = (ROOT / "scripts" / "generate-share.py").read_text(encoding="utf-8")
+        if "datetime.now" in src or "date.today" in src:
+            fail("sitemap lastmod must not use build time")
+        ok("sitemap lastmod")
         about_html = read(tmp / "about" / "index.html")
         if "https://koltigin.xyz/about/" not in about_html:
             fail("about section canonical")
+        if "data-homepage-graph" in about_html:
+            fail("section pages must not copy homepage json-ld")
         writings_shell = read(tmp / "writings" / "index.html")
         if "koltigin-share-writing" in writings_shell:
             fail("writings list must not be a share redirect")
@@ -637,6 +680,78 @@ def main() -> None:
     if "#\\/guides/" not in guide_src and "parseGuideHash" not in guide_src:
         fail("guide hashes")
     ok("backward compatible hashes still present")
+
+    robots = (ROOT / "robots.txt").read_text(encoding="utf-8")
+    if "Disallow: /admin/" not in robots:
+        fail("robots must disallow /admin/")
+    if "Sitemap: https://koltigin.xyz/sitemap.xml" not in robots:
+        fail("robots must list sitemap")
+    if "User-agent: *" not in robots or "Allow: /" not in robots:
+        fail("robots must allow public crawlers")
+    ok("robots.txt")
+
+    not_found = (ROOT / "404.html").read_text(encoding="utf-8")
+    if 'rel="canonical"' in not_found:
+        fail("404 must not have a canonical")
+    if "https://koltigin.xyz/" in not_found and "Back to home" not in not_found:
+        fail("404 must not use homepage as canonical")
+    if 'content="noindex' not in not_found:
+        fail("404 must keep noindex")
+    ok("404 has no homepage canonical")
+
+    favicon = ROOT / "favicon.ico"
+    if not favicon.is_file() or favicon.stat().st_size < 32:
+        fail("favicon.ico missing or empty")
+    magic = favicon.read_bytes()[:4]
+    if magic != b"\x00\x00\x01\x00":
+        fail("favicon.ico must be a valid ICO")
+    ok("favicon.ico")
+
+    home = (ROOT / "index.html").read_text(encoding="utf-8")
+    home_ld = json_ld(home.replace(' data-homepage-graph', ""))
+    graph = home_ld.get("@graph") if isinstance(home_ld.get("@graph"), list) else []
+    types = {item.get("@type") for item in graph if isinstance(item, dict)}
+    if "WebSite" not in types or "Person" not in types:
+        fail("homepage json-ld must include WebSite and Person")
+    website = next(item for item in graph if item.get("@type") == "WebSite")
+    person = next(item for item in graph if item.get("@type") == "Person")
+    if website.get("url") != "https://koltigin.xyz/" or website.get("name") != "KolTigin":
+        fail("homepage WebSite fields")
+    if person.get("name") != "KolTigin" or person.get("url") != "https://koltigin.xyz/":
+        fail("homepage Person fields")
+    same_as = person.get("sameAs") or []
+    if "https://github.com/koltigin" not in same_as or "https://x.com/mkoltigin" not in same_as:
+        fail("homepage Person sameAs must use configured social urls")
+    ok("homepage WebSite/Person json-ld")
+
+    site = json.loads((ROOT / "config" / "site.json").read_text(encoding="utf-8"))
+    guides_og = (((site.get("seo") or {}).get("routes") or {}).get("guides") or {}).get("ogImage")
+    projects_og = (((site.get("seo") or {}).get("routes") or {}).get("projects") or {}).get("ogImage")
+    if guides_og != "./assets/images/social/og-guides.png":
+        fail("guides section config ogImage must be og-guides.png")
+    if projects_og != "./assets/images/social/og-projects.png":
+        fail("projects section config ogImage must stay og-projects.png")
+    guides_html = (ROOT / "guides" / "index.html").read_text(encoding="utf-8")
+    projects_html = (ROOT / "projects" / "index.html").read_text(encoding="utf-8")
+    detail_html = (
+        ROOT / "guides" / "aro-network-depin-ubuntu-vps-installation-guide" / "EN" / "index.html"
+    ).read_text(encoding="utf-8")
+    if 'property="og:image" content="https://koltigin.xyz/assets/images/social/og-guides.png"' not in guides_html:
+        fail("guides section og:image must be og-guides.png")
+    if 'name="twitter:image" content="https://koltigin.xyz/assets/images/social/og-guides.png"' not in guides_html:
+        fail("guides section twitter:image must be og-guides.png")
+    if "og-projects.png" in guides_html:
+        fail("guides section must not use projects OG")
+    if 'property="og:image" content="https://koltigin.xyz/assets/images/social/og-projects.png"' not in projects_html:
+        fail("projects section og:image must stay og-projects.png")
+    if "aro-network-depin-ubuntu-vps-installation-guide.png" not in detail_html:
+        fail("guide detail must keep generated raster")
+    if "og-guides.png" in detail_html:
+        fail("guide detail must not use section OG")
+    og_guides = ROOT / "assets" / "images" / "social" / "og-guides.png"
+    if not og_guides.is_file() or og_guides.stat().st_size < 32:
+        fail("og-guides.png must exist as the Guides section asset")
+    ok("guides section OG vs projects and detail rasters")
     print("all generate-share tests passed")
 
 

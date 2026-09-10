@@ -142,7 +142,7 @@ class ProjectsParser {
 
   guideShareHref(guideId) {
     const code = this.currentLang() === 'tr' ? 'TR' : 'EN';
-    return `/guides/${encodeURIComponent(guideId)}/${code}`;
+    return `/guides/${encodeURIComponent(guideId)}/${code}/`;
   }
 
   normalizeLinks(links) {

@@ -128,7 +128,7 @@
 
   function guidePublicPath(id, lang) {
     const code = String(lang || 'EN').toUpperCase() === 'TR' ? 'TR' : 'EN';
-    return `/guides/${id}/${code}`;
+    return `/guides/${id}/${code}/`;
   }
 
   function parseGuideHeading(hash) {

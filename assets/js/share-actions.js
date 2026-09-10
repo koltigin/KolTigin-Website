@@ -43,7 +43,7 @@
   function guideShareUrl(lang, id) {
     const code = locale(lang) === 'tr' ? 'TR' : 'EN';
     const slug = String(id || '').trim();
-    return `${siteOrigin()}/guides/${encodeURIComponent(slug)}/${code}`;
+    return `${siteOrigin()}/guides/${encodeURIComponent(slug)}/${code}/`;
   }
 
   function composeText(title, url) {

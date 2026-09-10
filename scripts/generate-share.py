@@ -745,7 +745,7 @@ def guide_share_path(lang: str, item_id: str) -> str:
 
 def guide_public_url(base: str, item_id: str, lang: str) -> str:
     code = "TR" if lang == "tr" else "EN"
-    return abs_url(base, f"guides/{item_id}/{code}")
+    return abs_url(base, f"guides/{item_id}/{code}/")
 
 
 def guide_og_path(lang: str, item_id: str) -> str:
@@ -788,6 +788,7 @@ def json_ld_payload(
     url: str,
     in_language: str,
     date_published: str | None = None,
+    date_modified: str | None = None,
 ) -> dict:
     data = {
         "@context": "https://schema.org",
@@ -802,6 +803,8 @@ def json_ld_payload(
     }
     if date_published:
         data["datePublished"] = date_published
+    if date_modified:
+        data["dateModified"] = date_modified
     return data
 
 
@@ -853,7 +856,7 @@ def writing_detail_html(
 ) -> str:
     if '<meta name="description"' in source and 'rel="canonical"' in source:
         html_out = patch_section_head(
-            source,
+            strip_homepage_jsonld(source),
             title=title,
             description=description,
             canonical=canonical,
@@ -990,6 +993,7 @@ def discover_writings(root: Path) -> list[dict]:
                     "description": str(meta.get("summary") or meta.get("excerpt") or excerpt(body)).strip(),
                     "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
                     "date": published_date(meta.get("date")),
+                    "updated": published_date(meta.get("updated") or meta.get("modified")),
                     "body": body,
                 }
     return [items[key] for key in sorted(items)]
@@ -1017,6 +1021,8 @@ def discover_guides(root: Path) -> list[dict]:
                 "title": title,
                 "description": first_paragraph(text),
                 "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
+                "date": published_date(meta.get("date")),
+                "updated": published_date(meta.get("updated") or meta.get("modified")),
             }
         if rec["langs"]:
             items.append(rec)
@@ -1057,6 +1063,10 @@ def prune_generated(root: Path, keep: set[Path], bases: list[Path]) -> list[str]
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
 
+def sitemap_lastmod(value: object) -> str | None:
+    return published_date(value)
+
+
 def sitemap_xml(_base: str, urls: list[dict]) -> str:
     """Google-compatible urlset sitemap. No xhtml:link — that namespace makes
     Chrome (and some crawlers) treat the file as HTML and show concatenated URLs.
@@ -1072,6 +1082,10 @@ def sitemap_xml(_base: str, urls: list[dict]) -> str:
         url_el = ET.SubElement(urlset, f"{{{SITEMAP_NS}}}url")
         loc_el = ET.SubElement(url_el, f"{{{SITEMAP_NS}}}loc")
         loc_el.text = loc
+        lastmod = sitemap_lastmod((entry or {}).get("lastmod"))
+        if lastmod:
+            lastmod_el = ET.SubElement(url_el, f"{{{SITEMAP_NS}}}lastmod")
+            lastmod_el.text = lastmod
     ET.indent(urlset, space="  ")
     body = ET.tostring(urlset, encoding="unicode")
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + body + "\n"
@@ -1140,6 +1154,16 @@ def patch_section_head(
     return html_out
 
 
+def strip_homepage_jsonld(source: str) -> str:
+    return re.sub(
+        r'\n?\s*<script type="application/ld\+json" data-homepage-graph>[\s\S]*?</script>',
+        "",
+        source,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+
+
 def patch_guide_spa_page(
     source: str,
     *,
@@ -1152,7 +1176,7 @@ def patch_guide_spa_page(
     json_ld: dict,
 ) -> str:
     html_out = patch_section_head(
-        source,
+        strip_homepage_jsonld(source),
         title=title,
         description=description,
         canonical=canonical,
@@ -1211,7 +1235,7 @@ def write_section_pages(root: Path) -> list[str]:
         title, description, image = section_copy(root, spec["id"])
         canonical = f"{base}{spec['path']}"
         html_out = patch_section_head(
-            source,
+            strip_homepage_jsonld(source),
             title=title,
             description=description,
             canonical=canonical,
@@ -1296,13 +1320,17 @@ def generate(root: Path) -> dict:
                         url=canonical,
                         in_language="tr" if lang == "tr" else "en",
                         date_published=data.get("date"),
+                        date_modified=data.get("updated"),
                     ),
                 ),
             )
             keep.add(html_path.resolve())
             keep.add(og_path.resolve())
             created.append(html_rel)
-            sitemap_entries.append({"loc": canonical, "alternates": alternates})
+            writing_lastmod = data.get("updated") or data.get("date")
+            sitemap_entries.append(
+                {"loc": canonical, "alternates": alternates, "lastmod": writing_lastmod}
+            )
 
     index_source = (root / "index.html").read_text(encoding="utf-8") if (root / "index.html").is_file() else ""
 
@@ -1336,7 +1364,8 @@ def generate(root: Path) -> dict:
                 image=image,
                 url=canonical,
                 in_language="tr" if lang == "tr" else "en",
-                date_published=None,
+                date_published=data.get("date"),
+                date_modified=data.get("updated"),
             )
             if index_source:
                 write_text(
@@ -1355,7 +1384,10 @@ def generate(root: Path) -> dict:
             keep.add(html_path.resolve())
             keep.add(og_path.resolve())
             created.append(html_rel)
-            sitemap_entries.append({"loc": canonical, "alternates": alternates})
+            guide_lastmod = data.get("updated") or data.get("date")
+            sitemap_entries.append(
+                {"loc": canonical, "alternates": alternates, "lastmod": guide_lastmod}
+            )
 
     sitemap_path = root / "sitemap.xml"
     write_text(sitemap_path, sitemap_xml(base, sitemap_entries))

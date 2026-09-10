@@ -56,8 +56,8 @@ const guideTr = share.guideShareUrl("tr", "demo-guide");
 assert(writingEn === "https://koltigin.xyz/writings/en/notes/no-cover/", "en writing canonical");
 assert(writingTr === "https://koltigin.xyz/writings/tr/notes/no-cover/", "tr writing canonical");
 assert(writingEn !== writingTr, "en/tr writing urls differ");
-assert(guideEn === "https://koltigin.xyz/guides/demo-guide/EN", "en guide canonical");
-assert(guideTr === "https://koltigin.xyz/guides/demo-guide/TR", "tr guide canonical");
+assert(guideEn === "https://koltigin.xyz/guides/demo-guide/EN/", "en guide canonical");
+assert(guideTr === "https://koltigin.xyz/guides/demo-guide/TR/", "tr guide canonical");
 assert(!writingEn.includes("#") && !guideEn.includes("#"), "share urls are not hashes");
 assert(!src.includes("location.href"), "module does not share location.href");
 

@@ -108,7 +108,7 @@
         }
       },
       "guides": {
-        "ogImage": "./assets/images/social/og-projects.png",
+        "ogImage": "./assets/images/social/og-guides.png",
         "en": {
           "title": "Guides · KolTigin",
           "description": "Setup and installation guides for KolTigin’s node, testnet, and DePIN projects."

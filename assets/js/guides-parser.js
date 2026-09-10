@@ -162,7 +162,7 @@ class GuidesParser {
     const lang = this.currentLang || this.siteGuideLang();
     const path = router && typeof router.guidePublicPath === 'function'
       ? router.guidePublicPath(this.currentId, lang)
-      : `/guides/${this.currentId}/${lang}`;
+      : `/guides/${this.currentId}/${lang}/`;
     const slug = String(heading || '').trim();
     return slug ? `${path}#${slug}` : path;
   }
@@ -255,7 +255,7 @@ class GuidesParser {
   }
 
   createIndexCard(item) {
-    const href = `/guides/${this.escapeHtml(item.id)}/${item.lang}`;
+    const href = `/guides/${this.escapeHtml(item.id)}/${item.lang}/`;
     const project = item.project
       ? `<p class="blog-category">${this.escapeHtml(item.project)}</p>`
       : '';

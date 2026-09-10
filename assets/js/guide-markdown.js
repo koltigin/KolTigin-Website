@@ -48,7 +48,7 @@ window.KolTiginGuideMarkdown = {
       const trimmed = href.trim();
       if (/^(TR|EN)\.md$/i.test(trimmed)) {
         const lang = trimmed.slice(0, 2).toUpperCase();
-        return `<a href="/guides/${this.escapeHtml(guideId)}/${lang}" data-guide-lang="${lang}">${label}</a>`;
+        return `<a href="/guides/${this.escapeHtml(guideId)}/${lang}/" data-guide-lang="${lang}">${label}</a>`;
       }
       const safeHref = this.escapeHtml(trimmed);
       const external = /^https?:\/\//i.test(trimmed) ? ' target="_blank" rel="noopener noreferrer"' : '';

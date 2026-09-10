@@ -45,7 +45,7 @@ const sandbox = {
       parseGuidePath() { return null; },
       parseGuideHash() { return null; },
       parseGuideHeading() { return ""; },
-      guidePublicPath(id, lang) { return `/guides/${id}/${lang}`; }
+      guidePublicPath(id, lang) { return `/guides/${id}/${lang}/`; }
     },
     activatePage() {},
     addEventListener() {},
@@ -97,8 +97,8 @@ const trCard = parser.createIndexCard({
   project: "ARO"
 });
 
-assert(enCard.includes(`href="/guides/${ARO}/EN"`), "EN card route is /guides/{id}/EN");
-assert(trCard.includes(`href="/guides/${ARO}/TR"`), "TR card route is /guides/{id}/TR");
+assert(enCard.includes(`href="/guides/${ARO}/EN/"`), "EN card route is /guides/{id}/EN/");
+assert(trCard.includes(`href="/guides/${ARO}/TR/"`), "TR card route is /guides/{id}/TR/");
 assert(enCard.includes("ARO Network DePIN — Ubuntu / VPS Installation Guide"), "EN card shows real title");
 assert(trCard.includes("ARO Network DePIN — Ubuntu / VPS Kurulum Rehberi"), "TR card shows real title");
 assert(!enCard.includes(`>${ARO}<`), "EN card does not show slug as title");

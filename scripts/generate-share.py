@@ -12,6 +12,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import quote
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
@@ -163,6 +164,224 @@ def kind_label(root: Path, kind: str, lang: str) -> str:
     if isinstance(labels, dict):
         return str(labels.get(lang) or labels.get("en") or kind)
     return str(labels or kind)
+
+
+MONTHS_EN = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+MONTHS_TR = (
+    "Ocak",
+    "Şubat",
+    "Mart",
+    "Nisan",
+    "Mayıs",
+    "Haziran",
+    "Temmuz",
+    "Ağustos",
+    "Eylül",
+    "Ekim",
+    "Kasım",
+    "Aralık",
+)
+
+
+def format_display_date(iso: str | None, lang: str) -> str:
+    match = DATE_ISO.match(str(iso or "").strip())
+    if not match:
+        return ""
+    year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+    if not (1 <= month <= 12 and 1 <= day <= 31):
+        return ""
+    names = MONTHS_TR if lang == "tr" else MONTHS_EN
+    return f"{day} {names[month - 1]} {year}"
+
+
+def parse_inline_markdown(text: str) -> str:
+    html_out = html.escape(text or "")
+    html_out = re.sub(
+        r"!\[([^\]]*)\]\(([^)]+)\)",
+        lambda m: (
+            f'<img src="{html.escape(m.group(2).strip())}" alt="{html.escape(m.group(1))}" loading="lazy">'
+        ),
+        html_out,
+    )
+    html_out = re.sub(r"`([^`]+)`", r"<code>\1</code>", html_out)
+    html_out = re.sub(
+        r"\[([^\]]+)\]\(([^)]+)\)",
+        lambda m: (
+            f'<a href="{html.escape(m.group(2).strip())}"'
+            + (
+                ' target="_blank" rel="noopener noreferrer"'
+                if re.match(r"^https?://", m.group(2).strip(), flags=re.I)
+                else ""
+            )
+            + f">{m.group(1)}</a>"
+        ),
+        html_out,
+    )
+    html_out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", html_out)
+    html_out = re.sub(
+        r"(^|[\s(])(https?://[^\s<]+)",
+        lambda m: (
+            f'{m.group(1)}<a href="{html.escape(m.group(2).rstrip(").,;"))}" target="_blank" rel="noopener noreferrer">'
+            f"{html.escape(m.group(2).rstrip(').,;'))}</a>"
+        ),
+        html_out,
+    )
+    return html_out
+
+
+def markdown_to_html(markdown: str, *, copy_label: str = "Copy") -> str:
+    lines = str(markdown or "").replace("\r\n", "\n").split("\n")
+    out: list[str] = []
+    i = 0
+    copy = html.escape(copy_label)
+    while i < len(lines):
+        line = lines[i]
+        if re.match(r"^```", line):
+            lang = re.sub(r"^```", "", line).strip() or "text"
+            code: list[str] = []
+            i += 1
+            while i < len(lines) and not re.match(r"^```", lines[i]):
+                code.append(lines[i])
+                i += 1
+            i += 1
+            out.append(
+                '<div class="guide-code-wrap">'
+                '<div class="guide-code-meta">'
+                f"<span>{html.escape(lang)}</span>"
+                f'<button type="button" class="guide-copy-btn" data-copy-code>{copy}</button>'
+                "</div>"
+                f"<pre><code>{html.escape(chr(10).join(code))}</code></pre>"
+                "</div>"
+            )
+            continue
+        heading = re.match(r"^(#{1,6}) ", line)
+        if heading:
+            level = len(heading.group(1))
+            out.append(f"<h{level}>{parse_inline_markdown(line[level + 1 :])}</h{level}>")
+            i += 1
+            continue
+        if re.match(r"^(-{3,}|_{3,})$", line.strip()):
+            out.append("<hr>")
+            i += 1
+            continue
+        if re.match(r"^>\s?", line):
+            quote: list[str] = []
+            while i < len(lines) and re.match(r"^>\s?", lines[i]):
+                quote.append(re.sub(r"^>\s?", "", lines[i]))
+                i += 1
+            out.append(f"<blockquote><p>{parse_inline_markdown(' '.join(quote))}</p></blockquote>")
+            continue
+        if re.match(r"^[-*] ", line) or re.match(r"^\d+\. ", line):
+            ordered = bool(re.match(r"^\d+\. ", line))
+            items: list[str] = []
+            while i < len(lines) and (
+                re.match(r"^\d+\. ", lines[i]) if ordered else re.match(r"^[-*] ", lines[i])
+            ):
+                items.append(
+                    "<li>"
+                    + parse_inline_markdown(re.sub(r"^(?:[-*]|\d+\.)\s", "", lines[i]))
+                    + "</li>"
+                )
+                i += 1
+            tag = "ol" if ordered else "ul"
+            out.append(f"<{tag}>{''.join(items)}</{tag}>")
+            continue
+        if not line.strip():
+            i += 1
+            continue
+        para: list[str] = []
+        while (
+            i < len(lines)
+            and lines[i].strip()
+            and not re.match(r"^#{1,6} ", lines[i])
+            and not re.match(r"^```", lines[i])
+            and not re.match(r"^>\s?", lines[i])
+            and not re.match(r"^[-*] ", lines[i])
+            and not re.match(r"^\d+\. ", lines[i])
+            and not re.match(r"^(-{3,}|_{3,})$", lines[i].strip())
+        ):
+            para.append(lines[i])
+            i += 1
+        out.append(f"<p>{parse_inline_markdown(' '.join(para))}</p>")
+    return "\n".join(out)
+
+
+def writing_share_bar(*, title: str, url: str, lang: str) -> str:
+    page_url = str(url or "")
+    headline = str(title or "")
+    encoded_url = quote(page_url, safe="")
+    encoded_title = quote(headline, safe="")
+    compose = quote(f"{headline}\n{page_url}" if headline else page_url, safe="")
+    share_label = "Paylaş" if lang == "tr" else "Share"
+    return f"""
+      <div class="share-actions" data-share-actions data-share-url="{html.escape(page_url, quote=True)}" data-share-title="{html.escape(headline, quote=True)}">
+        <a class="share-action" data-share-network="x" href="https://x.com/intent/tweet?text={html.escape(encoded_title, quote=True)}&amp;url={html.escape(encoded_url, quote=True)}" target="_blank" rel="noopener noreferrer">X</a>
+        <a class="share-action" data-share-network="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url={html.escape(encoded_url, quote=True)}" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a class="share-action" data-share-network="farcaster" href="https://farcaster.xyz/~/compose?text={html.escape(compose, quote=True)}" target="_blank" rel="noopener noreferrer">Farcaster</a>
+        <button type="button" class="share-action" data-share-native>{html.escape(share_label)}</button>
+      </div>
+    """
+
+
+def writing_article_section(
+    *,
+    lang: str,
+    title: str,
+    body: str,
+    category: str,
+    date_iso: str | None,
+    cover_src: str,
+    canonical: str,
+    brand: str,
+) -> str:
+    date_label = format_display_date(date_iso, lang)
+    meta = " · ".join(part for part in (category, date_label) if part)
+    back = "Yazılara dön" if lang == "tr" else "Back to writings"
+    copy = "Kopyala" if lang == "tr" else "Copy"
+    share = writing_share_bar(title=title, url=canonical, lang=lang)
+    cover = ""
+    if cover_src:
+        cover = (
+            f'<figure class="writings-detail-cover">'
+            f'<img src="{html.escape(cover_src)}" alt="{html.escape(title)}" loading="lazy" decoding="async">'
+            f"</figure>"
+        )
+    article = markdown_to_html(body, copy_label=copy)
+    author = html.escape(brand)
+    return f"""
+      <section class="blog-post-detail" data-writing-article>
+        <a class="back-btn" href="/writings/">
+          <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+          <span>{html.escape(back)}</span>
+        </a>
+        <header class="blog-post-header">
+          <div class="blog-post-meta">
+            <p class="blog-category">{html.escape(meta)}</p>
+          </div>
+          <h1 class="h2 writings-detail-title">{html.escape(title)}</h1>
+          <p class="blog-text">{html.escape(author)}</p>
+          {share}
+        </header>
+        {cover}
+        <div class="blog-post-content">
+          {article}
+        </div>
+        {share}
+      </section>
+    """
 
 
 def excerpt(body: str, limit: int = 160) -> str:
@@ -592,36 +811,130 @@ def json_ld_script(data: dict) -> str:
     return f'  <script type="application/ld+json">{payload}</script>'
 
 
-def share_html(
+def writing_head_extras(
+    *,
+    lang: str,
+    marker: str,
+    alternates: dict[str, str],
+    json_ld: dict,
+) -> str:
+    extras = [f'  <meta name="{html.escape(marker)}" content="1">']
+    for code, url in alternates.items():
+        extras.append(
+            f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
+        )
+    if "en" in alternates:
+        extras.append(
+            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">'
+        )
+    elif alternates:
+        first = next(iter(alternates.values()))
+        extras.append(f'  <link rel="alternate" hreflang="x-default" href="{html.escape(first)}">')
+    extras.append('  <meta property="og:image:width" content="1200">')
+    extras.append('  <meta property="og:image:height" content="630">')
+    extras.append(json_ld_script(json_ld))
+    extras.append(
+        f'  <script>try{{localStorage.setItem("siteLang","{html.escape(lang)}");}}catch(e){{}}</script>'
+    )
+    return "\n".join(extras)
+
+
+def writing_detail_html(
+    source: str,
     *,
     lang: str,
     title: str,
     description: str,
     canonical: str,
     image: str,
-    spa_hash: str,
+    article_html: str,
     alternates: dict[str, str],
-    marker: str,
-    brand: str,
-    schema_type: str,
-    author: str,
-    date_published: str | None = None,
+    json_ld: dict,
 ) -> str:
+    if '<meta name="description"' in source and 'rel="canonical"' in source:
+        html_out = patch_section_head(
+            source,
+            title=title,
+            description=description,
+            canonical=canonical,
+            image=image,
+        )
+        html_out = re.sub(
+            r'(<html[^>]*\blang=")[^"]*(")',
+            rf"\1{html.escape(lang)}\2",
+            html_out,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        html_out = re.sub(
+            r'(<meta property="og:type" content=")[^"]*(")',
+            r"\1article\2",
+            html_out,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        html_out = re.sub(
+            r'(<meta property="og:locale" content=")[^"]*(")',
+            rf'\1{"tr_TR" if lang == "tr" else "en_US"}\2',
+            html_out,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        extras = writing_head_extras(
+            lang=lang,
+            marker=WRITINGS_MARKER,
+            alternates=alternates,
+            json_ld=json_ld,
+        )
+        html_out = html_out.replace("</head>", extras + "\n</head>", 1)
+        html_out = html_out.replace('class="about active"', 'class="about"', 1)
+        html_out = html_out.replace('class="blog"', 'class="blog active"', 1)
+        html_out = html_out.replace(
+            'navbar-link active" data-nav-link data-nav-page="about"',
+            'navbar-link" data-nav-link data-nav-page="about"',
+            1,
+        )
+        html_out = html_out.replace(
+            'navbar-link" data-nav-link data-nav-page="blog"',
+            'navbar-link active" data-nav-link data-nav-page="blog"',
+            1,
+        )
+        html_out = re.sub(
+            r'(<nav class="writings-filter"[^>]*)>',
+            r"\1 hidden>",
+            html_out,
+            count=1,
+        )
+        if "data-writings-view" in html_out:
+            html_out = re.sub(
+                r"<div data-writings-view>[\s\S]*?</div>",
+                f'<div data-writings-view>\n{article_html}\n        </div>',
+                html_out,
+                count=1,
+            )
+        else:
+            html_out = html_out.replace(
+                "</body>",
+                f"<main>{article_html}</main>\n</body>",
+                1,
+            )
+        return html_out
+
     hreflang = []
     for code, url in alternates.items():
-        hreflang.append(f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">')
+        hreflang.append(
+            f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
+        )
     if "en" in alternates:
-        hreflang.append(f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">')
-    elif alternates:
-        first = next(iter(alternates.values()))
-        hreflang.append(f'  <link rel="alternate" hreflang="x-default" href="{html.escape(first)}">')
-    continue_href = f"/{spa_hash}" if spa_hash.startswith("#") else spa_hash
+        hreflang.append(
+            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">'
+        )
     return f"""<!DOCTYPE html>
 <html lang="{html.escape(lang)}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="{html.escape(marker)}" content="1">
+  <meta name="{html.escape(WRITINGS_MARKER)}" content="1">
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(description)}">
   <link rel="canonical" href="{html.escape(canonical)}">
@@ -638,28 +951,15 @@ def share_html(
   <meta name="twitter:title" content="{html.escape(title)}">
   <meta name="twitter:description" content="{html.escape(description)}">
   <meta name="twitter:image" content="{html.escape(image)}">
-{json_ld_script(json_ld_payload(
-        schema_type=schema_type,
-        headline=title,
-        description=description,
-        author=author,
-        image=image,
-        url=canonical,
-        in_language="tr" if lang == "tr" else "en",
-        date_published=date_published,
-    ))}
-  <meta http-equiv="refresh" content="0;url={html.escape(continue_href)}">
-  <style>
-    body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111113; color: #d6d6d6; font-family: Poppins, system-ui, sans-serif; }}
-    a {{ color: #ffd86f; }}
-  </style>
+{json_ld_script(json_ld)}
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script>try{{localStorage.setItem("siteLang","{html.escape(lang)}");}}catch(e){{}}</script>
 </head>
 <body>
-  <p><a href="{html.escape(continue_href)}">Continue to {html.escape(brand)}</a></p>
-  <script>
-    try {{ localStorage.setItem("siteLang", "{html.escape(lang)}"); }} catch (e) {{}}
-    location.replace({json.dumps(continue_href)});
-  </script>
+<main>
+{article_html}
+</main>
+<script src="/assets/js/share-actions.js"></script>
 </body>
 </html>
 """
@@ -690,6 +990,7 @@ def discover_writings(root: Path) -> list[dict]:
                     "description": str(meta.get("summary") or meta.get("excerpt") or excerpt(body)).strip(),
                     "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
                     "date": published_date(meta.get("date")),
+                    "body": body,
                 }
     return [items[key] for key in sorted(items)]
 
@@ -955,22 +1256,47 @@ def generate(root: Path) -> dict:
                 )
             canonical = alternates[lang]
             image = abs_url(base, og_rel)
-            spa = f"#/yazilar/{kind}/{item_id}"
+            cover_src = ""
+            if used_cover and cover:
+                cover_src = "/" + str(cover.relative_to(root)).replace("\\", "/")
+            else:
+                cover_src = "/" + og_rel
+            article_html = writing_article_section(
+                lang=lang,
+                title=data["title"],
+                body=data.get("body") or "",
+                category=kind_label(root, kind, lang),
+                date_iso=data.get("date"),
+                cover_src=cover_src,
+                canonical=canonical,
+                brand=brand,
+            )
+            index_source = (
+                (root / "index.html").read_text(encoding="utf-8")
+                if (root / "index.html").is_file()
+                else ""
+            )
             write_text(
                 html_path,
-                share_html(
+                writing_detail_html(
+                    index_source,
                     lang=lang,
                     title=data["title"],
                     description=data["description"] or data["title"],
                     canonical=canonical,
                     image=image,
-                    spa_hash=spa,
+                    article_html=article_html,
                     alternates=alternates,
-                    marker=WRITINGS_MARKER,
-                    brand=brand,
-                    schema_type="BlogPosting",
-                    author=brand,
-                    date_published=data.get("date"),
+                    json_ld=json_ld_payload(
+                        schema_type="BlogPosting",
+                        headline=data["title"],
+                        description=data["description"] or data["title"],
+                        author=brand,
+                        image=image,
+                        url=canonical,
+                        in_language="tr" if lang == "tr" else "en",
+                        date_published=data.get("date"),
+                    ),
                 ),
             )
             keep.add(html_path.resolve())

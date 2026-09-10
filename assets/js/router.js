@@ -42,10 +42,36 @@
     return `${trimmed}/`;
   }
 
+  function parseWritingPath(pathname) {
+    const parts = String(pathname || '').split('?')[0].split('#')[0].split('/').filter(Boolean);
+    if (parts.length !== 4 || parts[0] !== 'writings') return null;
+    if (!/^(en|tr)$/i.test(parts[1])) return null;
+    if (!/^[a-z0-9-]+$/i.test(parts[2]) || !/^[a-z0-9-]+$/i.test(parts[3])) return null;
+    return {
+      lang: parts[1].toLowerCase() === 'tr' ? 'tr' : 'en',
+      kind: parts[2],
+      id: parts[3]
+    };
+  }
+
+  function writingPublicPath(lang, kind, id) {
+    const loc = String(lang || 'en').toLowerCase() === 'tr' ? 'tr' : 'en';
+    return `/writings/${loc}/${kind}/${id}/`;
+  }
+
   function sectionForPath(pathname) {
     const guide = parseGuidePath(pathname);
     if (guide) {
       return { id: 'guides', path: guidePublicPath(guide.id, guide.lang), page: 'guide', nav: 'guides' };
+    }
+    const writing = parseWritingPath(pathname);
+    if (writing) {
+      return {
+        id: 'writings',
+        path: writingPublicPath(writing.lang, writing.kind, writing.id),
+        page: 'blog',
+        nav: 'blog'
+      };
     }
     const path = normalizePath(pathname);
     return SECTIONS.find((item) => item.path === path) || SECTIONS[0];
@@ -62,6 +88,8 @@
   }
 
   function canonicalForPath(pathname) {
+    const writing = parseWritingPath(pathname);
+    if (writing) return `${ORIGIN}${writingPublicPath(writing.lang, writing.kind, writing.id)}`;
     const guide = parseGuidePath(pathname);
     if (guide) return `${ORIGIN}${guidePublicPath(guide.id, guide.lang)}`;
     const section = sectionForPath(pathname);
@@ -114,7 +142,10 @@
 
   function legacyTarget(hash) {
     const value = String(hash || '');
-    if (isWritingDetailHash(value)) return `/writings/${value}`;
+    if (isWritingDetailHash(value)) {
+      const match = value.match(/^#\/yazilar\/([a-z0-9-]+)\/([^/]+)$/i);
+      if (match) return writingPublicPath('en', match[1], match[2]);
+    }
     if (value === '#/yazilar' || value === '#yazilar') return '/writings/';
     const guide = parseGuideHash(value);
     if (guide) {
@@ -147,6 +178,8 @@
     isWritingDetailHash,
     isGuideHash,
     parseGuideHash,
+    parseWritingPath,
+    writingPublicPath,
     parseGuidePath,
     parseGuideHeading,
     guidePublicPath,

@@ -78,6 +78,18 @@ function originUrl(site) {
 
 function routeSeo(site, lang) {
   const router = window.KolTiginRouter;
+  const writing = router && router.parseWritingPath(window.location.pathname);
+  if (writing) {
+    return {
+      routeId: 'writing',
+      type: 'article',
+      title: document.title || 'KolTigin',
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+      url: `${originUrl(site)}${router.writingPublicPath(writing.lang, writing.kind, writing.id)}`,
+      image: document.querySelector('meta[property="og:image"]')?.getAttribute('content')
+        || absoluteAssetUrl(site, `./assets/images/og/writings/${writing.lang}/${writing.kind}/${writing.id}.png`)
+    };
+  }
   const guide = router && router.parseGuidePath(window.location.pathname);
   if (guide) {
     const loc = guide.lang === 'TR' ? 'tr' : 'en';
@@ -217,6 +229,14 @@ function bindLangSwitch() {
     event.preventDefault();
     event.stopPropagation();
     window.KolTiginI18n.setLanguage(button.getAttribute('data-set-lang'));
+    const writing = window.KolTiginRouter && window.KolTiginRouter.parseWritingPath(window.location.pathname);
+    if (writing) {
+      const loc = button.getAttribute('data-set-lang') === 'tr' ? 'tr' : 'en';
+      const next = window.KolTiginRouter.writingPublicPath(loc, writing.kind, writing.id);
+      if (window.KolTiginRouter.normalizePath(window.location.pathname) !== window.KolTiginRouter.normalizePath(next)) {
+        window.location.assign(next);
+      }
+    }
   });
 }
 

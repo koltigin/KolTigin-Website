@@ -84,7 +84,9 @@ assert(
   "share links force no underline"
 );
 
-const cardFn = blog.slice(blog.indexOf("createCard("), blog.indexOf("renderList("));
+const cardFn = blog.slice(blog.indexOf("createCard(item) {"), blog.indexOf("renderList() {"));
+assert(cardFn.includes("/writings/${loc}/"), "writing cards href canonical public urls");
+assert(!cardFn.includes("#/yazilar"), "writing cards do not use hash hrefs");
 assert(!cardFn.includes("shareMarkup") && !cardFn.includes("data-share-actions"), "writing list cards have no share controls");
 assert(blog.includes("shareMarkup(item)"), "writing detail uses shared share helper");
 const showItem = blog.slice(blog.indexOf("showItem(id)"), blog.indexOf("\n  contentLang()"));

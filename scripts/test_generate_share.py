@@ -63,7 +63,16 @@ def setup_root(tmp: Path) -> Path:
     )
     write(
         tmp / "content" / "notes" / "en" / "no-cover.md",
-        '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\nBody.\n',
+        '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\n'
+        "Body.\n\n"
+        "## Ops\n\n"
+        "- alerts\n"
+        "- peers\n\n"
+        "1. first\n\n"
+        "Use `keys` and **uptime**.\n\n"
+        "> keep snapshots\n\n"
+        "```bash\nsystemctl status\n```\n\n"
+        "[docs](https://example.com)\n",
     )
     write(
         tmp / "content" / "notes" / "tr" / "no-cover.md",
@@ -172,12 +181,32 @@ def main() -> None:
             'twitter:card" content="summary_large_image"',
             "https://koltigin.xyz/assets/images/og/writings/en/notes/no-cover.png",
             "https://koltigin.xyz/writings/en/notes/no-cover/",
-            "#/yazilar/notes/no-cover",
+            "<p>Body.</p>",
+            "<h2>Ops</h2>",
+            "<ul><li>alerts</li><li>peers</li></ul>",
+            "<ol><li>first</li></ol>",
+            "<code>keys</code>",
+            "<strong>uptime</strong>",
+            "<blockquote>",
+            "keep snapshots",
+            "<pre><code>",
+            "systemctl status",
+            'href="https://example.com"',
+            'rel="canonical" href="https://koltigin.xyz/writings/en/notes/no-cover/"',
+            'hreflang="en"',
             'hreflang="tr"',
             'hreflang="x-default"',
         ):
             if needle not in html:
                 fail(f"writing html missing {needle}")
+        if 'http-equiv="refresh"' in html.lower() or "http-equiv='refresh'" in html.lower():
+            fail("writing html must not meta-refresh")
+        if "location.replace" in html and "#/yazilar" in html:
+            fail("writing html must not location.replace to hash writings")
+        if "#/yazilar/" in html:
+            fail("writing html must not use hash writings urls")
+        if 'hreflang="x-default" href="https://koltigin.xyz/writings/en/notes/no-cover/"' not in html:
+            fail("x-default must point at the English writing url")
         ok("writing without cover share html")
         if Image.open(note_og).size != (1200, 630):
             fail("fallback og size")
@@ -188,6 +217,14 @@ def main() -> None:
         tr_html = read(tmp / "writings" / "tr" / "notes" / "no-cover" / "index.html")
         if "Doğrulayıcı notları" not in tr_html or 'lang="tr"' not in tr_html:
             fail("tr metadata")
+        if "<p>Gövde.</p>" not in tr_html:
+            fail("tr writing html must contain article body")
+        if 'rel="canonical" href="https://koltigin.xyz/writings/tr/notes/no-cover/"' not in tr_html:
+            fail("tr writing must be self-canonical")
+        if 'hreflang="x-default" href="https://koltigin.xyz/writings/en/notes/no-cover/"' not in tr_html:
+            fail("tr writing x-default must be English")
+        if 'http-equiv="refresh"' in tr_html.lower() or "location.replace" in tr_html:
+            fail("tr writing html must not redirect")
         ok("bilingual writing metadata")
 
         note_ld = json_ld(html)
@@ -236,6 +273,10 @@ def main() -> None:
         cover_html = read(tmp / "writings" / "en" / "articles" / "with-cover" / "index.html")
         if "SoulMemory" not in cover_html or "with-cover.png" not in cover_html:
             fail("custom cover html")
+        if "/assets/images/blog/soul.png" not in cover_html:
+            fail("custom cover article must use the uploaded cover file")
+        if "<p>Hello.</p>" not in cover_html:
+            fail("custom cover writing must contain article body")
         ok("writing with custom cover html")
 
         if (tmp / "writings" / "en" / "social" / "tweet" / "index.html").exists():
@@ -419,7 +460,16 @@ def main() -> None:
         # Recreate the deleted note so identity raster tests have a fallback PNG.
         write(
             tmp / "content" / "notes" / "en" / "no-cover.md",
-            '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\nBody.\n',
+            '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\n'
+            "Body.\n\n"
+            "## Ops\n\n"
+            "- alerts\n"
+            "- peers\n\n"
+            "1. first\n\n"
+            "Use `keys` and **uptime**.\n\n"
+            "> keep snapshots\n\n"
+            "```bash\nsystemctl status\n```\n\n"
+            "[docs](https://example.com)\n",
         )
         write(
             tmp / "content" / "notes" / "tr" / "no-cover.md",
@@ -429,7 +479,7 @@ def main() -> None:
         if Image.open(fallback_png).size != (1200, 630):
             fail("fallback png must remain 1200x630")
         html = read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html")
-        if "Continue to KolTigin" not in html:
+        if "KolTigin" not in html:
             fail("share html should use configured displayName")
         ok("fallback raster size and configured name")
 
@@ -576,6 +626,13 @@ def main() -> None:
     hash_src = (ROOT / "assets" / "js" / "blog-parser.js").read_text(encoding="utf-8")
     if r"^#\/yazilar\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([^/]+)$" not in hash_src and "#/yazilar/" not in hash_src:
         fail("writing hashes")
+    card_start = hash_src.find("createCard(item) {")
+    card_end = hash_src.find("renderList() {")
+    card_fn = hash_src[card_start:card_end]
+    if "/writings/${loc}/" not in card_fn:
+        fail("writing cards must href canonical public writing urls")
+    if "#/yazilar/" in card_fn:
+        fail("writing card primary href must not use #/yazilar/")
     guide_src = (ROOT / "assets" / "js" / "guides-parser.js").read_text(encoding="utf-8")
     if "#\\/guides/" not in guide_src and "parseGuideHash" not in guide_src:
         fail("guide hashes")

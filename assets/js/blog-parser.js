@@ -62,6 +62,12 @@ class BlogParser {
     this.wrapActivatePage();
     this.bindHash();
     await this.loadItems();
+    if (this.publicWritingPath()) {
+      this.filterNav?.setAttribute('hidden', '');
+      this.bindCoverFallbacks();
+      if (window.KolTiginShareActions) window.KolTiginShareActions.bind(this.view);
+      return;
+    }
     if (window.location.hash.startsWith('#/yazilar/')) this.openFromHash();
     else this.renderList();
   }
@@ -71,14 +77,14 @@ class BlogParser {
     if (typeof original !== 'function' || original._writingsWrapped) return;
     this.activateOriginal = original;
 
-    const wrapped = (pageName) => {
+    const wrapped = (pageName, options) => {
       if (pageName === 'blog') {
         history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
       } else if (window.location.hash.startsWith('#/yazilar')) {
         history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
       }
-      original(pageName);
-      if (pageName === 'blog') this.renderList();
+      original(pageName, options);
+      if (pageName === 'blog' && !this.publicWritingPath()) this.renderList();
     };
     wrapped._writingsWrapped = true;
     window.activatePage = wrapped;
@@ -90,13 +96,15 @@ class BlogParser {
     });
   }
 
+  publicWritingPath() {
+    return window.KolTiginRouter ? window.KolTiginRouter.parseWritingPath(window.location.pathname) : null;
+  }
+
   openFromHash() {
     const match = window.location.hash.match(/^#\/yazilar\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([^/]+)$/i);
     if (!match) return;
-    if (typeof this.activateOriginal === 'function') {
-      this.activateOriginal('blog', { skipHistory: true, keepHash: true, instantScroll: true });
-    }
-    this.showItem(`${match[1]}/${decodeURIComponent(match[2])}`);
+    const dest = `/writings/${this.contentLang()}/${match[1]}/${decodeURIComponent(match[2])}/`;
+    window.location.replace(dest);
   }
 
   bindUi() {
@@ -111,6 +119,7 @@ class BlogParser {
     this.view.addEventListener('click', (event) => {
       const back = event.target.closest('[data-writings-back]');
       if (back) {
+        if (back.tagName === 'A' && back.getAttribute('href')) return;
         event.preventDefault();
         this.showList();
         return;
@@ -118,8 +127,7 @@ class BlogParser {
 
       const open = event.target.closest('[data-writings-open]');
       if (open) {
-        event.preventDefault();
-        this.showItem(open.dataset.writingsOpen);
+        return;
       }
     });
 
@@ -200,6 +208,9 @@ class BlogParser {
 
   parseInline(text) {
     let html = this.escapeHtml(text);
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, href) => (
+      `<img src="${this.escapeHtml(href.trim())}" alt="${this.escapeHtml(alt)}" loading="lazy">`
+    ));
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
       const trimmed = href.trim();
@@ -582,10 +593,13 @@ class BlogParser {
     ].filter(Boolean).join(' · ');
 
     const isExternal = this.isExternal(item);
-    const href = isExternal ? this.escapeHtml(item.externalUrl) : `#/yazilar/${item.kind}/${encodeURIComponent(item.slug)}`;
+    const loc = this.contentLang();
+    const href = isExternal
+      ? this.escapeHtml(item.externalUrl)
+      : `/writings/${loc}/${encodeURIComponent(item.kind)}/${encodeURIComponent(item.slug)}/`;
     const extra = isExternal
       ? ' target="_blank" rel="noopener noreferrer"'
-      : ` data-writings-open="${this.escapeHtml(item.id)}"`;
+      : '';
 
     return `
       <li class="blog-post-item">

@@ -10,6 +10,8 @@ summary:
   en: I operate as an active node operator on Redbelly Network.
 links:
   - label: Setup Guide
+    guide: redbelly-node-troubleshooting
+  - label: Setup Guide
     guide: redbelly-mainnet-node-update-guide
   - label: Setup Guide
     guide: redbelly-mainnet-node-installation-guide

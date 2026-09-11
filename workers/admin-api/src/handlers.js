@@ -112,8 +112,9 @@ async function applyGuideProjectRelationships(github, { guideId, nextProjectId, 
     });
     if (!file || seenPaths.has(file.path)) continue;
     seenPaths.add(file.path);
-    let next = stripGuideFromProjectMarkdown(file.text, guideId);
-    if (meta.attach) next = attachGuideToProjectMarkdown(next, guideId, nextLabel);
+    const next = meta.attach
+      ? attachGuideToProjectMarkdown(file.text, guideId, nextLabel)
+      : stripGuideFromProjectMarkdown(file.text, guideId);
     if (next !== file.text) upserts.push({ path: file.path, text: next.endsWith("\n") ? next : `${next}\n` });
   }
   const nextJson = nextProjectId

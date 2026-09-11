@@ -9,8 +9,6 @@ summary:
   tr: Redbelly Network üzerinde aktif node operator olarak çalışıyorum.
   en: I operate as an active node operator on Redbelly Network.
 links:
-  - label: Setup Guide
-    guide: redbelly-mainnet-telegram-monitoring-bot-installation-guide
 - label: Website
   url: https://redbelly.network
 - label: Explorer
@@ -27,4 +25,6 @@ links:
     en: Troubleshooting
     tr: Sorunlar ve Çözümler
   guide: redbelly-node-troubleshooting
+- label: Setup Guide
+  guide: redbelly-mainnet-telegram-monitoring-bot-installation-guide
 ---

@@ -25,7 +25,7 @@ assert(cms.includes("/admin/api/script-upload") && cms.includes("overwrite"), "u
 assert(cms.includes("/admin/api/script-delete") && cms.includes("scripts.deleteConfirm"), "delete requires confirmation");
 assert(cms.includes("https://koltigin.xyz/downloads/") || cms.includes("item.url"), "list uses generated public URLs");
 assert(i18n.includes("Upload / Update") && i18n.includes("Yükle / Güncelle"), "bilingual upload button");
-assert(html.includes("cms.js?v=v3.17") && html.includes("admin.js?v=v3.18"), "Scripts UI cache-bust");
+assert(html.includes("cms.js?v=v3.18") && html.includes("admin.js?v=v3.18"), "Scripts UI cache-bust");
 assert(cms.includes("data.options") && cms.includes("optgroup") && cms.includes("scriptCatalogOptions"), "Scripts project dropdown is populated from canonical Projects options");
 assert(cms.includes("(group.scripts || []).length") && !cms.includes("id: 'redbelly', label:"), "existing Scripts groups skip empty projects and are not hard-coded");
 

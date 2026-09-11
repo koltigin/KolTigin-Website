@@ -11,7 +11,9 @@ const {
   pageSaveRequest,
   saveShouldShowSuccess,
   syncGuideEditorFields,
-  switchGuideLang
+  switchGuideLang,
+  visibleGuideLabelFields,
+  hydrateGuideRelation
 } = createRequire(join(root, "cms-save.js"))("./cms-save.js");
 
 const cmsSrc = readFileSync(join(root, "cms.js"), "utf8");
@@ -110,7 +112,7 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.2") && htmlSrc.includes("cms.js?v=v3.17"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.3") && htmlSrc.includes("cms.js?v=v3.18"), "admin HTML cache-busts cms-save and cms.js");
 
 const sharedGuide = {
   id: "ario-guide",
@@ -142,6 +144,64 @@ const tabBlock = cmsSrc.slice(tabStart, cmsSrc.indexOf("if (event.target.closest
 assert(tabBlock.includes("syncGuideDraftFromForm") && tabBlock.includes("switchGuideLang"), "language tabs sync shared projectId before re-rendering");
 assert(cmsSrc.includes("data-gfield=\"projectId\"") && cmsSrc.includes("g.projectId === p.id"), "renderGuideEditor reselects the shared projectId");
 assert(cmsSrc.includes("matches('[data-gfield=\"projectId\"]')"), "project select change writes shared guideDraft.projectId");
+
+const telegramId = "redbelly-mainnet-telegram-monitoring-bot-installation-guide";
+const attachedProjects = [{
+  id: "redbelly-network",
+  name: "Redbelly Network",
+  links: [{ label: { en: "Telegram Bot", tr: "Telegram Bot" }, guide: telegramId }]
+}];
+const hydrated = hydrateGuideRelation(telegramId, attachedProjects, { projects: [] });
+assert(hydrated.projectId === "redbelly-network", "existing attached Guide opens with the persisted Related Project");
+assert(hydrated.buttonLabelEn === "Telegram Bot", "existing custom labelEn loads for the English tab");
+assert(hydrated.buttonLabelTr === "Telegram Bot", "existing custom labelTr loads for the Turkish tab");
+assert(visibleGuideLabelFields("en").labelEn && !visibleGuideLabelFields("en").labelTr, "English tab displays only Label EN");
+assert(visibleGuideLabelFields("tr").labelTr && !visibleGuideLabelFields("tr").labelEn, "Turkish tab displays only Label TR");
+assert(cmsSrc.includes("visibleGuideLabelFields") && cmsSrc.includes("hydrateGuideRelation"), "Guide editor uses shared hydration and locale-visible label fields");
+assert(cmsSrc.includes("freshProjects") && !cmsSrc.includes("((data.meta && data.meta.projects) || [])[0]"), "Edit hydrates from persisted project links, not a UI-only inference");
+
+const labelDraft = {
+  id: telegramId,
+  lang: "en",
+  projectId: "redbelly-network",
+  buttonLabelEn: "Telegram Bot",
+  buttonLabelTr: "Telegram Bot",
+  langs: {
+    en: "# Telegram\n\nEnglish body.",
+    tr: "# Telegram\n\nTurkce govde."
+  }
+};
+syncGuideEditorFields(labelDraft, { buttonLabelEn: "Telegram Bot" });
+switchGuideLang(labelDraft, "tr");
+syncGuideEditorFields(labelDraft, { markdown: "# Telegram\n\nTurkce govde." });
+switchGuideLang(labelDraft, "en");
+assert(labelDraft.buttonLabelEn === "Telegram Bot" && labelDraft.buttonLabelTr === "Telegram Bot", "switching EN → TR → EN preserves both labels");
+assert(labelDraft.projectId === "redbelly-network", "switching tabs preserves projectId");
+const labeledSave = guideSaveRequest(labelDraft);
+assert(
+  labeledSave.projectId === "redbelly-network"
+    && labeledSave.labelEn === "Telegram Bot"
+    && labeledSave.labelTr === "Telegram Bot"
+    && labeledSave.linkLabel.en === "Telegram Bot"
+    && labeledSave.linkLabel.tr === "Telegram Bot"
+    && labeledSave.locales.length === 2,
+  "atomic bilingual Save contains projectId + labelEn + labelTr"
+);
+const reopened = hydrateGuideRelation(telegramId, attachedProjects, {});
+assert(reopened.projectId === "redbelly-network" && reopened.buttonLabelEn === "Telegram Bot" && reopened.buttonLabelTr === "Telegram Bot", "reopening after Save restores projectId and both labels");
+
+const fallbackHydrate = hydrateGuideRelation("optimai-cli-node-setup-guide-ubuntu-24-04-vps", [{
+  id: "optimai",
+  name: "OptimAI",
+  links: [{ label: "Setup Guide", guide: "optimai-cli-node-setup-guide-ubuntu-24-04-vps" }]
+}], {});
+assert(fallbackHydrate.buttonLabelEn === "Setup Guide" && fallbackHydrate.buttonLabelTr === "Kurulum Rehberi", "empty custom labels still fall back to Setup Guide / Kurulum Rehberi in the editor");
+
+const reassigned = hydrateGuideRelation(telegramId, [
+  { id: "redbelly-network", name: "Redbelly Network", links: [{ label: "Website", url: "https://redbelly.network" }] },
+  { id: "optimai", name: "OptimAI", links: [{ label: { en: "Telegram Bot", tr: "Telegram Bot" }, guide: telegramId }] }
+], {});
+assert(reassigned.projectId === "optimai", "Guide reassignment hydrates the new project relationship");
 
 if (failed) {
   console.error(`${failed} failed`);

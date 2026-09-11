@@ -324,14 +324,25 @@ def list_guides() -> list[dict]:
         tr_text = tr.read_text(encoding="utf-8") if tr.is_file() else ""
         if not en.is_file() and not tr.is_file():
             continue
-        related = [
-            {"id": item["id"], "name": item["name"]}
-            for item in projects
-            if any(
-                isinstance(link, dict) and str(link.get("guide") or "") == folder.name
-                for link in (item.get("links") or [])
+        related = []
+        for item in projects:
+            link = next(
+                (
+                    entry
+                    for entry in (item.get("links") or [])
+                    if isinstance(entry, dict) and str(entry.get("guide") or "") == folder.name
+                ),
+                None,
             )
-        ]
+            if not link:
+                continue
+            related.append(
+                {
+                    "id": item["id"],
+                    "name": item["name"],
+                    "label": link.get("label"),
+                }
+            )
         meta, _body = parse_simple_front_matter(en_text or tr_text)
         guides.append(
             {
@@ -357,14 +368,28 @@ def _is_project_guide_link(link: dict, guide_id: str) -> bool:
     return f"/guide/en/{guide_id}" in url or f"/guide/tr/{guide_id}" in url
 
 
-def strip_guide_from_projects(guide_id: str) -> list[str]:
+def optional_guide_button_label(body: dict) -> dict | None:
+    src = body.get("linkLabel") or body.get("buttonLabel") or {}
+    if not isinstance(src, dict):
+        src = {}
+    en = str(src.get("en") or body.get("labelEn") or "").strip()
+    tr = str(src.get("tr") or body.get("labelTr") or "").strip()
+    if not en and not tr:
+        return None
+    return {"en": en or tr, "tr": tr or en}
+
+
+def strip_guide_from_projects(guide_id: str, keep_project_id: str | None = None) -> list[str]:
     changed = []
+    keep = str(keep_project_id or "")
     for path in PROJECTS_ROOT.rglob("*.md"):
         if path.name.startswith("_"):
             continue
         try:
             data = parse_project_file(path)
         except Exception:
+            continue
+        if keep and str(data.get("id") or path.stem) == keep:
             continue
         links = data.get("links")
         if not isinstance(links, list):
@@ -842,9 +867,10 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
         if first_path is None:
             first_path = path
     try:
-        strip_guide_from_projects(item_id)
+        label = optional_guide_button_label(body)
+        strip_guide_from_projects(item_id, project_id or None)
         if project_id:
-            attach_guide_to_project(project_id, item_id)
+            attach_guide_to_project(project_id, item_id, label)
         log = regenerate_projects()
     except ValueError as exc:
         return json_error(handler, HTTPStatus.BAD_REQUEST, str(exc))

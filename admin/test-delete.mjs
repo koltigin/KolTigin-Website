@@ -128,7 +128,7 @@ assert(tr("en", "cms.guideNotFound") === "This guide was not found.", "EN missin
 assert(tr("tr", "cms.guideNotFound") === "Bu rehber bulunamadı.", "TR missing guide copy");
 const openGuideFn = cmsSrc.slice(cmsSrc.indexOf("async function openGuide"), cmsSrc.indexOf("async function saveGuide"));
 assert(openGuideFn.includes("if (!data.exists)") && openGuideFn.includes("#/guides") && openGuideFn.includes("guideDraft = null"), "missing guide edit route returns to list");
-assert((openGuideFn.split("if (!data.exists)")[1] || "").includes("return") && !(openGuideFn.split("if (!data.exists)")[1] || "").split("const related")[0].includes("renderGuideEditor()"), "missing guide does not open a blank editor");
+assert((openGuideFn.split("if (!data.exists)")[1] || "").includes("return") && !(openGuideFn.split("if (!data.exists)")[1] || "").split("hydrateGuideRelation")[0].includes("renderGuideEditor()"), "missing guide does not open a blank editor");
 assert(readFileSync(join(root, "static-source.js"), "utf8").includes("if (!en && !tr) continue"), "admin does not list guides with no EN/TR source");
 assert(adminSrc.includes("parseJsonResponse(response)") && adminSrc.includes("data.error === t('errors.api')"), "production API JSON errors are not swallowed as disconnected");
 

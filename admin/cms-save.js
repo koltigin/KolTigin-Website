@@ -48,6 +48,55 @@
     draft.lang = nextLang === 'tr' ? 'tr' : 'en';
   }
 
+  function visibleGuideLabelFields(lang) {
+    const turkish = lang === 'tr';
+    return { labelEn: !turkish, labelTr: turkish };
+  }
+
+  function isGuideProjectLink(link, guideId) {
+    if (!link || typeof link !== 'object') return false;
+    return String(link.guide || '') === String(guideId || '');
+  }
+
+  function relatedProjectForGuide(guideId, projects, metaProjects) {
+    const id = String(guideId || '');
+    const list = Array.isArray(projects) ? projects : [];
+    for (let i = 0; i < list.length; i += 1) {
+      const project = list[i];
+      if (!project) continue;
+      const links = Array.isArray(project.links) ? project.links : [];
+      const link = links.find((entry) => isGuideProjectLink(entry, id));
+      if (link) return { id: project.id, name: project.name, label: link.label };
+    }
+    const meta = Array.isArray(metaProjects) ? metaProjects : [];
+    return meta.find((item) => item && item.id) || null;
+  }
+
+  function guideButtonLabelParts(label) {
+    if (label && typeof label === 'object' && !Array.isArray(label)) {
+      return {
+        en: String(label.en || label.labelEN || '').trim(),
+        tr: String(label.tr || label.labelTR || '').trim()
+      };
+    }
+    const text = String(label || '').trim();
+    if (!text) return { en: '', tr: '' };
+    if (text === 'Setup Guide' || text === 'Kurulum Rehberi') {
+      return { en: 'Setup Guide', tr: 'Kurulum Rehberi' };
+    }
+    return { en: text, tr: text };
+  }
+
+  function hydrateGuideRelation(guideId, projects, meta) {
+    const related = relatedProjectForGuide(guideId, projects, (meta && meta.projects) || []);
+    const labels = guideButtonLabelParts(related && related.label);
+    return {
+      projectId: related && related.id ? String(related.id) : '',
+      buttonLabelEn: labels.en,
+      buttonLabelTr: labels.tr
+    };
+  }
+
   function guideSaveRequest(draft) {
     const locales = localesFromLangs((draft && draft.langs) || {});
     if (!locales.length) return null;
@@ -57,6 +106,8 @@
       id: String((draft && draft.id) || ''),
       projectId: String((draft && draft.projectId) || ''),
       cover: (draft && draft.cover) || '',
+      labelEn: en,
+      labelTr: tr,
       locales
     };
     if (en || tr) payload.linkLabel = { en: en || tr, tr: tr || en };
@@ -77,6 +128,10 @@
     saveShouldShowSuccess,
     syncGuideEditorFields,
     switchGuideLang,
+    visibleGuideLabelFields,
+    relatedProjectForGuide,
+    guideButtonLabelParts,
+    hydrateGuideRelation,
     guideSaveRequest,
     pageSaveRequest
   };

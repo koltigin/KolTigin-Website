@@ -175,19 +175,53 @@ function guideLabelsEqual(a, b) {
   return left === right;
 }
 
-function yamlGuideLinkLines(id, label) {
+function yamlGuideLinkLines(id, label, dashIndent = "") {
   const resolved = normalizeGuideLinkLabel(label);
+  const dash = `${dashIndent}- `;
+  const key = `${dashIndent}  `;
+  const nested = `${dashIndent}    `;
   if (resolved && typeof resolved === "object") {
     return [
-      "  - label:",
-      `      en: ${yamlQuote(resolved.en)}`,
-      `      tr: ${yamlQuote(resolved.tr)}`,
-      `    guide: ${id}`
+      `${dash}label:`,
+      `${nested}en: ${yamlQuote(resolved.en)}`,
+      `${nested}tr: ${yamlQuote(resolved.tr)}`,
+      `${key}guide: ${id}`
     ];
   }
   const text = String(resolved);
   const rendered = text === "Setup Guide" ? "Setup Guide" : yamlQuote(text);
-  return [`  - label: ${rendered}`, `    guide: ${id}`];
+  return [`${dash}label: ${rendered}`, `${key}guide: ${id}`];
+}
+
+function linkListDashIndent(fm, linksIdx) {
+  for (let i = linksIdx + 1; i < (fm || []).length; i += 1) {
+    const match = fm[i].match(/^([ \t]*)-\s/);
+    if (match) return match[1];
+    if (fm[i].trim() && !/^[ \t]/.test(fm[i])) break;
+  }
+  return "";
+}
+
+function endOfYamlList(fm, start) {
+  let i = start;
+  while (i < (fm || []).length) {
+    if (/^[ \t]*-\s/.test(fm[i])) {
+      i += 1;
+      continue;
+    }
+    if (/^[ \t]+/.test(fm[i]) && fm[i].trim()) {
+      i += 1;
+      continue;
+    }
+    break;
+  }
+  return i;
+}
+
+function yamlListItemEnd(fm, start) {
+  let i = start + 1;
+  while (i < (fm || []).length && /^ +/.test(fm[i]) && !/^\s*-\s/.test(fm[i])) i += 1;
+  return i;
 }
 
 function parseGuideListItemLabel(lines) {
@@ -242,17 +276,35 @@ export function attachGuideToProjectMarkdown(text, guideId, label) {
   const current = extractGuideLinksFromMarkdown(text).find((link) => link.guide === id);
   const nextLabel = label != null ? normalizeGuideLinkLabel(label) : (current ? current.label : "Setup Guide");
   if (current && guideLabelsEqual(current.label, nextLabel)) return String(text || "");
-  const raw = stripGuideFromProjectMarkdown(text, id);
-  const blockLines = yamlGuideLinkLines(id, nextLabel);
-  const parts = String(raw || "").split("\n");
+  const parts = String(text || "").split("\n");
+  const blockFor = (indent) => yamlGuideLinkLines(id, nextLabel, indent);
   if (parts[0] !== "---") {
-    return `---\nlinks:\n${blockLines.join("\n")}\n---\n${raw}`;
+    return `---\nlinks:\n${blockFor("").join("\n")}\n---\n${text}`;
   }
   let end = parts.indexOf("---", 1);
   if (end === -1) end = parts.length;
   const fm = parts.slice(1, end);
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const guideRe = new RegExp(`^\\s*guide:\\s*['"]?${escaped}['"]?\\s*$`);
+  let i = 0;
+  while (i < fm.length) {
+    if (/^\s*-\s/.test(fm[i])) {
+      const start = i;
+      const stop = yamlListItemEnd(fm, start);
+      if (fm.slice(start, stop).some((line) => guideRe.test(line))) {
+        const indent = (fm[start].match(/^([ \t]*)-/) || ["", ""])[1];
+        fm.splice(start, stop - start, ...blockFor(indent));
+        return ["---", ...fm, "---", ...parts.slice(end + 1)].join("\n");
+      }
+      i = stop;
+      continue;
+    }
+    i += 1;
+  }
   const linksIdx = fm.findIndex((line) => /^links:\s*$/.test(line));
-  if (linksIdx >= 0) fm.splice(linksIdx + 1, 0, ...blockLines);
+  const indent = linksIdx >= 0 ? linkListDashIndent(fm, linksIdx) : "";
+  const blockLines = blockFor(indent);
+  if (linksIdx >= 0) fm.splice(endOfYamlList(fm, linksIdx + 1), 0, ...blockLines);
   else fm.push("links:", ...blockLines);
   return ["---", ...fm, "---", ...parts.slice(end + 1)].join("\n");
 }
@@ -260,7 +312,8 @@ export function attachGuideToProjectMarkdown(text, guideId, label) {
 export function attachGuideToProjectsJson(json, projectId, guideId, label) {
   const data = JSON.parse(JSON.stringify(json || {}));
   let changed = false;
-  const nextLabel = normalizeGuideLinkLabel(label);
+  const hasLabel = label != null && label !== "";
+  const nextLabel = hasLabel ? normalizeGuideLinkLabel(label) : null;
   for (const key of Object.keys(data)) {
     if (!Array.isArray(data[key])) continue;
     for (const item of data[key]) {
@@ -280,7 +333,7 @@ export function attachGuideToProjectsJson(json, projectId, guideId, label) {
       const links = Array.isArray(item.links) ? item.links.slice() : [];
       const existing = links.find((link) => isGuideLink(link, guideId));
       if (existing) {
-        if (!guideLabelsEqual(existing.label, nextLabel)) {
+        if (nextLabel != null && !guideLabelsEqual(existing.label, nextLabel)) {
           existing.label = nextLabel;
           existing.guide = guideId;
           delete existing.url;
@@ -288,7 +341,7 @@ export function attachGuideToProjectsJson(json, projectId, guideId, label) {
           changed = true;
         }
       } else {
-        links.push({ label: nextLabel, guide: guideId });
+        links.push({ label: nextLabel != null ? nextLabel : "Setup Guide", guide: guideId });
         item.links = links;
         changed = true;
       }

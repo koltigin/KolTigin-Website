@@ -57,6 +57,15 @@ optimai = next(item for item in generated["depin"] if item["id"] == "optimai")
 assert_true(any(link.get("guide") == GUIDE for link in optimai["links"]), "existing OptimAI Guide relationship is recognized/backfilled")
 assert_true(any(link.get("label") == "Website" for link in optimai["links"]), "normal manual project links remain unchanged")
 
+redbelly = next(item for item in generated["mainnet"] if item["id"] == "redbelly-network")
+rb_guides = [link for link in (redbelly.get("links") or []) if link.get("guide")]
+assert_true(len(rb_guides) == 4, "Redbelly markdown still exposes four Guide relationships")
+telegram = next(link for link in rb_guides if link.get("guide") == "redbelly-mainnet-telegram-monitoring-bot-installation-guide")
+assert_true(telegram.get("label") == "Setup Guide", "Telegram guide still uses the stored fallback label, not invented copy")
+assert_true(rb_guides[-1]["guide"] == "redbelly-mainnet-telegram-monitoring-bot-installation-guide", "Telegram guide stays last among Redbelly guide buttons")
+install = next(link for link in rb_guides if link.get("guide") == "redbelly-mainnet-node-installation-guide")
+assert_true(install["label"]["en"] == "Installation Guide" and install["label"]["tr"] == "Kurulum Rehberi", "existing custom Redbelly bilingual labels are unchanged")
+
 if failed:
     sys.exit(1)
 print("all generate-projects guide tests passed")

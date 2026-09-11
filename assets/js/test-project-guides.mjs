@@ -46,6 +46,8 @@ assert(redbellyGuides[2].label?.en === "Troubleshooting" && redbellyGuides[2].la
 assert(redbellyGuides[3].guide === "redbelly-mainnet-telegram-monitoring-bot-installation-guide", "Redbelly Telegram monitor Guide remains linked");
 assert(parser.includes("labelEN || link.labelTR"), "parser accepts labelEN/labelTR aliases");
 assert(parser.includes("this.currentLang()"), "project guide labels follow the active site language");
+assert(parser.includes("label[lang] || label.en || label.tr"), "EN project card uses labelEn when present");
+assert(parser.includes("'Setup Guide': 'projects.links.setupGuide'"), "empty custom labels still fall back to Setup Guide / Kurulum Rehberi");
 assert(cms.includes("cms.guidesManagedHint"), "project editor has a managed Guides area");
 assert(!cms.includes('data-pfield="guideId"'), "project editor no longer asks for a single guide URL/id field");
 assert(i18n.includes("guidesManagedHint") && i18n.includes("Rehberler"), "admin Guides/Rehberler copy exists");

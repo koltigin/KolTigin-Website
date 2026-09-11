@@ -695,13 +695,19 @@
           ${projects.map((p) => `<option value="${esc(p.id)}" ${g.projectId === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
         </select>
       </div>
-      <div class="field"><label>${esc(t('cms.labelEn'))}</label>
+      ${(() => {
+        const visible = CmsSave().visibleGuideLabelFields(lang);
+        const hint = `<span class="hint">${esc(t('cms.guideButtonHint'))}</span>`;
+        const enField = `<div class="field"><label>${esc(t('cms.labelEn'))}</label>
         <input data-gfield="buttonLabelEn" type="text" value="${esc(g.buttonLabelEn || '')}" placeholder="Setup Guide">
-      </div>
-      <div class="field"><label>${esc(t('cms.labelTr'))}</label>
+        ${hint}
+      </div>`;
+        const trField = `<div class="field"><label>${esc(t('cms.labelTr'))}</label>
         <input data-gfield="buttonLabelTr" type="text" value="${esc(g.buttonLabelTr || '')}" placeholder="Kurulum Rehberi">
-        <span class="hint">${esc(t('cms.guideButtonHint'))}</span>
-      </div>
+        ${hint}
+      </div>`;
+        return `${visible.labelEn ? enField : ''}${visible.labelTr ? trField : ''}`;
+      })()}
       ${guideCoverPicker(g)}
       <form>
         <div class="field">
@@ -723,9 +729,10 @@
     const pack = await H().api('/admin/api/guides');
     adoptGuides(pack.guides || []);
     const prevProjects = H().state.projectsData || {};
+    const freshProjects = pack.projects || [];
     H().state.projectsData = {
       categories: prevProjects.categories || [],
-      projects: Sync().mergeRemoteList(pack.projects || [], prevProjects.projects || [])
+      projects: freshProjects.length ? freshProjects : (prevProjects.projects || [])
     };
     if (!id) {
       H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '', buttonLabelEn: '', buttonLabelTr: '', cover: '', coverFile: null, coverPreview: '' };
@@ -742,16 +749,15 @@
       renderGuidesList();
       return;
     }
-    const related = ((data.meta && data.meta.projects) || [])[0];
-    const relatedLabels = linkLabelParts(related && related.label);
+    const relation = CmsSave().hydrateGuideRelation(id, freshProjects, data.meta || {});
     H().state.guideDraft = {
       id,
       locked: true,
       lang: data.en ? 'en' : 'tr',
       langs: { en: data.en || '', tr: data.tr || '' },
-      projectId: related ? related.id : '',
-      buttonLabelEn: relatedLabels.en,
-      buttonLabelTr: relatedLabels.tr,
+      projectId: relation.projectId,
+      buttonLabelEn: relation.buttonLabelEn,
+      buttonLabelTr: relation.buttonLabelTr,
       cover: (data.meta && data.meta.cover) || '',
       coverFile: null,
       coverPreview: ''
@@ -1342,6 +1348,14 @@
       if (event.target.matches('[data-guide-md]') && H().state.guideDraft) {
         H().state.guideDraft.langs[H().state.guideDraft.lang] = event.target.value;
       }
+      if (event.target.matches('[data-gfield="buttonLabelEn"]') && H().state.guideDraft) {
+        CmsSave().syncGuideEditorFields(H().state.guideDraft, { buttonLabelEn: event.target.value });
+        if (H().state.authed) H().markDirty();
+      }
+      if (event.target.matches('[data-gfield="buttonLabelTr"]') && H().state.guideDraft) {
+        CmsSave().syncGuideEditorFields(H().state.guideDraft, { buttonLabelTr: event.target.value });
+        if (H().state.authed) H().markDirty();
+      }
     });
 
     app.addEventListener('change', async (event) => {
@@ -1368,11 +1382,13 @@
         if (H().state.authed) H().markDirty();
         return;
       }
-      if (event.target.matches('[data-gfield="buttonLabelEn"], [data-gfield="buttonLabelTr"]') && H().state.guideDraft) {
-        CmsSave().syncGuideEditorFields(H().state.guideDraft, {
-          buttonLabelEn: document.querySelector('[data-gfield="buttonLabelEn"]')?.value || '',
-          buttonLabelTr: document.querySelector('[data-gfield="buttonLabelTr"]')?.value || ''
-        });
+      if (event.target.matches('[data-gfield="buttonLabelEn"]') && H().state.guideDraft) {
+        CmsSave().syncGuideEditorFields(H().state.guideDraft, { buttonLabelEn: event.target.value });
+        if (H().state.authed) H().markDirty();
+        return;
+      }
+      if (event.target.matches('[data-gfield="buttonLabelTr"]') && H().state.guideDraft) {
+        CmsSave().syncGuideEditorFields(H().state.guideDraft, { buttonLabelTr: event.target.value });
         if (H().state.authed) H().markDirty();
         return;
       }

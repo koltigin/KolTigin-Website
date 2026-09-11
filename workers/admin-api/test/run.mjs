@@ -166,14 +166,22 @@ links:
     const rbGuide = labeledJson.data.mainnet[0].links.find((link) => link.guide === "redbelly-mainnet-node-update-guide");
     assert(rbGuide && rbGuide.label.en === "Update Guide" && rbGuide.label.tr === "Güncelleme Rehberi", "projects.json stores bilingual guide labels");
     const attached = attachGuideToProjectMarkdown(`---
-name: OptimAI
 links:
 - label: Website
   url: https://optimai.network
 ---
-`, "optimai-cli-node-setup-guide-ubuntu-24-04-vps");
+`, "optimai-cli-node-setup-guide-ubuntu-24-04-vps", { en: "Telegram Bot", tr: "Telegram Bot" });
     assert(attached.includes("guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps"), "attach writes guide id into project markdown");
     assert(!/url:\s*.*guide\//.test(attached), "attached guide has no share URL");
+    assert(/en:\s*"?Telegram Bot"?/.test(attached) && /tr:\s*"?Telegram Bot"?/.test(attached), "attach writes bilingual labels with the file's list indent");
+    assert(!/\n  - label:/.test(attached), "attach does not mix a 2-space list item into a flush YAML links list");
+    assert(attached.indexOf("https://optimai.network") < attached.indexOf("guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps"), "attach appends a new Guide after existing links");
+    const relabeled = attachGuideToProjectMarkdown(attached, "optimai-cli-node-setup-guide-ubuntu-24-04-vps", { en: "Node Bot", tr: "Node Bot" });
+    assert(relabeled.indexOf("https://optimai.network") < relabeled.indexOf("guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps"), "updating labels does not reorder existing project links");
+    const customKept = attachGuideToProjectsJson({
+      depin: [{ id: "optimai", links: [{ label: { en: "Telegram Bot", tr: "Telegram Bot" }, guide: "bot-guide" }] }]
+    }, "optimai", "bot-guide");
+    assert(customKept.data.depin[0].links[0].label.en === "Telegram Bot", "JSON attach without a new label keeps a custom label");
     const attachedJson = attachGuideToProjectsJson({
       depin: [{ id: "optimai", links: [{ label: "Website", url: "https://optimai.network" }] }],
       mainnet: [{ id: "ario", links: [{ label: "Website", url: "https://ar.io" }] }]
@@ -476,6 +484,9 @@ links:
       id: "bilingual-guide",
       projectId: "optimai",
       cover: "hero.png",
+      labelEn: "Telegram Bot",
+      labelTr: "Telegram Bot",
+      linkLabel: { en: "Telegram Bot", tr: "Telegram Bot" },
       locales: [
         { lang: "en", markdown: "# Bilingual Guide\n\nEnglish body.\n" },
         { lang: "tr", markdown: "# Iki Dilli Rehber\n\nTurkce govde.\n" }
@@ -490,6 +501,25 @@ links:
     assert(!github.files.has("content/guides/bilingual-guide/en.md"), "guide files stay EN.md/TR.md");
     assert(projectMarkdownReads(github).length === 1, "bilingual guide applies Linked Project once");
     assert((String(github.files.get("content/projects/depin/optimai.md")).match(/guide:\s*bilingual-guide/g) || []).length === 1, "Linked Project is attached once");
+    const optimaiAfterBilingual = String(github.files.get("content/projects/depin/optimai.md"));
+    assert(/en:\s*"?Telegram Bot"?/.test(optimaiAfterBilingual) && /tr:\s*"?Telegram Bot"?/.test(optimaiAfterBilingual), "Worker persists custom bilingual Guide labels in project markdown");
+    const liveAfterBilingual = JSON.parse(github.files.get("projects/projects.json"));
+    const liveBilingualLink = (liveAfterBilingual.depin.find((item) => item.id === "optimai").links || []).find((link) => link.guide === "bilingual-guide");
+    assert(liveBilingualLink && liveBilingualLink.label && liveBilingualLink.label.en === "Telegram Bot" && liveBilingualLink.label.tr === "Telegram Bot", "Worker persists custom bilingual Guide labels in projects.json");
+    const websiteBeforeCustom = optimaiAfterBilingual.indexOf("https://optimai.network");
+    const customGuideAt = optimaiAfterBilingual.indexOf("guide: bilingual-guide");
+    assert(websiteBeforeCustom >= 0 && customGuideAt > websiteBeforeCustom, "new Guide is appended after existing project links");
+    const unlabeledResave = await json(await post("/api/admin/guide-save", {
+      id: "bilingual-guide",
+      projectId: "optimai",
+      locales: [
+        { lang: "en", markdown: "# Bilingual Guide\n\nEnglish body.\n" },
+        { lang: "tr", markdown: "# Iki Dilli Rehber\n\nTurkce govde.\n" }
+      ]
+    }, env));
+    assert(unlabeledResave.status === 200, "resave without labels is accepted");
+    const keptCustom = (JSON.parse(github.files.get("projects/projects.json")).depin.find((item) => item.id === "optimai").links || []).find((link) => link.guide === "bilingual-guide");
+    assert(keptCustom && keptCustom.label && keptCustom.label.en === "Telegram Bot", "resave without labels does not replace a custom label with Setup Guide");
     res = await json(await post("/api/admin/guide-save", {
       id: "placeholder-guide",
       locales: [

@@ -740,6 +740,18 @@ if (window.KolTiginI18n) {
   window.KolTiginI18n.onChange(async () => {
     if (!window.blogParser) return;
     window.blogParser.applyKindLabels();
+    const parsed = window.blogParser.publicWritingPath();
+    if (parsed) {
+      const dest = window.KolTiginRouter
+        ? window.KolTiginRouter.writingPublicPath(window.blogParser.contentLang(), parsed.kind, parsed.id)
+        : `/writings/${window.blogParser.contentLang()}/${parsed.kind}/${parsed.id}/`;
+      const current = window.KolTiginRouter
+        ? window.KolTiginRouter.normalizePath(window.location.pathname)
+        : window.location.pathname;
+      const next = window.KolTiginRouter ? window.KolTiginRouter.normalizePath(dest) : dest;
+      if (current !== next) window.location.replace(dest);
+      return;
+    }
     const openId = window.blogParser.currentItem && window.blogParser.currentItem.id;
     await window.blogParser.loadItems();
     if (openId) window.blogParser.showItem(openId);

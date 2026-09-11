@@ -166,6 +166,26 @@ def kind_label(root: Path, kind: str, lang: str) -> str:
     return str(labels or kind)
 
 
+def locale_upper(text: str, lang: str) -> str:
+    """Uppercase for OG kickers. Turkish i/ı mapping is locale-independent."""
+    raw = str(text or "")
+    if lang != "tr":
+        return raw.upper()
+    out: list[str] = []
+    for ch in raw:
+        if ch == "i":
+            out.append("İ")
+        elif ch == "ı":
+            out.append("I")
+        else:
+            out.append(ch.upper())
+    return "".join(out)
+
+
+def turkish_upper(text: str) -> str:
+    return locale_upper(text, "tr")
+
+
 MONTHS_EN = (
     "January",
     "February",
@@ -657,7 +677,7 @@ def identity_row_geometry(draw: ImageDraw.ImageDraw, root: Path, og_w: int, og_h
     }
 
 
-def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str) -> None:
+def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str, lang: str = "en") -> None:
     og_w, og_h = OG_SIZE
     img = load_og_background(root, kind)
     draw = ImageDraw.Draw(img)
@@ -668,7 +688,7 @@ def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind
     cx = og_w // 2
     kicker_h = int(round(OG_CATEGORY_PT * 1.2))
     title_top = OG_TITLE_TOP
-    category = str(kicker or "").strip().upper()
+    category = locale_upper(str(kicker or "").strip(), lang)
 
     y = title_top
     for line in lines:
@@ -1277,6 +1297,7 @@ def generate(root: Path) -> dict:
                     title=data["title"],
                     kicker=kind_label(root, kind, lang),
                     kind=kind,
+                    lang=lang,
                 )
             canonical = alternates[lang]
             image = abs_url(base, og_rel)
@@ -1353,6 +1374,7 @@ def generate(root: Path) -> dict:
                     title=data["title"],
                     kicker=kicker,
                     kind="guide",
+                    lang=lang,
                 )
             canonical = alternates[lang]
             image = abs_url(base, og_rel)

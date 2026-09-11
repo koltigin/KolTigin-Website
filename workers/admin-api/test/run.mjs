@@ -1,7 +1,7 @@
 import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
-import { applyWritingIndex, applyGuideIndex, upsertListed, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
+import { applyWritingIndex, applyGuideIndex, upsertListed, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts, patchWritingShareHtml, markdownToHtml } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover, applyGuideDate } from "../src/markdown.js";
 import { HttpError, safeExceptionDetail } from "../src/util.js";
 import { getAllowedDownloadProjects, publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
@@ -233,6 +233,13 @@ links:
     assert(applyGuideCover("# Hello\n", "hero.png").includes("cover:"), "guide cover is stored in front matter");
     assert(!applyGuideCover("---\ncover: hero.png\n---\n\n# Hello\n", "").includes("hero.png"), "empty cover removes guide cover");
     assert(writingShareArtifacts("notes", "hello").includes("writings/en/notes/hello/index.html"), "writing share artifact paths");
+    assert(markdownToHtml("1. Commands should work as written.").includes("Commands should work as written."), "writing markdown becomes article html");
+    const patchedHtml = patchWritingShareHtml(
+      "<title>Old</title><h1 class=\"h2 writings-detail-title\">Old</h1><div class=\"blog-post-content\"><p>Old short body.</p></div>",
+      { lang: "en", title: "New", description: "Desc", bodyMarkdown: "Fresh paragraph.", category: "Technical Note", dateIso: "2026-06-01" }
+    );
+    assert(patchedHtml.includes("Fresh paragraph."), "patchWritingShareHtml replaces article body");
+    assert(!patchedHtml.includes("Old short body."), "patchWritingShareHtml drops stale body");
 
     const github = new MockGitHub(seed());
     const env = envWith(github);
@@ -279,6 +286,71 @@ links:
     assert(Array.isArray(res.body.langs) && res.body.langs.join(",") === "en,tr", "save response reports both langs");
     const bilingualCommit = github.commits[github.commits.length - 1];
     assert(bilingualCommit.upserts.includes("content/articles/en/bilingual-atomic.md") && bilingualCommit.upserts.includes("content/articles/tr/bilingual-atomic.md"), "one commit upserts both locale files");
+
+    github.files.set("content/notes/en/stale-note.md", "---\ntitle: Old title\ndate: 2026-06-01\nsummary: Old summary.\n---\n\nOld short body.\n");
+    github.files.set("content/notes/tr/stale-note.md", "---\ntitle: Eski baslik\ndate: 2026-06-01\nsummary: Eski ozet.\n---\n\nEski kisa govde.\n");
+    github.files.set("writings/en/notes/stale-note/index.html", [
+      "<!DOCTYPE html><html lang=\"en\"><head>",
+      "<title>Old title</title>",
+      "<meta name=\"description\" content=\"Old summary.\">",
+      "<link rel=\"canonical\" href=\"https://koltigin.xyz/writings/en/notes/stale-note/\">",
+      "<meta property=\"og:title\" content=\"Old title\">",
+      "<meta property=\"og:description\" content=\"Old summary.\">",
+      "<meta name=\"twitter:title\" content=\"Old title\">",
+      "<meta name=\"twitter:description\" content=\"Old summary.\">",
+      "<script type=\"application/ld+json\">{\"@type\":\"BlogPosting\",\"headline\":\"Old title\",\"description\":\"Old summary.\"}</script>",
+      "</head><body>",
+      "<h1 class=\"h2 writings-detail-title\">Old title</h1>",
+      "<p class=\"blog-category\">notes</p>",
+      "<div class=\"blog-post-content\"><p>Old short body.</p></div>",
+      "<div class=\"share-actions\" data-share-title=\"Old title\"></div>",
+      "</body></html>"
+    ].join(""));
+    github.files.set("writings/tr/notes/stale-note/index.html", [
+      "<!DOCTYPE html><html lang=\"tr\"><head>",
+      "<title>Eski baslik</title>",
+      "<meta name=\"description\" content=\"Eski ozet.\">",
+      "<link rel=\"canonical\" href=\"https://koltigin.xyz/writings/tr/notes/stale-note/\">",
+      "<meta property=\"og:title\" content=\"Eski baslik\">",
+      "<meta property=\"og:description\" content=\"Eski ozet.\">",
+      "<meta name=\"twitter:title\" content=\"Eski baslik\">",
+      "<meta name=\"twitter:description\" content=\"Eski ozet.\">",
+      "<script type=\"application/ld+json\">{\"@type\":\"BlogPosting\",\"headline\":\"Eski baslik\",\"description\":\"Eski ozet.\"}</script>",
+      "</head><body>",
+      "<h1 class=\"h2 writings-detail-title\">Eski baslik</h1>",
+      "<p class=\"blog-category\">notes</p>",
+      "<div class=\"blog-post-content\"><p>Eski kisa govde.</p></div>",
+      "<div class=\"share-actions\" data-share-title=\"Eski baslik\"></div>",
+      "</body></html>"
+    ].join(""));
+    const beforeEdit = github.commits.length;
+    res = await json(await post("/api/admin/save", {
+      kind: "notes",
+      id: "stale-note",
+      date: "2026-06-01",
+      locales: [
+        { lang: "en", title: "Updated English title", body: "Commands should work as written." },
+        { lang: "tr", title: "Guncellenmis Turkce baslik", body: "Komutlar yazildigi gibi calismali." }
+      ]
+    }, env));
+    assert(res.status === 200 && res.body.ok === true, "edit existing writing ok");
+    assert(github.commits.length === beforeEdit + 1, "edit existing writing is one GitHub commit");
+    const enMd = github.files.get("content/notes/en/stale-note.md");
+    const trMd = github.files.get("content/notes/tr/stale-note.md");
+    assert(enMd.includes("Commands should work as written."), "canonical EN markdown updates on edit");
+    assert(trMd.includes("Komutlar yazildigi gibi calismali."), "canonical TR markdown updates on edit");
+    assert(enMd.includes("summary:"), "existing writing summary is preserved");
+    const enHtml = github.files.get("writings/en/notes/stale-note/index.html");
+    const trHtml = github.files.get("writings/tr/notes/stale-note/index.html");
+    assert(enHtml.includes("Commands should work as written."), "generated EN writing html body updates on edit");
+    assert(!enHtml.includes("Old short body."), "stale EN article body is replaced");
+    assert(enHtml.includes("Updated English title"), "generated EN writing title updates on edit");
+    assert(enHtml.includes("Old summary."), "share description keeps existing summary");
+    assert(trHtml.includes("Komutlar yazildigi gibi calismali."), "generated TR writing html body updates on edit");
+    assert(!trHtml.includes("Eski kisa govde."), "stale TR article body is replaced");
+    const editCommit = github.commits[github.commits.length - 1];
+    assert(editCommit.upserts.includes("writings/en/notes/stale-note/index.html"), "writing save commits EN public html");
+    assert(editCommit.upserts.includes("writings/tr/notes/stale-note/index.html"), "writing save commits TR public html");
 
     res = await json(await post("/api/admin/save", {
       kind: "social",

@@ -34,9 +34,11 @@ export function dumpYaml(data) {
   }).join("\n") + "\n";
 }
 
-export function buildWritingMarkdown({ title, date, cover, externalUrl, kind, body, external }) {
+export function buildWritingMarkdown({ title, date, cover, externalUrl, kind, body, external, summary, slug }) {
   const lines = ["---", `title: ${yamlQuote(title)}`, `date: ${date}`];
   if (cover) lines.push(`cover: ${yamlQuote(cover)}`);
+  if (summary) lines.push(`summary: ${yamlQuote(summary)}`);
+  if (slug) lines.push(`slug: ${yamlQuote(slug)}`);
   if (external || kind === "social") lines.push(`externalUrl: ${yamlQuote(externalUrl || "")}`);
   lines.push("---");
   const text = String(body || "").replace(/\s+$/, "");

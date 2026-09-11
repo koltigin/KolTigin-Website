@@ -145,6 +145,31 @@ def json_ld(html: str) -> dict:
 
 
 def main() -> None:
+    cases = {
+        "teknik not": "TEKNİK NOT",
+        "işletim sistemi": "İŞLETİM SİSTEMİ",
+        "çözüm ağı": "ÇÖZÜM AĞI",
+    }
+    for src, expected in cases.items():
+        if generate_share.turkish_upper(src) != expected:
+            fail(f"turkish_upper({src!r}) != {expected!r}")
+    if generate_share.locale_upper("teknik not", "en") != "TEKNIK NOT":
+        fail("English uppercase must keep ASCII I")
+    if generate_share.locale_upper("Technical Note", "en") != "TECHNICAL NOTE":
+        fail("English kicker must not use Turkish casing")
+    for word in ("İşletim", "Çalıştırmak", "Güncelleme", "Çözüm", "Önemli", "Şifre", "Ağ", "Kurulum"):
+        uppered = generate_share.turkish_upper(word)
+        if any(ch in uppered for ch in "iı"):
+            fail(f"turkish_upper left lowercase i/ı in {word!r} -> {uppered!r}")
+    font_regular = generate_share.load_font(ROOT, "regular", 34)
+    font_bold = generate_share.load_font(ROOT, "semibold", 48)
+    for font in (font_regular, font_bold):
+        for ch in "İıŞşĞğÇçÖöÜü":
+            mask = font.getmask(ch)
+            if not mask.size[0] or not mask.size[1]:
+                fail(f"Poppins is missing glyph for {ch!r}")
+    ok("turkish uppercase helper and Poppins glyphs")
+
     escaped = generate_share.sitemap_xml(
         "https://koltigin.xyz",
         [{"loc": "https://koltigin.xyz/a&b/"}, {"loc": "https://koltigin.xyz/a&b/"}],
@@ -450,11 +475,15 @@ def main() -> None:
 
         write(
             tmp / "content" / "notes" / "en" / "no-cover.md",
-            '---\ntitle: "Updated title"\ndate: "2026-08-29"\nsummary: "Changed."\n---\n\nBody.\n',
+            '---\ntitle: "Updated title"\ndate: "2026-08-29"\nsummary: "Changed."\n---\n\nChanged body that crawlers must see.\n',
         )
         generate_share.generate(tmp)
         if "Updated title" not in read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"):
             fail("update did not regenerate html")
+        if "Changed body that crawlers must see." not in read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"):
+            fail("update did not regenerate article body")
+        if "Body." in read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"):
+            fail("stale article body survived a markdown update")
         ok("update regenerates metadata")
 
         shutil.rmtree(tmp / "content" / "notes")
@@ -605,15 +634,25 @@ def main() -> None:
         fallback_fn = inspect.getsource(generate_share.render_fallback_png)
         if "OG_TITLE_TOP" not in fallback_fn or "identity_row_geometry" not in fallback_fn:
             fail("Writing and Guide must share the same overlay geometry helper")
-        if ".upper()" not in fallback_fn:
-            fail("category labels should render uppercase")
+        if "locale_upper" not in fallback_fn:
+            fail("category labels should use locale-aware uppercase")
         long_title = "Ubuntu VPS üzerinde dağıtık altyapı ve doğrulayıcı operasyonu için ayrıntılı kurulum " * 4
         long_dest = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "long-title.png"
         generate_share.render_fallback_png(
-            tmp, long_dest, title=long_title, kicker="Teknik Not", kind="notes"
+            tmp, long_dest, title=long_title, kicker="Teknik Not", kind="notes", lang="tr"
         )
         if Image.open(long_dest).size != (1200, 630):
             fail("long title fallback must stay 1200x630")
+        tr_kicker = tmp / "assets" / "images" / "og" / "writings" / "tr" / "notes" / "kicker.png"
+        en_kicker = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "kicker.png"
+        generate_share.render_fallback_png(
+            tmp, tr_kicker, title="İşletim", kicker="Teknik Not", kind="notes", lang="tr"
+        )
+        generate_share.render_fallback_png(
+            tmp, en_kicker, title="İşletim", kicker="Teknik Not", kind="notes", lang="en"
+        )
+        if Image.open(tr_kicker).tobytes() == Image.open(en_kicker).tobytes():
+            fail("Turkish OG kicker must render İ rather than ASCII I")
         probe = Image.new("RGB", generate_share.OG_SIZE)
         probe_draw = ImageDraw.Draw(probe)
         max_w = generate_share.title_max_width(1200)

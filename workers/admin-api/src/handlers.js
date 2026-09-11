@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
 function commitMsg(action, target) {
@@ -160,12 +160,58 @@ function rewriteWritingText(text, destKind, types, externalUrl) {
     externalUrl: isExternalKind(types, destKind) ? externalUrl : "",
     kind: destKind,
     external: isExternalKind(types, destKind),
+    summary: meta.summary || "",
+    slug: meta.slug || "",
     body
   });
 }
 
 function mdText(text) {
   return text.endsWith("\n") ? text : `${text}\n`;
+}
+
+async function optionalText(github, path) {
+  try {
+    return await github.getText(path);
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) return "";
+    throw error;
+  }
+}
+
+async function upsertWritingLocale(github, upserts, {
+  kind, id, date, types, destExternal, external, item, extraPath
+}) {
+  const mdPath = writingPath(kind, item.lang, id);
+  const existingMd = await optionalText(github, extraPath || mdPath);
+  const extra = existingMd ? parseFrontMatter(existingMd).meta : {};
+  const text = mdText(buildWritingMarkdown({
+    title: item.title,
+    date,
+    cover: item.cover,
+    externalUrl: destExternal ? external : "",
+    kind,
+    body: item.body || "",
+    external: destExternal,
+    summary: extra.summary || "",
+    slug: extra.slug || ""
+  }));
+  upserts.push({ path: mdPath, text });
+  const htmlPath = writingShareHtmlPath(item.lang, kind, id);
+  const existingHtml = await optionalText(github, htmlPath);
+  if (!existingHtml) return;
+  const description = String(extra.summary || extra.excerpt || excerptWriting(item.body || "") || item.title).trim();
+  upserts.push({
+    path: htmlPath,
+    text: patchWritingShareHtml(existingHtml, {
+      lang: item.lang,
+      title: item.title,
+      description,
+      bodyMarkdown: item.body || "",
+      category: writingKindLabel(types, kind, item.lang),
+      dateIso: date
+    })
+  });
 }
 
 async function collectExisting(github, paths, deletes) {
@@ -221,15 +267,6 @@ export async function handleSave(body, github) {
   const fromKind = String(body.fromKind || kind);
   const file = `${id}.md`;
   const localeByLang = Object.fromEntries(locales.map((item) => [item.lang, item]));
-  const markdownFor = (item) => mdText(buildWritingMarkdown({
-    title: item.title,
-    date,
-    cover: item.cover,
-    externalUrl: destExternal ? external : "",
-    kind,
-    body: item.body || "",
-    external: destExternal
-  }));
   const upserts = [];
   const deletes = [];
   let index = await readJson(github, "content/index.json", {});
@@ -253,15 +290,17 @@ export async function handleSave(body, github) {
     }
     for (const lang of ["en", "tr"]) {
       if (!langsToWrite.has(lang)) continue;
-      const dest = writingPath(kind, lang, id);
       const src = writingPath(fromKind, lang, id);
       const item = localeByLang[lang];
       if (item) {
-        upserts.push({ path: dest, text: markdownFor(item) });
+        await upsertWritingLocale(github, upserts, {
+          kind, id, date, types, destExternal, external, item,
+          extraPath: writingPath(fromKind, lang, id)
+        });
         savedLangs.push(lang);
       } else {
         upserts.push({
-          path: dest,
+          path: writingPath(kind, lang, id),
           text: mdText(rewriteWritingText(await github.getText(src), kind, typeList, destExternal ? external : ""))
         });
       }
@@ -271,7 +310,9 @@ export async function handleSave(body, github) {
     await collectExisting(github, writingShareArtifacts(fromKind, id), deletes);
   } else {
     for (const item of locales) {
-      upserts.push({ path: writingPath(kind, item.lang, id), text: markdownFor(item) });
+      await upsertWritingLocale(github, upserts, {
+        kind, id, date, types, destExternal, external, item
+      });
       index = applyWritingIndex(index, { kind, lang: item.lang, file });
       savedLangs.push(item.lang);
     }

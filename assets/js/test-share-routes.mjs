@@ -24,6 +24,8 @@ assert(guides.includes("parseGuideHash"), "legacy guide hashes remain for migrat
 assert(guides.includes("guidePublicPath"), "guides write real public paths");
 assert(/#\\\/guides\\\/\(\[a-z0-9-\]+\)/.test(guides) || guides.includes("^#\\/guides\\/"), "guide hash parser remains");
 assert(share.includes("writingShareUrl") && share.includes("guideShareUrl"), "canonical share helpers exist");
+assert(blog.includes("publicWritingPath()"), "public writing path helper remains");
+assert(blog.includes("writingPublicPath"), "language switch on a public writing page navigates to the other locale URL");
 assert(!share.includes("location.href"), "share helpers do not use location.href");
 
 if (failed) {

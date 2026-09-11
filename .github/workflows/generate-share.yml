@@ -5,8 +5,12 @@ on:
     branches: [main]
     paths:
       - "content/**/*.md"
+      - "content/articles/**"
+      - "content/notes/**"
+      - "content/social/**"
       - "content/index.json"
       - "content/guides/**"
+      - "writings/**"
       - "config/writing-types.json"
       - "index.html"
       - "config/site.json"

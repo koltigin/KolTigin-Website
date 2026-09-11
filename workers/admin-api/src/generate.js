@@ -5,10 +5,232 @@ export const SHARE_LANGS = ["en", "tr"];
 export function writingShareArtifacts(kind, id) {
   const paths = [];
   for (const lang of SHARE_LANGS) {
-    paths.push(`writings/${lang}/${kind}/${id}/index.html`);
+    paths.push(writingShareHtmlPath(lang, kind, id));
     paths.push(`assets/images/og/writings/${lang}/${kind}/${id}.png`);
   }
   return paths;
+}
+
+export function writingShareHtmlPath(lang, kind, id) {
+  return `writings/${lang}/${kind}/${id}/index.html`;
+}
+
+const MONTHS_EN = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+const MONTHS_TR = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+];
+
+export function writingKindLabel(types, kind, lang) {
+  const list = Array.isArray(types) ? types : (types && types.types) || [];
+  const item = list.find((row) => row && row.id === kind);
+  const labels = item && item.label;
+  if (labels && typeof labels === "object") {
+    return String(labels[lang] || labels.en || kind);
+  }
+  return String(kind || "");
+}
+
+export function formatWritingDate(iso, lang) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || "").trim());
+  if (!match) return "";
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return "";
+  const names = lang === "tr" ? MONTHS_TR : MONTHS_EN;
+  return `${day} ${names[month - 1]} ${match[1]}`;
+}
+
+export function excerptWriting(body, limit = 160) {
+  const chunks = [];
+  for (const line of String(body || "").split("\n")) {
+    let stripped = line.trim();
+    if (!stripped || stripped.startsWith("#") || stripped.startsWith("```")) {
+      if (chunks.length) break;
+      continue;
+    }
+    stripped = stripped.replace(/[*_`>#]+/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+    chunks.push(stripped);
+    const text = chunks.join(" ");
+    if (text.length >= limit) return `${text.slice(0, limit - 1).trimEnd()}…`;
+  }
+  return chunks.join(" ").slice(0, limit).trim();
+}
+
+function escapeHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function parseInlineMarkdown(text) {
+  let html = escapeHtml(text || "");
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => (
+    `<img src="${escapeHtml(String(src).trim())}" alt="${escapeHtml(alt)}" loading="lazy">`
+  ));
+  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
+    const url = String(href).trim();
+    const extra = /^https?:\/\//i.test(url) ? ' target="_blank" rel="noopener noreferrer"' : "";
+    return `<a href="${escapeHtml(url)}"${extra}>${label}</a>`;
+  });
+  html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, (_, prefix, url) => {
+    const trimmed = url.replace(/[).,;]+$/, "");
+    return `${prefix}<a href="${escapeHtml(trimmed)}" target="_blank" rel="noopener noreferrer">${escapeHtml(trimmed)}</a>`;
+  });
+  return html;
+}
+
+export function markdownToHtml(markdown, { copyLabel = "Copy" } = {}) {
+  const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
+  const out = [];
+  const copy = escapeHtml(copyLabel);
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^```/.test(line)) {
+      const lang = line.replace(/^```/, "").trim() || "text";
+      const code = [];
+      i += 1;
+      while (i < lines.length && !/^```/.test(lines[i])) {
+        code.push(lines[i]);
+        i += 1;
+      }
+      i += 1;
+      out.push(
+        `<div class="guide-code-wrap"><div class="guide-code-meta"><span>${escapeHtml(lang)}</span>`
+        + `<button type="button" class="guide-copy-btn" data-copy-code>${copy}</button></div>`
+        + `<pre><code>${escapeHtml(code.join("\n"))}</code></pre></div>`
+      );
+      continue;
+    }
+    const heading = /^(#{1,6}) /.exec(line);
+    if (heading) {
+      const level = heading[1].length;
+      out.push(`<h${level}>${parseInlineMarkdown(line.slice(level + 1))}</h${level}>`);
+      i += 1;
+      continue;
+    }
+    if (/^(-{3,}|_{3,})$/.test(line.trim())) {
+      out.push("<hr>");
+      i += 1;
+      continue;
+    }
+    if (/^>\s?/.test(line)) {
+      const quote = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        quote.push(lines[i].replace(/^>\s?/, ""));
+        i += 1;
+      }
+      out.push(`<blockquote><p>${parseInlineMarkdown(quote.join(" "))}</p></blockquote>`);
+      continue;
+    }
+    if (/^[-*] /.test(line) || /^\d+\. /.test(line)) {
+      const ordered = /^\d+\. /.test(line);
+      const items = [];
+      while (i < lines.length && (ordered ? /^\d+\. /.test(lines[i]) : /^[-*] /.test(lines[i]))) {
+        items.push(`<li>${parseInlineMarkdown(lines[i].replace(/^(?:[-*]|\d+\.)\s/, ""))}</li>`);
+        i += 1;
+      }
+      const tag = ordered ? "ol" : "ul";
+      out.push(`<${tag}>${items.join("")}</${tag}>`);
+      continue;
+    }
+    if (!line.trim()) {
+      i += 1;
+      continue;
+    }
+    const para = [];
+    while (
+      i < lines.length
+      && lines[i].trim()
+      && !/^#{1,6} /.test(lines[i])
+      && !/^```/.test(lines[i])
+      && !/^>\s?/.test(lines[i])
+      && !/^[-*] /.test(lines[i])
+      && !/^\d+\. /.test(lines[i])
+      && !/^(-{3,}|_{3,})$/.test(lines[i].trim())
+    ) {
+      para.push(lines[i]);
+      i += 1;
+    }
+    out.push(`<p>${parseInlineMarkdown(para.join(" "))}</p>`);
+  }
+  return out.join("\n");
+}
+
+function writingShareBar({ title, url, lang }) {
+  const pageUrl = String(url || "");
+  const headline = String(title || "");
+  const encodedUrl = encodeURIComponent(pageUrl);
+  const encodedTitle = encodeURIComponent(headline);
+  const compose = encodeURIComponent(headline ? `${headline}\n${pageUrl}` : pageUrl);
+  const shareLabel = lang === "tr" ? "Paylaş" : "Share";
+  return `<div class="share-actions" data-share-actions data-share-url="${escapeHtml(pageUrl)}" data-share-title="${escapeHtml(headline)}">`
+    + `<a class="share-action" data-share-network="x" href="https://x.com/intent/tweet?text=${escapeHtml(encodedTitle)}&amp;url=${escapeHtml(encodedUrl)}" target="_blank" rel="noopener noreferrer">X</a>`
+    + `<a class="share-action" data-share-network="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=${escapeHtml(encodedUrl)}" target="_blank" rel="noopener noreferrer">LinkedIn</a>`
+    + `<a class="share-action" data-share-network="farcaster" href="https://farcaster.xyz/~/compose?text=${escapeHtml(compose)}" target="_blank" rel="noopener noreferrer">Farcaster</a>`
+    + `<button type="button" class="share-action" data-share-native>${escapeHtml(shareLabel)}</button>`
+    + `</div>`;
+}
+
+export function patchWritingShareHtml(html, {
+  lang,
+  title,
+  description,
+  bodyMarkdown,
+  category,
+  dateIso
+}) {
+  let out = String(html || "");
+  const desc = String(description || title || "").trim();
+  const attrTitle = escapeHtml(title);
+  const attrDesc = escapeHtml(desc);
+  const copyLabel = lang === "tr" ? "Kopyala" : "Copy";
+  const bodyHtml = markdownToHtml(bodyMarkdown || "", { copyLabel });
+  const dateLabel = formatWritingDate(dateIso, lang);
+  const meta = [category, dateLabel].filter(Boolean).join(" · ");
+  const canonicalMatch = out.match(/<link rel="canonical" href="([^"]+)"/i);
+  const canonical = canonicalMatch ? canonicalMatch[1] : "";
+
+  out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${attrTitle}</title>`);
+  out = out.replace(/(<meta name="description" content=")[^"]*(")/i, `$1${attrDesc}$2`);
+  out = out.replace(/(<meta property="og:title" content=")[^"]*(")/i, `$1${attrTitle}$2`);
+  out = out.replace(/(<meta property="og:description" content=")[^"]*(")/i, `$1${attrDesc}$2`);
+  out = out.replace(/(<meta name="twitter:title" content=")[^"]*(")/i, `$1${attrTitle}$2`);
+  out = out.replace(/(<meta name="twitter:description" content=")[^"]*(")/i, `$1${attrDesc}$2`);
+  out = out.replace(
+    /<h1 class="h2 writings-detail-title">[\s\S]*?<\/h1>/,
+    `<h1 class="h2 writings-detail-title">${attrTitle}</h1>`
+  );
+  if (meta) {
+    out = out.replace(/<p class="blog-category">[\s\S]*?<\/p>/, `<p class="blog-category">${escapeHtml(meta)}</p>`);
+  }
+  out = out.replace(
+    /<div class="blog-post-content">[\s\S]*?<\/div>/,
+    `<div class="blog-post-content">\n          ${bodyHtml}\n        </div>`
+  );
+  if (canonical) {
+    const bar = writingShareBar({ title, url: canonical, lang });
+    out = out.replace(/<div class="share-actions"[\s\S]*?<\/div>/g, bar);
+  }
+  out = out.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/i, (full, json) => {
+    try {
+      const data = JSON.parse(json);
+      data.headline = title;
+      data.description = desc;
+      return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+    } catch {
+      return full;
+    }
+  });
+  return out;
 }
 
 export function guideShareArtifacts(id) {

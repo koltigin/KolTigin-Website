@@ -25,6 +25,8 @@ links:
     en: Troubleshooting
     tr: Sorunlar ve Çözümler
   guide: redbelly-node-troubleshooting
-- label: Setup Guide
+- label:
+    en: "Telegram Monitoring Bot"
+    tr: "Telegram Bot"
   guide: redbelly-mainnet-telegram-monitoring-bot-installation-guide
 ---

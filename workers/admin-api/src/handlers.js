@@ -2,7 +2,7 @@ import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeD
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
 import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
-import { SCRIPT_UPLOAD_LIMIT, SCRIPT_PROJECT_ORDER, SCRIPT_PROJECTS, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject } from "./scripts.js";
+import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -989,14 +989,24 @@ export async function handleUpload(kind, file, fields, github) {
   return payload;
 }
 
+async function scriptCatalog(github) {
+  const projectsJson = await readJson(github, "projects/projects.json", {});
+  const categories = await readJson(github, "config/project-categories.json", []);
+  return {
+    allowed: getAllowedDownloadProjects(projectsJson),
+    options: buildScriptOptions(projectsJson, categories)
+  };
+}
+
 export async function handleScriptUpload(file, fields, github) {
   if (!file || !file.bytes || !file.bytes.length) throw new HttpError(400, "Choose a script file");
   if (file.bytes.length > SCRIPT_UPLOAD_LIMIT) throw new HttpError(413, "File is too large");
   if ([...file.bytes].some((byte) => byte === 0)) throw new HttpError(400, "Unsupported file type");
-  const project = resolveScriptProject(String((fields && fields.project) || ""));
+  const { allowed } = await scriptCatalog(github);
+  const project = resolveScriptProject(String((fields && fields.project) || ""), allowed);
   const fallbackExt = scriptExtension(file.name);
   const filename = sanitizeScriptFilename((fields && (fields.filename || fields.name)) || file.name, fallbackExt);
-  const path = scriptRepoPath(project, filename);
+  const path = scriptRepoPath(project, filename, allowed);
   const exists = await github.exists(path);
   if (exists && !isOverwriteFlag(fields && (fields.overwrite || fields.replace))) {
     throw new HttpError(409, "This file already exists. Do you want to overwrite it?");
@@ -1005,22 +1015,25 @@ export async function handleScriptUpload(file, fields, github) {
     message: scriptCommitMessage(exists ? "update" : "add", project, filename),
     upserts: [{ path, bytes: file.bytes }]
   });
+  const folder = downloadFolder(project);
   return {
     filename,
     project,
+    folder,
     path: `/${path}`,
-    url: publicScriptUrl(project, filename),
+    url: publicScriptUrl(folder, filename),
     updated: exists,
     sha: result.sha
   };
 }
 
 export async function handleScriptsList(_body, github) {
+  const { allowed, options } = await scriptCatalog(github);
   const entries = await github.listPrefixEntries("downloads/");
   const items = [];
   for (const entry of entries) {
     const parsed = parseDownloadPath(entry.path);
-    if (!parsed) continue;
+    if (!parsed || !allowed.has(parsed.project)) continue;
     items.push({
       project: parsed.project,
       filename: parsed.filename,
@@ -1028,27 +1041,28 @@ export async function handleScriptsList(_body, github) {
       size: Number(entry.size) || 0
     });
   }
-  items.sort((a, b) => {
-    const left = SCRIPT_PROJECT_ORDER.indexOf(a.project);
-    const right = SCRIPT_PROJECT_ORDER.indexOf(b.project);
-    const order = (left === -1 ? 99 : left) - (right === -1 ? 99 : right);
-    if (order !== 0) return order;
-    return a.filename.localeCompare(b.filename);
-  });
+  const groups = [];
+  for (const option of options) {
+    const folder = option.folder || downloadFolder(option.id);
+    const scripts = items
+      .filter((item) => item.project === folder || item.project === option.id)
+      .sort((a, b) => a.filename.localeCompare(b.filename));
+    if (!scripts.length) continue;
+    groups.push({ ...option, scripts });
+  }
   return {
-    projects: SCRIPT_PROJECT_ORDER.map((id) => ({
-      id,
-      label: SCRIPT_PROJECTS[id],
-      scripts: items.filter((item) => item.project === id)
-    })),
+    options,
+    groups,
+    projects: groups,
     scripts: items
   };
 }
 
 export async function handleScriptDelete(body, github) {
-  const project = resolveScriptProject(String((body && body.project) || ""));
+  const { allowed } = await scriptCatalog(github);
+  const project = resolveScriptProject(String((body && body.project) || ""), allowed);
   const filename = sanitizeScriptFilename((body && body.filename) || "");
-  const path = scriptRepoPath(project, filename);
+  const path = scriptRepoPath(project, filename, allowed);
   if (!(await github.exists(path))) throw new HttpError(404, "File not found");
   const result = await github.commit({
     message: scriptCommitMessage("delete", project, filename),

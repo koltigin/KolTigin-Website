@@ -4,7 +4,7 @@ import { assertSafePath } from "../src/paths.js";
 import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover } from "../src/markdown.js";
 import { HttpError, safeExceptionDetail } from "../src/util.js";
-import { publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
+import { getAllowedDownloadProjects, publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -592,6 +592,33 @@ links:
 
     const sh = new TextEncoder().encode("#!/bin/sh\necho ok\n");
     const beforeScripts = github.commits.length;
+    const savedProjectsJson = github.files.get("projects/projects.json");
+    const savedCategoriesJson = github.files.get("config/project-categories.json");
+    github.files.set("projects/projects.json", JSON.stringify({
+      mainnet: [
+        { id: "ario", name: "AR.IO", status: "active" },
+        { id: "redbelly-network", name: "Redbelly Network", status: "active" }
+      ],
+      depin: [
+        { id: "optimai", name: "OptimAI", status: "active", links: [{ label: "Website", url: "https://optimai.network" }] },
+        { id: "nodepay", name: "Nodepay", status: "active" },
+        { id: "future-project", name: "Future Project", status: "active" }
+      ]
+    }, null, 2) + "\n");
+    github.files.set("config/project-categories.json", JSON.stringify([
+      { id: "mainnet", folder: "mainnet", order: 1, label: { en: "Mainnet", tr: "Mainnet" } },
+      { id: "depin", folder: "depin", order: 2, label: { en: "DePIN", tr: "DePIN" } }
+    ], null, 2) + "\n");
+    const allowedFromProjects = getAllowedDownloadProjects(JSON.parse(github.files.get("projects/projects.json")));
+    assert(allowedFromProjects.has("redbelly-network") && allowedFromProjects.has("redbelly") && allowedFromProjects.has("ario") && allowedFromProjects.has("optimai") && allowedFromProjects.has("nodepay") && allowedFromProjects.has("future-project") && allowedFromProjects.has("common"), "allowed download projects come from Projects data plus common");
+    assert(scriptRepoPath("redbelly-network", "redbelly-monitor.sh", allowedFromProjects) === "downloads/redbelly/redbelly-monitor.sh", "canonical redbelly-network resolves to downloads/redbelly/");
+    assert(scriptRepoPath("ario", "ario-gateway.sh", allowedFromProjects) === "downloads/ario/ario-gateway.sh", "ario uses downloads/ario/");
+    assert(scriptRepoPath("optimai", "optimai-setup.sh", allowedFromProjects) === "downloads/optimai/optimai-setup.sh", "optimai uses downloads/optimai/");
+    assert(scriptRepoPath("nodepay", "nodepay-setup.sh", allowedFromProjects) === "downloads/nodepay/nodepay-setup.sh", "nodepay uses downloads/nodepay/");
+    assert(scriptRepoPath("common", "common-tool.sh", allowedFromProjects) === "downloads/common/common-tool.sh", "common uses downloads/common/");
+    assert(scriptRepoPath("future-project", "new-tool.sh", allowedFromProjects) === "downloads/future-project/new-tool.sh", "new canonical ids use downloads/{canonical-id}/");
+    assert(!allowedFromProjects.has("evil") && !allowedFromProjects.has("not-a-project"), "fake project slugs are not in the allowlist");
+
     res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "redbelly", filename: "redbelly-monitor.sh" }, env));
     assert(res.status === 200 && res.body.ok === true, "allowed .sh upload succeeds");
     assert(github.files.has("downloads/redbelly/redbelly-monitor.sh"), "file is written only under /downloads/{allowed-project}/");
@@ -601,8 +628,21 @@ links:
     assert(github.commits.at(-1).message === "Add downloadable script: redbelly/redbelly-monitor.sh", "new script commit message");
     assert(github.commits.length === beforeScripts + 1, "new script creates a GitHub commit");
 
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "redbelly-network", filename: "redbelly-canonical.sh" }, env));
+    assert(res.status === 200 && github.files.has("downloads/redbelly/redbelly-canonical.sh"), "canonical Redbelly id still writes the existing redbelly folder");
+    assert(!github.files.has("downloads/redbelly-network/redbelly-canonical.sh"), "canonical Redbelly id never creates downloads/redbelly-network/");
+    assert(res.body.url === "https://koltigin.xyz/downloads/redbelly/redbelly-canonical.sh", "canonical Redbelly public URL stays under /downloads/redbelly/");
+    assert(res.body.folder === "redbelly" && res.body.path === "/downloads/redbelly/redbelly-canonical.sh", "upload response reports the legacy Redbelly folder");
+
     const listed = await json(await post("/api/admin/scripts", {}, env));
     assert(listed.status === 200 && listed.body.scripts.some((item) => item.filename === "redbelly-monitor.sh" && item.project === "redbelly"), "scripts list includes uploaded file");
+    const optionIds = (listed.body.options || []).map((item) => item.id);
+    assert(optionIds.includes("redbelly-network") && optionIds.includes("ario") && optionIds.includes("optimai"), "Scripts dropdown options are derived from Projects data");
+    assert(optionIds.includes("common") && optionIds.at(-1) === "common", "Common is included in the Scripts dropdown");
+    assert((listed.body.options || []).some((item) => item.id === "redbelly-network" && item.name === "Redbelly Network" && item.folder === "redbelly"), "dropdown uses project display names and the existing Redbelly folder");
+    assert(!(listed.body.groups || []).some((group) => !(group.scripts || []).length), "existing Scripts groups omit empty projects");
+    assert(!(listed.body.groups || []).some((group) => group.id === "optimai"), "projects without scripts do not create empty sections");
+    assert((listed.body.groups || []).some((group) => group.id === "redbelly-network" && group.scripts.some((item) => item.filename === "redbelly-monitor.sh")), "existing Scripts are grouped from current project definitions");
 
     const originalBytes = github.files.get("downloads/redbelly/redbelly-monitor.sh");
     res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: new TextEncoder().encode("#!/bin/sh\necho replaced\n") }, { project: "redbelly", filename: "redbelly-monitor.sh" }, env));
@@ -631,7 +671,23 @@ links:
     res = await json(await postForm("/api/admin/script-upload", { name: ".env", bytes: sh }, { project: "redbelly", filename: ".env" }, env));
     assert(res.status === 400, "hidden filenames such as .env are rejected");
     try { sanitizeScriptFilename("%2e%2e%2fevil.sh"); assert(false, "encoded"); } catch (error) { assert(error instanceof HttpError, "URL-encoded traversal is rejected"); }
-    assert(scriptRepoPath("redbelly", "redbelly-monitor.sh") === "downloads/redbelly/redbelly-monitor.sh", "server-side path is generated");
+    assert(scriptRepoPath("redbelly", "redbelly-monitor.sh", allowedFromProjects) === "downloads/redbelly/redbelly-monitor.sh", "server-side path is generated");
+    try { scriptRepoPath("../etc", "redbelly-monitor.sh", allowedFromProjects); assert(false, "path"); } catch (error) { assert(error instanceof HttpError, "arbitrary project path is rejected"); }
+    try { scriptRepoPath("redbelly", "foo/bar.sh", allowedFromProjects); assert(false, "nested"); } catch (error) { assert(error instanceof HttpError, "no arbitrary repository path can be supplied"); }
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "gateway.sh", bytes: sh }, { project: "ario", filename: "ario-gateway.sh" }, env));
+    assert(res.status === 200 && github.files.has("downloads/ario/ario-gateway.sh") && res.body.url === "https://koltigin.xyz/downloads/ario/ario-gateway.sh", "existing AR.IO upload remains valid");
+    res = await json(await postForm("/api/admin/script-upload", { name: "shared.sh", bytes: sh }, { project: "common", filename: "common-tool.sh" }, env));
+    assert(res.status === 200 && github.files.has("downloads/common/common-tool.sh"), "existing Common upload remains valid");
+    res = await json(await postForm("/api/admin/script-upload", { name: "optimai.sh", bytes: sh }, { project: "optimai", filename: "optimai-setup.sh" }, env));
+    assert(res.status === 200 && github.files.has("downloads/optimai/optimai-setup.sh"), "a project from Projects that was not in the original three-item list can upload");
+    res = await json(await postForm("/api/admin/script-upload", { name: "nodepay.sh", bytes: sh }, { project: "nodepay", filename: "nodepay-setup.sh" }, env));
+    assert(res.status === 200 && github.files.has("downloads/nodepay/nodepay-setup.sh") && !github.files.has("downloads/redbelly-network/nodepay-setup.sh"), "nodepay uses downloads/nodepay/");
+    res = await json(await postForm("/api/admin/script-upload", { name: "new-tool.sh", bytes: sh }, { project: "future-project", filename: "new-tool.sh" }, env));
+    assert(res.status === 200 && github.files.has("downloads/future-project/new-tool.sh"), "a newly added canonical project ID uses downloads/{canonical-id}/");
+    const listedAfter = await json(await post("/api/admin/scripts", {}, env));
+    const listedGroupIds = (listedAfter.body.groups || []).map((group) => group.id);
+    assert(listedGroupIds.includes("ario") && listedGroupIds.includes("common") && listedGroupIds.includes("optimai"), "existing Scripts groups grow dynamically with uploaded projects");
 
     const beforeScriptUnauth = github.commits.length;
     res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "redbelly", filename: "other.sh" }, locked));
@@ -649,6 +705,9 @@ links:
     assert(res.status === 400, "delete rejects traversal filenames");
     res = await json(await post("/api/admin/script-delete", { project: "redbelly", filename: "missing.sh" }, env));
     assert(res.status === 404, "delete of missing downloadable script is 404");
+
+    github.files.set("projects/projects.json", savedProjectsJson);
+    github.files.set("config/project-categories.json", savedCategoriesJson);
 
     const guideStill = JSON.parse(github.files.get("content/guides/index.json"));
     assert(Array.isArray(guideStill.guides), "existing Guides/Projects/CMS behavior remains unaffected");

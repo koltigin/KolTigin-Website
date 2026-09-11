@@ -910,18 +910,45 @@
 
   function scriptDraft() {
     if (!H().state.scriptDraft) {
-      H().state.scriptDraft = { project: 'redbelly', filename: '', file: null, replacing: false };
+      H().state.scriptDraft = { project: '', filename: '', file: null, replacing: false };
     }
     return H().state.scriptDraft;
   }
 
+  function scriptCatalogOptions() {
+    const data = H().state.scriptsData || {};
+    return data.options || [];
+  }
+
   function scriptProjectLabel(project) {
-    const lang = H().uiLang();
-    const groups = (H().state.scriptsData && H().state.scriptsData.projects) || [];
-    const found = groups.find((item) => item.id === project);
+    const pool = [...scriptCatalogOptions(), ...((H().state.scriptsData && (H().state.scriptsData.groups || H().state.scriptsData.projects)) || [])];
+    const found = pool.find((item) => item.id === project || item.folder === project);
+    if (found && found.name) return found.name;
     const label = found && found.label;
-    if (label && typeof label === 'object') return label[lang] || label.en || project;
+    if (label && typeof label === 'object') return label[H().uiLang()] || label.en || project;
     return project;
+  }
+
+  function scriptSelectMarkup(selected) {
+    const lang = H().uiLang();
+    const options = scriptCatalogOptions();
+    const groups = [];
+    for (const item of options) {
+      const last = groups[groups.length - 1];
+      if (!last || last.id !== item.categoryId) {
+        groups.push({ id: item.categoryId, label: item.categoryLabel, items: [item] });
+      } else {
+        last.items.push(item);
+      }
+    }
+    return groups.map((group) => {
+      const label = (group.label && (group.label[lang] || group.label.en)) || group.id;
+      const opts = group.items.map((item) => {
+        const isSelected = selected === item.id || selected === item.folder;
+        return `<option value="${esc(item.id)}" ${isSelected ? 'selected' : ''}>${esc(item.name || item.id)}</option>`;
+      }).join('');
+      return `<optgroup label="${esc(label)}">${opts}</optgroup>`;
+    }).join('');
   }
 
   function formatScriptSize(bytes) {
@@ -951,19 +978,12 @@
 
   function renderScripts() {
     const draft = scriptDraft();
-    const data = H().state.scriptsData || { projects: [], scripts: [] };
-    const groups = data.projects || [];
-    const projectOptions = groups.length
-      ? groups
-      : [
-          { id: 'redbelly', label: { en: 'Redbelly', tr: 'Redbelly' } },
-          { id: 'ario', label: { en: 'AR.IO', tr: 'AR.IO' } },
-          { id: 'common', label: { en: 'Common', tr: 'Common' } }
-        ];
-    const options = projectOptions.map((item) => {
-      const label = (item.label && (item.label[H().uiLang()] || item.label.en)) || item.id;
-      return `<option value="${esc(item.id)}" ${draft.project === item.id ? 'selected' : ''}>${esc(label)}</option>`;
-    }).join('');
+    const data = H().state.scriptsData || { options: [], groups: [], projects: [], scripts: [] };
+    const catalog = scriptCatalogOptions();
+    if (catalog.length && !catalog.some((item) => item.id === draft.project || item.folder === draft.project)) {
+      draft.project = catalog[0].id;
+    }
+    const groups = (data.groups || data.projects || []).filter((group) => (group.scripts || []).length);
     const grouped = groups.map((group) => {
       const rows = (group.scripts || []).map((item) => `
         <article class="item">
@@ -980,10 +1000,10 @@
             <button class="btn btn-ghost" type="button" data-script-delete="${esc(item.project)}" data-script-name="${esc(item.filename)}">${esc(t('scripts.delete'))}</button>
           </div>
         </article>
-      `).join('') || `<p class="empty">${esc(t('scripts.empty'))}</p>`;
+      `).join('');
       return `
         <section>
-          <h3 class="section-label">${esc(scriptProjectLabel(group.id))}</h3>
+          <h3 class="section-label">${esc(group.name || scriptProjectLabel(group.id))}</h3>
           <div class="list">${rows}</div>
         </section>
       `;
@@ -992,7 +1012,7 @@
       <form class="editor" data-script-form>
         <div class="field">
           <label>${esc(t('scripts.project'))}</label>
-          <select data-script-project>${options}</select>
+          <select data-script-project>${scriptSelectMarkup(draft.project)}</select>
         </div>
         <div class="field">
           <label>${esc(t('scripts.file'))}</label>
@@ -1290,7 +1310,7 @@
       if (replaceBtn) {
         event.preventDefault();
         const draft = scriptDraft();
-        draft.project = replaceBtn.getAttribute('data-script-replace') || 'redbelly';
+        draft.project = replaceBtn.getAttribute('data-script-replace') || '';
         draft.filename = replaceBtn.getAttribute('data-script-name') || '';
         draft.replacing = true;
         renderScripts();

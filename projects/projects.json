@@ -86,10 +86,6 @@
             "tr": "Sorunlar ve Çözümler"
           },
           "guide": "redbelly-node-troubleshooting"
-        },
-        {
-          "label": "Setup Guide",
-          "guide": "redbelly-mainnet-telegram-monitoring-bot-installation-guide"
         }
       ]
     }

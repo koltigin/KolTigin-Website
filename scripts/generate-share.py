@@ -1151,20 +1151,20 @@ def patch_section_head(
     attr_canon = html.escape(canonical, quote=True)
     attr_title = html.escape(title, quote=True)
     replacements = [
-        (r'(<meta name="description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
-        (r'(<link rel="canonical" href=")[^"]*(")', rf"\1{attr_canon}\2"),
-        (r'(<meta property="og:title" content=")[^"]*(")', rf"\1{attr_title}\2"),
-        (r'(<meta property="og:description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
-        (r'(<meta property="og:url" content=")[^"]*(")', rf"\1{attr_canon}\2"),
-        (r'(<meta name="twitter:title" content=")[^"]*(")', rf"\1{attr_title}\2"),
-        (r'(<meta name="twitter:description" content=")[^"]*(")', rf"\1{attr_desc}\2"),
+        (r'(<meta name="description" content=")[^"]*(")', rf"\g<1>{attr_desc}\g<2>"),
+        (r'(<link rel="canonical" href=")[^"]*(")', rf"\g<1>{attr_canon}\g<2>"),
+        (r'(<meta property="og:title" content=")[^"]*(")', rf"\g<1>{attr_title}\g<2>"),
+        (r'(<meta property="og:description" content=")[^"]*(")', rf"\g<1>{attr_desc}\g<2>"),
+        (r'(<meta property="og:url" content=")[^"]*(")', rf"\g<1>{attr_canon}\g<2>"),
+        (r'(<meta name="twitter:title" content=")[^"]*(")', rf"\g<1>{attr_title}\g<2>"),
+        (r'(<meta name="twitter:description" content=")[^"]*(")', rf"\g<1>{attr_desc}\g<2>"),
     ]
     if image:
         attr_image = html.escape(image, quote=True)
         replacements.extend(
             [
-                (r'(<meta property="og:image" content=")[^"]*(")', rf"\1{attr_image}\2"),
-                (r'(<meta name="twitter:image" content=")[^"]*(")', rf"\1{attr_image}\2"),
+                (r'(<meta property="og:image" content=")[^"]*(")', rf"\g<1>{attr_image}\g<2>"),
+                (r'(<meta name="twitter:image" content=")[^"]*(")', rf"\g<1>{attr_image}\g<2>"),
             ]
         )
     for pattern, repl in replacements:

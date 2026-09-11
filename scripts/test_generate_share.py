@@ -170,6 +170,26 @@ def main() -> None:
                 fail(f"Poppins is missing glyph for {ch!r}")
     ok("turkish uppercase helper and Poppins glyphs")
 
+    numbered_head = generate_share.patch_section_head(
+        """<!DOCTYPE html><html><head>
+  <title>Old</title>
+  <meta name="description" content="old">
+  <link rel="canonical" href="https://koltigin.xyz/">
+  <meta property="og:title" content="Old">
+  <meta property="og:description" content="old">
+  <meta property="og:url" content="https://koltigin.xyz/">
+  <meta name="twitter:title" content="Old">
+  <meta name="twitter:description" content="old">
+</head><body></body></html>
+""",
+        title="Three rules",
+        description="1. Komutlar olduğu gibi çalışsın.",
+        canonical="https://koltigin.xyz/writings/tr/notes/demo/",
+    )
+    if "1. Komutlar" not in numbered_head:
+        fail("description starting with 1. must patch without a regex group error")
+    ok("share head patch survives numbered descriptions")
+
     escaped = generate_share.sitemap_xml(
         "https://koltigin.xyz",
         [{"loc": "https://koltigin.xyz/a&b/"}, {"loc": "https://koltigin.xyz/a&b/"}],

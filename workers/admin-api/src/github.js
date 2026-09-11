@@ -55,6 +55,14 @@ export class MockGitHub {
     return this.listPaths().filter((path) => path === prefix || path.startsWith(prefix));
   }
 
+  async listPrefixEntries(prefix) {
+    const paths = await this.listPrefix(prefix);
+    return Promise.all(paths.map(async (path) => {
+      const bytes = await this.getBytes(path);
+      return { path, size: bytes.length };
+    }));
+  }
+
   sameBytes(left, right) {
     if (left === right) return true;
     if (left == null || right == null) return false;
@@ -137,12 +145,16 @@ export class GitHubClient {
   }
 
   async listPrefix(prefix) {
+    return (await this.listPrefixEntries(prefix)).map((item) => item.path);
+  }
+
+  async listPrefixEntries(prefix) {
     const ref = await this.api(`/git/ref/heads/${this.branch}`);
     const commit = await this.api(`/git/commits/${ref.object.sha}`);
     const tree = await this.api(`/git/trees/${commit.tree.sha}?recursive=1`);
     return (tree.tree || [])
       .filter((item) => item.type === "blob" && (item.path === prefix || item.path.startsWith(prefix)))
-      .map((item) => item.path);
+      .map((item) => ({ path: item.path, size: Number(item.size) || 0 }));
   }
 
   async commit({ message, upserts = [], deletes = [] }) {

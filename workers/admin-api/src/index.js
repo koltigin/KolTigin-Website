@@ -1,7 +1,8 @@
 import { JSON_LIMIT, UPLOAD_LIMIT, HttpError, jsonOk, jsonErr, safeExceptionDetail } from "./util.js";
 import { assertAccess } from "./access.js";
 import { createGitHub } from "./github.js";
-import { POST_HANDLERS, handleUpload } from "./handlers.js";
+import { POST_HANDLERS, handleUpload, handleScriptUpload } from "./handlers.js";
+import { SCRIPT_UPLOAD_LIMIT } from "./scripts.js";
 
 const UPLOADS = {
   "/api/admin/cover": "cover",
@@ -44,6 +45,22 @@ async function parseUpload(request) {
   return { file: { name: file.name || "upload", bytes }, fields };
 }
 
+async function parseScriptUpload(request) {
+  const length = Number(request.headers.get("content-length") || "0");
+  if (length > SCRIPT_UPLOAD_LIMIT + 32_000) throw new HttpError(413, "File is too large");
+  const form = await request.formData();
+  const file = form.get("file");
+  if (!file || typeof file === "string") throw new HttpError(400, "Choose a script file");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.length > SCRIPT_UPLOAD_LIMIT) throw new HttpError(413, "File is too large");
+  const fields = {};
+  for (const [key, value] of form.entries()) {
+    if (key === "file") continue;
+    if (typeof value === "string") fields[key] = value;
+  }
+  return { file: { name: file.name || "upload", bytes }, fields };
+}
+
 export async function handleRequest(request, env) {
   const path = pathnameOf(request.url);
   if (request.method === "OPTIONS") {
@@ -56,6 +73,11 @@ export async function handleRequest(request, env) {
   try {
     await assertAccess(request, env);
     const github = createGitHub(env);
+    if (path === "/api/admin/script-upload") {
+      const { file, fields } = await parseScriptUpload(request);
+      const payload = await handleScriptUpload(file, fields, github);
+      return jsonOk(payload);
+    }
     if (UPLOADS[path]) {
       const { file, fields } = await parseUpload(request);
       const payload = await handleUpload(UPLOADS[path], file, fields, github);

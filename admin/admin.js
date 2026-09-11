@@ -399,7 +399,12 @@
     if (isProductionAdmin()) return productionWrite(url, { method: 'POST', body });
     const response = await fetch(url, { method: 'POST', credentials: 'include', body });
     const data = await parseJsonResponse(response);
-    if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.error || `HTTP ${response.status}`);
+      error.status = response.status;
+      if (data.exists) error.exists = true;
+      throw error;
+    }
     return data;
   }
 
@@ -622,6 +627,7 @@
     if (page === 'videos') return 'videos';
     if (page === 'projects' || page === 'project-categories') return 'projects';
     if (page === 'guides') return 'guides';
+    if (page === 'scripts') return 'scripts';
     if (page === 'social-links') return 'social-links';
     return page;
   }
@@ -648,6 +654,7 @@
             ${navLink('#/writings', t('nav.writings'), 'writings')}
             ${navLink('#/videos', t('nav.videos'), 'videos')}
             ${navLink('#/guides', t('nav.guides'), 'guides')}
+            ${navLink('#/scripts', t('nav.scripts'), 'scripts')}
           </div>
           <div class="nav-section">
             <p class="nav-group">${escapeHtml(t('nav.portfolio'))}</p>
@@ -732,6 +739,10 @@
         </a>
         <a class="dash-card" href="#/guides">
           <h2>${escapeHtml(t('nav.guides'))}</h2>
+          <p>${escapeHtml(t('dash.quickEdit'))}</p>
+        </a>
+        <a class="dash-card" href="#/scripts">
+          <h2>${escapeHtml(t('nav.scripts'))}</h2>
           <p>${escapeHtml(t('dash.quickEdit'))}</p>
         </a>
         <a class="dash-card" href="#/about">

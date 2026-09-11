@@ -10,6 +10,8 @@ from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import quote
 
+import admin_scripts
+
 ROOT = Path(__file__).resolve().parents[1]
 ABOUT_ROOT = ROOT / "content" / "about"
 RESUME_ROOT = ROOT / "content" / "resume"
@@ -886,5 +888,11 @@ def handle_cms_post(handler, parsed, body, json_ok, json_error) -> bool:
         return True
     if path == "/admin/api/contact":
         handle_contact_save(handler, body, json_ok, json_error)
+        return True
+    if path == "/admin/api/scripts":
+        json_ok(handler, admin_scripts.list_scripts())
+        return True
+    if path == "/admin/api/script-delete":
+        admin_scripts.handle_script_delete(body, json_ok, json_error, handler)
         return True
     return False

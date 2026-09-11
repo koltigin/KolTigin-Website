@@ -17,6 +17,7 @@ window.ADMIN_I18N = {
       resume: 'Resume',
       projects: 'Projects',
       guides: 'Guides',
+      scripts: 'Scripts',
       contact: 'Contact',
       close: 'Close menu'
     },
@@ -294,6 +295,29 @@ window.ADMIN_I18N = {
       icon: 'Icon',
       changeImage: 'Change image'
     },
+    scripts: {
+      project: 'Project',
+      file: 'File',
+      filename: 'Publish filename',
+      submit: 'Upload / Update',
+      existing: 'Existing Scripts',
+      copyUrl: 'Copy URL',
+      download: 'Download',
+      replace: 'Replace',
+      delete: 'Delete',
+      uploaded: 'File uploaded successfully.',
+      updated: 'File updated successfully.',
+      deleted: 'File deleted successfully.',
+      overwriteConfirm: 'This file already exists. Do you want to overwrite it?',
+      deleteConfirm: 'Delete this file from the repository?',
+      invalidFilename: 'Invalid filename.',
+      unsupportedType: 'Unsupported file type.',
+      copied: 'Copied',
+      replacing: 'This will replace {name}.',
+      empty: 'No scripts uploaded yet.',
+      size: 'Size',
+      hint: 'Public files are stored at downloads/{project}/{filename}.'
+    },
     contact: {
       city: 'City',
       country: 'Country'
@@ -317,6 +341,7 @@ window.ADMIN_I18N = {
       resume: 'Özgeçmiş',
       projects: 'Projeler',
       guides: 'Rehberler',
+      scripts: 'Scriptler',
       contact: 'İletişim',
       close: 'Menüyü kapat'
     },
@@ -593,6 +618,29 @@ window.ADMIN_I18N = {
       whatIDo: 'Ne Yapıyorum — ikonlar',
       icon: 'İkon',
       changeImage: 'Görseli değiştir'
+    },
+    scripts: {
+      project: 'Proje',
+      file: 'Dosya',
+      filename: 'Yayın dosya adı',
+      submit: 'Yükle / Güncelle',
+      existing: 'Mevcut Scriptler',
+      copyUrl: 'URL\'yi Kopyala',
+      download: 'İndir',
+      replace: 'Değiştir',
+      delete: 'Sil',
+      uploaded: 'Dosya başarıyla yüklendi.',
+      updated: 'Dosya başarıyla güncellendi.',
+      deleted: 'Dosya başarıyla silindi.',
+      overwriteConfirm: 'Bu dosya zaten mevcut. Üzerine yazmak istiyor musunuz?',
+      deleteConfirm: 'Bu dosyayı depodan silmek istiyor musunuz?',
+      invalidFilename: 'Geçersiz dosya adı.',
+      unsupportedType: 'Desteklenmeyen dosya türü.',
+      copied: 'Kopyalandı',
+      replacing: 'Bu işlem {name} dosyasının üzerine yazacak.',
+      empty: 'Henüz script yüklenmedi.',
+      size: 'Boyut',
+      hint: 'Herkese açık dosyalar downloads/{project}/{filename} altına yazılır.'
     },
     contact: {
       city: 'Şehir',

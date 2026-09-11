@@ -25,6 +25,7 @@ from urllib.parse import parse_qs, urlparse, quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import admin_cms
+import admin_scripts
 
 ROOT = Path(__file__).resolve().parents[1]
 CODE_FILE = ROOT / ".admin-dev-code"
@@ -1053,6 +1054,10 @@ class AdminHandler(SimpleHTTPRequestHandler):
             if not self.is_authed():
                 return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
             return self.handle_guide_image_upload()
+        if parsed.path == "/admin/api/script-upload":
+            if not self.is_authed():
+                return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
+            return admin_scripts.handle_script_upload(self, json_ok, json_error, parse_multipart)
 
         try:
             body = read_json_body(self)

@@ -4,6 +4,7 @@ import { assertSafePath } from "../src/paths.js";
 import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover } from "../src/markdown.js";
 import { HttpError, safeExceptionDetail } from "../src/util.js";
+import { publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -125,6 +126,7 @@ async function main() {
     assertSafePath("guide/tr/hello/index.html");
     assertSafePath("sitemap.xml");
     assertSafePath("assets/images/og/writings/en/notes/hello.png");
+    assertSafePath("downloads/redbelly/redbelly-monitor.sh");
     try { assertSafePath("../etc/passwd"); assert(false, "traversal"); } catch (error) { assert(error instanceof HttpError, "path traversal blocked"); }
     try { assertSafePath("scripts/admin_cms.py"); assert(false, "scripts"); } catch (error) { assert(error instanceof HttpError, "scripts blocked"); }
 
@@ -587,6 +589,69 @@ links:
     res = await json(await postForm("/api/admin/cover", { name: "shot.png", bytes: png }, {}, env));
     assert(res.status === 200 && res.body.filename.endsWith(".png"), "cover upload");
     assert([...github.files.keys()].some((path) => path.startsWith("assets/images/blog/")), "cover stored under blog");
+
+    const sh = new TextEncoder().encode("#!/bin/sh\necho ok\n");
+    const beforeScripts = github.commits.length;
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "redbelly", filename: "redbelly-monitor.sh" }, env));
+    assert(res.status === 200 && res.body.ok === true, "allowed .sh upload succeeds");
+    assert(github.files.has("downloads/redbelly/redbelly-monitor.sh"), "file is written only under /downloads/{allowed-project}/");
+    assert(![...github.files.keys()].some((path) => path.startsWith("scripts/") && path.endsWith("redbelly-monitor.sh")), "downloadable script is not stored in /scripts/");
+    assert(res.body.url === "https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh", "generated public URL is correct");
+    assert(publicScriptUrl("redbelly", "redbelly-monitor.sh") === res.body.url, "helper public URL matches response");
+    assert(github.commits.at(-1).message === "Add downloadable script: redbelly/redbelly-monitor.sh", "new script commit message");
+    assert(github.commits.length === beforeScripts + 1, "new script creates a GitHub commit");
+
+    const listed = await json(await post("/api/admin/scripts", {}, env));
+    assert(listed.status === 200 && listed.body.scripts.some((item) => item.filename === "redbelly-monitor.sh" && item.project === "redbelly"), "scripts list includes uploaded file");
+
+    const originalBytes = github.files.get("downloads/redbelly/redbelly-monitor.sh");
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: new TextEncoder().encode("#!/bin/sh\necho replaced\n") }, { project: "redbelly", filename: "redbelly-monitor.sh" }, env));
+    assert(res.status === 409, "existing file replacement requires overwrite");
+    assert(github.files.get("downloads/redbelly/redbelly-monitor.sh") === originalBytes || new TextDecoder().decode(github.files.get("downloads/redbelly/redbelly-monitor.sh")).includes("echo ok"), "rejected replace leaves original file");
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: new TextEncoder().encode("#!/bin/sh\necho replaced\n") }, { project: "redbelly", filename: "redbelly-monitor.sh", overwrite: "1" }, env));
+    assert(res.status === 200 && res.body.updated === true, "existing file replacement uses the update path");
+    assert(github.commits.at(-1).message === "Update downloadable script: redbelly/redbelly-monitor.sh", "update script commit message");
+    assert(new TextDecoder().decode(github.files.get("downloads/redbelly/redbelly-monitor.sh")).includes("echo replaced"), "overwrite updates the existing path");
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "tool.exe", bytes: sh }, { project: "redbelly", filename: "tool.exe" }, env));
+    assert(res.status === 400 && String(res.body.error).toLowerCase().includes("unsupported"), "unsupported extension is rejected");
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "evil", filename: "redbelly-monitor.sh" }, env));
+    assert(res.status === 400 && String(res.body.error).toLowerCase().includes("unknown project"), "invalid project is rejected");
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "../evil.sh", bytes: sh }, { project: "redbelly", filename: "../evil.sh" }, env));
+    assert(res.status === 400, "../evil.sh is rejected");
+    assert(![...github.files.keys()].some((path) => path.endsWith("evil.sh")), "traversal filename is not written");
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "bad.sh", bytes: sh }, { project: "redbelly", filename: "foo/bar.sh" }, env));
+    assert(res.status === 400, "filenames containing / are rejected");
+    res = await json(await postForm("/api/admin/script-upload", { name: "bad.sh", bytes: sh }, { project: "redbelly", filename: "foo\\bar.sh" }, env));
+    assert(res.status === 400, "filenames containing \\ are rejected");
+    res = await json(await postForm("/api/admin/script-upload", { name: ".env", bytes: sh }, { project: "redbelly", filename: ".env" }, env));
+    assert(res.status === 400, "hidden filenames such as .env are rejected");
+    try { sanitizeScriptFilename("%2e%2e%2fevil.sh"); assert(false, "encoded"); } catch (error) { assert(error instanceof HttpError, "URL-encoded traversal is rejected"); }
+    assert(scriptRepoPath("redbelly", "redbelly-monitor.sh") === "downloads/redbelly/redbelly-monitor.sh", "server-side path is generated");
+
+    const beforeScriptUnauth = github.commits.length;
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "redbelly", filename: "other.sh" }, locked));
+    assert(res.status === 401, "script upload remains Access-protected");
+    assert(github.commits.length === beforeScriptUnauth, "unauthorized script upload does not mutate GitHub");
+
+    github.files.set("scripts/admin_cms.py", "print('nope')\n");
+    res = await json(await post("/api/admin/script-delete", { project: "redbelly", filename: "redbelly-monitor.sh" }, env));
+    assert(res.status === 200 && res.body.deleted === true, "deletion only targets an existing file under /downloads/");
+    assert(!github.files.has("downloads/redbelly/redbelly-monitor.sh"), "deleted downloadable script is gone");
+    assert(github.files.has("scripts/admin_cms.py"), "internal /scripts/ files are not deleted");
+    assert(github.commits.at(-1).message === "Delete downloadable script: redbelly/redbelly-monitor.sh", "delete script commit message");
+
+    res = await json(await post("/api/admin/script-delete", { project: "redbelly", filename: "../evil.sh" }, env));
+    assert(res.status === 400, "delete rejects traversal filenames");
+    res = await json(await post("/api/admin/script-delete", { project: "redbelly", filename: "missing.sh" }, env));
+    assert(res.status === 404, "delete of missing downloadable script is 404");
+
+    const guideStill = JSON.parse(github.files.get("content/guides/index.json"));
+    assert(Array.isArray(guideStill.guides), "existing Guides/Projects/CMS behavior remains unaffected");
 
     github.files.set("writings/en/articles/smoke-note/index.html", "<html></html>");
     github.files.set("assets/images/og/writings/en/articles/smoke-note.png", png);

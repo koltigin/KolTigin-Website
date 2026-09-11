@@ -229,6 +229,7 @@ assert(navIdFromParts(["resume"]) === "resume", "Resume → Resume");
 assert(navIdFromParts(["profile"]) === "profile", "Profile → Profile");
 assert(navIdFromParts(["social-links"]) === "social-links", "Social Links → Social Links");
 assert(navIdFromParts(["contact"]) === "contact", "Contact → Contact");
+assert(navIdFromParts(["scripts"]) === "scripts", "Scripts → Scripts");
 assert(navIdFromParts(["writing-types"]) === "writings", "writing types still highlight Writings");
 assert(navIdFromParts(["project-categories"]) === "projects", "project categories still highlight Projects");
 

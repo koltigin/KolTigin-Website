@@ -110,7 +110,7 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.2") && htmlSrc.includes("cms.js?v=v3.14"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.2") && htmlSrc.includes("cms.js?v=v3.15"), "admin HTML cache-busts cms-save and cms.js");
 
 const sharedGuide = {
   id: "ario-guide",

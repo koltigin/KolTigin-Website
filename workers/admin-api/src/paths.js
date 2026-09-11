@@ -24,7 +24,8 @@ const ALLOWED_PREFIXES = [
   "assets/images/profile/",
   "assets/images/projects/",
   "assets/images/guides/",
-  "assets/images/og/"
+  "assets/images/og/",
+  "downloads/"
 ];
 
 const BLOCKED = new Set([

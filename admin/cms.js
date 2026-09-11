@@ -906,6 +906,159 @@
     renderContact();
   }
 
+  const SCRIPT_ACCEPT = '.sh,.py,.js,.json,.yaml,.yml,.toml,.txt';
+
+  function scriptDraft() {
+    if (!H().state.scriptDraft) {
+      H().state.scriptDraft = { project: 'redbelly', filename: '', file: null, replacing: false };
+    }
+    return H().state.scriptDraft;
+  }
+
+  function scriptProjectLabel(project) {
+    const lang = H().uiLang();
+    const groups = (H().state.scriptsData && H().state.scriptsData.projects) || [];
+    const found = groups.find((item) => item.id === project);
+    const label = found && found.label;
+    if (label && typeof label === 'object') return label[lang] || label.en || project;
+    return project;
+  }
+
+  function formatScriptSize(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return `${n} B`;
+    return `${(n / 1024).toFixed(1)} KB`;
+  }
+
+  async function loadScripts() {
+    const data = await H().api('/admin/api/scripts', { method: 'POST', body: '{}' });
+    H().state.scriptsData = data;
+    return data;
+  }
+
+  function collectScriptForm() {
+    const draft = scriptDraft();
+    const project = document.querySelector('[data-script-project]');
+    const filename = document.querySelector('[data-script-filename]');
+    if (project) draft.project = project.value;
+    if (filename) draft.filename = filename.value.trim();
+  }
+
+  async function openScripts() {
+    await loadScripts();
+    renderScripts();
+  }
+
+  function renderScripts() {
+    const draft = scriptDraft();
+    const data = H().state.scriptsData || { projects: [], scripts: [] };
+    const groups = data.projects || [];
+    const projectOptions = groups.length
+      ? groups
+      : [
+          { id: 'redbelly', label: { en: 'Redbelly', tr: 'Redbelly' } },
+          { id: 'ario', label: { en: 'AR.IO', tr: 'AR.IO' } },
+          { id: 'common', label: { en: 'Common', tr: 'Common' } }
+        ];
+    const options = projectOptions.map((item) => {
+      const label = (item.label && (item.label[H().uiLang()] || item.label.en)) || item.id;
+      return `<option value="${esc(item.id)}" ${draft.project === item.id ? 'selected' : ''}>${esc(label)}</option>`;
+    }).join('');
+    const grouped = groups.map((group) => {
+      const rows = (group.scripts || []).map((item) => `
+        <article class="item">
+          <h3>${esc(item.filename)}</h3>
+          <div class="meta">
+            <span class="pill gold">${esc(scriptProjectLabel(item.project))}</span>
+            <span class="pill">${esc(formatScriptSize(item.size))}</span>
+          </div>
+          <p class="hint">${esc(item.url)}</p>
+          <div class="item-actions">
+            <button class="btn btn-ghost" type="button" data-script-copy="${esc(item.url)}">${esc(t('scripts.copyUrl'))}</button>
+            <a class="btn btn-ghost" href="${esc(item.url)}" target="_blank" rel="noopener">${esc(t('scripts.download'))}</a>
+            <button class="btn btn-ghost" type="button" data-script-replace="${esc(item.project)}" data-script-name="${esc(item.filename)}">${esc(t('scripts.replace'))}</button>
+            <button class="btn btn-ghost" type="button" data-script-delete="${esc(item.project)}" data-script-name="${esc(item.filename)}">${esc(t('scripts.delete'))}</button>
+          </div>
+        </article>
+      `).join('') || `<p class="empty">${esc(t('scripts.empty'))}</p>`;
+      return `
+        <section>
+          <h3 class="section-label">${esc(scriptProjectLabel(group.id))}</h3>
+          <div class="list">${rows}</div>
+        </section>
+      `;
+    }).join('');
+    document.getElementById('app').innerHTML = H().layout(t('nav.scripts'), `
+      <form class="editor" data-script-form>
+        <div class="field">
+          <label>${esc(t('scripts.project'))}</label>
+          <select data-script-project>${options}</select>
+        </div>
+        <div class="field">
+          <label>${esc(t('scripts.file'))}</label>
+          <input data-script-file type="file" accept="${SCRIPT_ACCEPT}">
+        </div>
+        <div class="field">
+          <label>${esc(t('scripts.filename'))}</label>
+          <input data-script-filename type="text" value="${esc(draft.filename)}" autocomplete="off">
+        </div>
+        ${draft.replacing ? `<p class="hint">${esc(t('scripts.replacing', { name: draft.filename }))}</p>` : ''}
+        <p class="hint">${esc(t('scripts.hint'))}</p>
+        <div class="row-actions">
+          <button class="btn btn-gold" type="submit" data-script-upload>${esc(t('scripts.submit'))}</button>
+        </div>
+      </form>
+      <h2 class="section-label">${esc(t('scripts.existing'))}</h2>
+      ${grouped || `<p class="empty">${esc(t('scripts.empty'))}</p>`}
+    `);
+  }
+
+  async function uploadScript(overwrite) {
+    collectScriptForm();
+    const draft = scriptDraft();
+    if (!draft.file) {
+      H().showError(t('scripts.file'));
+      return;
+    }
+    const fields = {
+      project: draft.project,
+      filename: draft.filename || draft.file.name
+    };
+    if (overwrite) fields.overwrite = '1';
+    try {
+      const result = await H().uploadImage('/admin/api/script-upload', draft.file, fields);
+      draft.file = null;
+      draft.replacing = false;
+      await loadScripts();
+      await saveOk(result.updated ? t('scripts.updated') : t('scripts.uploaded'));
+      renderScripts();
+    } catch (error) {
+      if (error.status === 409) {
+        if (!window.confirm(t('scripts.overwriteConfirm'))) return;
+        await uploadScript(true);
+        return;
+      }
+      await saveFail(error);
+      renderScripts();
+    }
+  }
+
+  async function deleteScript(project, filename) {
+    if (!window.confirm(t('scripts.deleteConfirm'))) return;
+    try {
+      await H().api('/admin/api/script-delete', {
+        method: 'POST',
+        body: JSON.stringify({ project, filename })
+      });
+      await loadScripts();
+      await saveOk(t('scripts.deleted'));
+      renderScripts();
+    } catch (error) {
+      await saveFail(error);
+      renderScripts();
+    }
+  }
+
   function bindCms() {
     const app = document.getElementById('app');
     app.addEventListener('click', async (event) => {
@@ -1118,6 +1271,38 @@
         return;
       }
       if (event.target.closest('[data-save-contact]')) { event.preventDefault(); await saveContact(); }
+      const copyBtn = event.target.closest('[data-script-copy]');
+      if (copyBtn) {
+        event.preventDefault();
+        const url = copyBtn.getAttribute('data-script-copy') || '';
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch {
+          window.prompt(t('scripts.copyUrl'), url);
+        }
+        const original = copyBtn.textContent;
+        copyBtn.textContent = t('scripts.copied');
+        H().showNotice(t('scripts.copied'));
+        setTimeout(() => { if (copyBtn.isConnected) copyBtn.textContent = original; }, 1500);
+        return;
+      }
+      const replaceBtn = event.target.closest('[data-script-replace]');
+      if (replaceBtn) {
+        event.preventDefault();
+        const draft = scriptDraft();
+        draft.project = replaceBtn.getAttribute('data-script-replace') || 'redbelly';
+        draft.filename = replaceBtn.getAttribute('data-script-name') || '';
+        draft.replacing = true;
+        renderScripts();
+        document.querySelector('[data-script-file]')?.focus();
+        return;
+      }
+      const deleteBtn = event.target.closest('[data-script-delete]');
+      if (deleteBtn) {
+        event.preventDefault();
+        await deleteScript(deleteBtn.getAttribute('data-script-delete'), deleteBtn.getAttribute('data-script-name'));
+        return;
+      }
     });
 
     app.addEventListener('input', (event) => {
@@ -1169,6 +1354,14 @@
         if (H().state.authed) H().markDirty();
         return;
       }
+      if (event.target.matches('[data-script-file]') && event.target.files && event.target.files[0]) {
+        const draft = scriptDraft();
+        draft.file = event.target.files[0];
+        if (!draft.replacing || !draft.filename) draft.filename = draft.file.name;
+        const nameInput = document.querySelector('[data-script-filename]');
+        if (nameInput && (!draft.replacing || !nameInput.value.trim())) nameInput.value = draft.filename;
+        return;
+      }
       if (event.target.id === 'guide-cover-file' && event.target.files && event.target.files[0]) {
         const g = H().state.guideDraft;
         const file = event.target.files[0];
@@ -1201,6 +1394,12 @@
         } catch (error) { await saveFail(error); renderGuideEditor(); }
       }
     });
+
+    app.addEventListener('submit', async (event) => {
+      if (!event.target.closest('[data-script-form]')) return;
+      event.preventDefault();
+      await uploadScript(scriptDraft().replacing);
+    });
   }
 
   window.AdminCMS = {
@@ -1227,6 +1426,7 @@
       }
       if (page === 'new' && parts[1] === 'guides') { await openGuide(); return true; }
       if (page === 'edit' && parts[1] === 'guides' && parts[2]) { await openGuide(decodeURIComponent(parts[2])); return true; }
+      if (page === 'scripts') { await openScripts(); return true; }
       if (page === 'contact') { await openContact(); return true; }
       return false;
     }

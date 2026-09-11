@@ -5,6 +5,7 @@ import vm from "node:vm";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const repo = join(root, "../..");
+const orderSrc = readFileSync(join(root, "content-order.js"), "utf8");
 const guidesSrc = readFileSync(join(root, "guides-parser.js"), "utf8");
 const css = readFileSync(join(root, "../css/style.css"), "utf8");
 const indexHtml = readFileSync(join(repo, "index.html"), "utf8");
@@ -66,6 +67,7 @@ const sandbox = {
   fetch: async () => ({ ok: false })
 };
 sandbox.window.window = sandbox.window;
+vm.runInNewContext(orderSrc, sandbox);
 vm.runInNewContext(guidesSrc, sandbox);
 const Parser = sandbox.window.GuidesParser;
 const parser = Object.create(Parser.prototype);
@@ -152,6 +154,12 @@ assert(
 assert(css.includes(".blog-posts-list.guides-posts-list"), "guides grid class exists");
 assert(css.includes("@media (min-width: 1024px)") && /guides-posts-list\s*\{[^}]*1fr 1fr/.test(css), "desktop uses 2-column guides grid");
 assert(/guides-posts-list \{\s*grid-template-columns: 1fr;/.test(css), "tablet/mobile guides grid is 1 column");
+assert(indexHtml.includes("/assets/js/content-order.js?v=prod1"), "guides landing loads the shared chronological helper");
+assert(guidesSrc.includes("sortByPublicationDate"), "guides landing sorts by publication date");
+assert(sandbox.window.KolTiginContentOrder.sortByPublicationDate([
+  { id: "old", date: "2026-09-09" },
+  { id: "telegram", date: "2026-09-11" }
+], { dateKeys: ["date"], idKeys: ["id"] })[0].id === "telegram", "newly published Guide becomes first");
 
 if (failed) {
   console.error(`${failed} failed`);

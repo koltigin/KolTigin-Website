@@ -26,11 +26,10 @@ export function pretty(data) {
   return `${JSON.stringify(data, null, 2)}\n`;
 }
 
-export function upsertListed(list, name, date) {
-  const next = (list || []).filter((item) => item !== name);
-  next.push(name);
-  next.sort((a, b) => String(b).localeCompare(String(a)));
-  return next;
+export function upsertListed(list, name) {
+  const current = list || [];
+  if (current.includes(name)) return [...current];
+  return [name, ...current];
 }
 
 export function removeListed(list, name) {
@@ -70,8 +69,7 @@ export function applyVideoIndex(index, { file, remove }) {
 export function applyGuideIndex(index, { id, remove }) {
   const data = { guides: [...((index && index.guides) || [])] };
   if (remove) data.guides = data.guides.filter((item) => item !== id);
-  else if (!data.guides.includes(id)) data.guides.push(id);
-  data.guides.sort();
+  else if (!data.guides.includes(id)) data.guides.unshift(id);
   return data;
 }
 

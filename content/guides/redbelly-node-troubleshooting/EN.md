@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Node Troubleshooting
 
 This guide covers solutions to some common issues that may occur while operating a Redbelly Mainnet node.

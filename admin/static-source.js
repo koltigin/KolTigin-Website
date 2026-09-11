@@ -247,17 +247,20 @@
           const link = (project.links || []).find((entry) => entry && entry.guide === id);
           return { id: project.id, name: project.name, label: link ? link.label : undefined };
         });
+      const enMeta = parseFrontMatter(en).meta;
+      const trMeta = parseFrontMatter(tr).meta;
       guides.push({
         id,
         titleEn: firstHeading(en) || id,
         titleTr: firstHeading(tr) || id,
+        date: String(enMeta.date || trMeta.date || '').trim(),
         existsEn: Boolean(en),
         existsTr: Boolean(tr),
-        cover: (parseFrontMatter(en).meta.cover || parseFrontMatter(tr).meta.cover || parseFrontMatter(en).meta.image || parseFrontMatter(tr).meta.image || '').trim(),
+        cover: (enMeta.cover || trMeta.cover || enMeta.image || trMeta.image || '').trim(),
         projects: related
       });
     }
-    return guides;
+    return guides.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(a.id).localeCompare(String(b.id)));
   }
 
   async function read(path) {

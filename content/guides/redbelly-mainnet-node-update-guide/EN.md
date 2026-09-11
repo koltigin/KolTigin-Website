@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Mainnet Node Update Guide
 
 This guide explains how to update an existing Redbelly Mainnet node using the latest installer when a new node version is released.

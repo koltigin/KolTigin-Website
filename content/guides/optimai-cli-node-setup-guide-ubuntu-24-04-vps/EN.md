@@ -1,3 +1,7 @@
+---
+date: 2026-09-09
+---
+
 # OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS
 
 There are several ways to participate in the OptimAI Network.

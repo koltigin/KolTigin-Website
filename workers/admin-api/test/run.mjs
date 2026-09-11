@@ -1,8 +1,8 @@
 import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
-import { applyWritingIndex, applyGuideIndex, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
-import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover } from "../src/markdown.js";
+import { applyWritingIndex, applyGuideIndex, upsertListed, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts } from "../src/generate.js";
+import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover, applyGuideDate } from "../src/markdown.js";
 import { HttpError, safeExceptionDetail } from "../src/util.js";
 import { getAllowedDownloadProjects, publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
 import { readFileSync } from "node:fs";
@@ -134,6 +134,15 @@ async function main() {
     assert(idx.articles.en.includes("hello.md"), "writing index upsert");
     const gidx = applyGuideIndex({ guides: [] }, { id: "aioz-depin" });
     assert(gidx.guides[0] === "aioz-depin", "guide index");
+    const gidxNew = applyGuideIndex({ guides: ["old-guide"] }, { id: "new-guide" });
+    assert(gidxNew.guides[0] === "new-guide" && gidxNew.guides[1] === "old-guide", "new Guide is prepended instead of sorted alphabetically");
+    const gidxEdit = applyGuideIndex({ guides: ["new-guide", "old-guide"] }, { id: "old-guide" });
+    assert(JSON.stringify(gidxEdit.guides) === JSON.stringify(["new-guide", "old-guide"]), "editing a Guide does not move it in the index");
+    const datedGuide = applyGuideDate("# Old Guide\n", "2026-09-06");
+    assert(datedGuide.startsWith("---\ndate: 2026-09-06\n---"), "new Guide markdown stores publication date");
+    assert(applyGuideDate(datedGuide, "2026-09-11").includes("date: 2026-09-06") && !applyGuideDate(datedGuide, "2026-09-11").includes("2026-09-11"), "updating a Guide does not bump publication date");
+    assert(upsertListed(["older.md"], "newest.md")[0] === "newest.md", "new writings are prepended without alphabetical rewrite");
+    assert(JSON.stringify(upsertListed(["newest.md", "older.md"], "older.md")) === JSON.stringify(["newest.md", "older.md"]), "updating a writing keeps its index position");
     assert(discoverGuides({
       indexIds: ["aioz-depin"],
       markdownById: { "aioz-depin": { en: "# Guide\n", tr: "# Rehber\n" } }
@@ -364,6 +373,8 @@ links:
       projectId: "optimai"
     }, env));
     assert(res.status === 200, "save guide linked to OptimAI");
+    assert(/^---\ndate: \d{4}-\d{2}-\d{2}\n---/.test(String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/EN.md`) || "")), "new Guide automatically stores a publication date");
+    const published = String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/EN.md`)).match(/^---\ndate: (\d{4}-\d{2}-\d{2})\n---/)[1];
     assert(projectMarkdownReads(github).length === 1, "new Guide None→OptimAI fetches one project Markdown file");
     assert(projectMarkdownReads(github).every((path) => path.endsWith("/optimai.md")), "new Guide only reads the selected project Markdown");
     assert(estimateWorkerSubrequests(github) < 40, "new Guide save stays under the Cloudflare subrequest budget");
@@ -380,6 +391,7 @@ links:
       projectId: "optimai"
     }, env));
     assert(res.status === 200, "TR save keeps the OptimAI relationship");
+    assert(String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/TR.md`)).includes(`date: ${published}`), "updating an old Guide keeps its publication date");
     assert(projectMarkdownReads(github).length === 1, "OptimAI→OptimAI fetches project Markdown once");
     assert((String(github.files.get("content/projects/depin/optimai.md")).match(new RegExp(`guide:\\s*${OPTIMAI_GUIDE}`, "g")) || []).length === 1, "same-project save keeps the Guide relationship exactly once");
     assert(estimateWorkerSubrequests(github) < 40, "same-project Guide save stays under the Cloudflare subrequest budget");

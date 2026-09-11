@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Mainnet Node Installation Guide
 
 This guide explains how to install a Redbelly Mainnet node using the official `rbn-installer` and how to verify that the node is running correctly after installation.

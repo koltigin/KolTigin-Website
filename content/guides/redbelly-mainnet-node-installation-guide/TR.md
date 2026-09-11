@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Mainnet Node Kurulum Rehberi
 
 Bu rehber, Redbelly Mainnet node'unun resmi `rbn-installer` kullanılarak kurulmasını ve kurulum sonrasında node'un çalıştığının kontrol edilmesini anlatır.

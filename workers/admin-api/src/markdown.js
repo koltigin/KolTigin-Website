@@ -1,4 +1,4 @@
-import { yamlQuote } from "./util.js";
+import { yamlQuote, normalizeDate } from "./util.js";
 
 function dumpYamlValue(value, indent) {
   const pad = "  ".repeat(indent);
@@ -64,6 +64,19 @@ export function parseFrontMatter(text) {
     if (key) meta[key] = value;
   });
   return { meta, body: raw.slice(close + 4).replace(/^\n/, "") };
+}
+
+export function applyGuideDate(text, date, { overwrite = false } = {}) {
+  const normalized = normalizeDate(date);
+  if (!normalized) return String(text || "");
+  const raw = String(text || "").replace(/\r\n/g, "\n");
+  const existing = normalizeDate(parseFrontMatter(raw).meta.date);
+  if (existing && !overwrite) return raw;
+  if (!raw.startsWith("---")) {
+    const body = raw.replace(/^\n+/, "");
+    return `---\ndate: ${normalized}\n---\n\n${body}`;
+  }
+  return setYamlScalar(raw, "date", normalized);
 }
 
 export function applyGuideCover(text, cover) {

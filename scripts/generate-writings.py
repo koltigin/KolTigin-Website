@@ -13,10 +13,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from content_order import publication_stamp
+
 OUTPUT_PATH = ROOT / "content" / "index.json"
 TYPES_PATH = ROOT / "config" / "writing-types.json"
 FALLBACK_KINDS = ("articles", "notes", "social")
-DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 
 
 def parse_front_matter(text: str) -> tuple[dict, str]:
@@ -71,23 +73,19 @@ def writing_kind_ids() -> list[str]:
     return ids
 
 
-def date_parts(path: Path) -> tuple[int, int, int]:
+def date_stamp(path: Path) -> int:
     try:
         metadata, _body = parse_front_matter(path.read_text(encoding="utf-8"))
     except OSError:
         metadata = {}
-    raw = str(metadata.get("date") or "").strip()
-    match = DATE_RE.match(raw)
-    if not match:
-        return (0, 0, 0)
-    return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    return publication_stamp(metadata.get("date"))
 
 
 def list_markdown(folder: Path) -> list[str]:
     if not folder.is_dir():
         return []
     files = [path for path in folder.glob("*.md") if not path.name.startswith("_")]
-    files.sort(key=lambda path: ((-date_parts(path)[0], -date_parts(path)[1], -date_parts(path)[2]), path.name.lower()))
+    files.sort(key=lambda path: (-date_stamp(path), path.name.lower()))
     return [path.name for path in files]
 
 

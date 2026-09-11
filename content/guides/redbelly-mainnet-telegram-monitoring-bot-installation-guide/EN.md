@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Mainnet Telegram Monitoring Bot Installation Guide
 
 This guide explains how to install the KolTigin Redbelly Monitor to automatically monitor your Redbelly Mainnet node through Telegram.

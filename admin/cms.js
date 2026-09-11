@@ -617,6 +617,7 @@
   function renderGuidesList() {
     const q = (H().state.guideQuery || '').toLowerCase();
     let items = H().state.guidesData || [];
+    items = items.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(a.id).localeCompare(String(b.id)));
     if (q) items = items.filter((item) => `${item.titleEn} ${item.titleTr} ${item.id}`.toLowerCase().includes(q));
     const rows = items.map((item) => `
       <article class="item">
@@ -812,6 +813,7 @@
         titleTr: (savedLangs.includes('tr') ? guideHeading(g.langs.tr) : '') || prev.titleTr || g.id,
         existsEn: savedLangs.includes('en') || Boolean(prev.existsEn),
         existsTr: savedLangs.includes('tr') || Boolean(prev.existsTr),
+        date: prev.date || new Date().toISOString().slice(0, 10),
         projects: prev.projects || []
       });
       history.replaceState(null, '', `${location.pathname}${location.search}#/edit/guides/${encodeURIComponent(g.id)}`);

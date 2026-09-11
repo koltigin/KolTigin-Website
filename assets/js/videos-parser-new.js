@@ -208,12 +208,15 @@ function videoDisplayTitle(video) {
 }
 
 function sortVideosNewestFirst(videos) {
-  const locale = window.KolTiginI18n && window.KolTiginI18n.language === 'en' ? 'en' : 'tr';
+  const order = window.KolTiginContentOrder;
+  if (order && typeof order.sortByPublicationDate === 'function') {
+    return order.sortByPublicationDate(videos, { dateKeys: ['date', 'publishedAt'], idKeys: ['youtubeId', 'titleEn', 'title'] });
+  }
   return videos.slice().sort((a, b) => {
-    const right = parseVideoTimestamp(b.publishedAt || b.date);
-    const left = parseVideoTimestamp(a.publishedAt || a.date);
+    const right = parseVideoTimestamp(b.date || b.publishedAt);
+    const left = parseVideoTimestamp(a.date || a.publishedAt);
     if (right !== left) return right - left;
-    return String(videoDisplayTitle(a)).localeCompare(String(videoDisplayTitle(b)), locale, { sensitivity: 'base' });
+    return String(a.youtubeId || a.titleEn || '').localeCompare(String(b.youtubeId || b.titleEn || ''), 'en');
   });
 }
 

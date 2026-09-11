@@ -481,10 +481,14 @@ class BlogParser {
     }
 
     loaded.sort((a, b) => {
+      const order = window.KolTiginContentOrder;
+      if (order && typeof order.compareByPublicationDate === 'function') {
+        return order.compareByPublicationDate(a, b, { dateKeys: ['date'], idKeys: ['id', 'slug'] });
+      }
       const left = this.parseDate(a.date)?.getTime() || 0;
       const right = this.parseDate(b.date)?.getTime() || 0;
       if (right !== left) return right - left;
-      return String(a.title).localeCompare(String(b.title), lang === 'en' ? 'en' : 'tr', { sensitivity: 'base' });
+      return String(a.id).localeCompare(String(b.id), 'en');
     });
 
     this.items = loaded;

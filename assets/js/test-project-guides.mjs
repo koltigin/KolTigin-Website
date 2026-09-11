@@ -39,10 +39,11 @@ assert(!parser.includes("if (href.startsWith('/guide/')) return;"), "project cli
 assert(parser.includes("if (!url && !guide) return null;"), "guide links do not require a manual URL");
 const redbelly = (projectsJson.mainnet || []).find((item) => item.id === "redbelly-network");
 const redbellyGuides = (redbelly.links || []).filter((link) => link.guide);
-assert(redbellyGuides.length === 3, "Redbelly exposes three Guide links");
+assert(redbellyGuides.length === 4, "Redbelly exposes four Guide links");
 assert(redbellyGuides[0].label?.en === "Installation Guide" && redbellyGuides[0].label?.tr === "Kurulum Rehberi", "Redbelly installation button has bilingual labels");
 assert(redbellyGuides[1].label?.en === "Update Guide" && redbellyGuides[1].label?.tr === "Güncelleme Rehberi", "Redbelly update button has bilingual labels");
 assert(redbellyGuides[2].label?.en === "Troubleshooting" && redbellyGuides[2].label?.tr === "Sorunlar ve Çözümler", "Redbelly troubleshooting button has bilingual labels");
+assert(redbellyGuides[3].guide === "redbelly-mainnet-telegram-monitoring-bot-installation-guide", "Redbelly Telegram monitor Guide remains linked");
 assert(parser.includes("labelEN || link.labelTR"), "parser accepts labelEN/labelTR aliases");
 assert(parser.includes("this.currentLang()"), "project guide labels follow the active site language");
 assert(cms.includes("cms.guidesManagedHint"), "project editor has a managed Guides area");
@@ -60,6 +61,7 @@ assert(!/text-overflow:\s*ellipsis/.test(labelRule[0]), "project action labels a
 assert(!/white-space:\s*nowrap/.test(labelRule[0]), "project action labels may wrap instead of truncating");
 const order = (optimai.links || []).map((link) => link.guide ? "guide" : String(link.label || "").toLowerCase());
 assert(order[0] === "website" && order[1] === "guide", "OptimAI semantic link order stays Website then Guide");
+assert(parser.includes("sortProjectsByName") && !parser.includes("KolTiginContentOrder"), "Projects ordering is NOT changed");
 assert(parser.includes("if (referralUrl) {\n      links.push({ label: this.t('projects.links.referral'"), "Referral is still appended after project links");
 
 if (failed) {

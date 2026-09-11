@@ -1,11 +1,18 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
-import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover } from "./markdown.js";
+import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate } from "./markdown.js";
 import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, guideShareArtifacts } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
+}
+
+function utcToday() {
+  const now = new Date();
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(now.getUTCDate()).padStart(2, "0");
+  return `${now.getUTCFullYear()}-${month}-${day}`;
 }
 
 async function readJson(github, path, fallback) {
@@ -593,10 +600,23 @@ export async function handleGuideSave(body, github) {
   if (RESERVED_GUIDE_IDS.has(id)) throw new HttpError(400, "That guide id is reserved");
   if (projectId && !ID_RE.test(projectId)) throw new HttpError(400, "Invalid project id");
   const coverInBody = Object.prototype.hasOwnProperty.call(body, "cover");
+  let published = "";
+  let existed = false;
+  for (const lang of ["en", "tr"]) {
+    try {
+      const existing = await github.getText(guidePath(id, lang));
+      existed = true;
+      published = published || normalizeDate(parseFrontMatter(existing).meta.date);
+    } catch (error) {
+      if (!(error instanceof HttpError) || error.status !== 404) throw error;
+    }
+  }
+  if (!existed) published = utcToday();
   const savedLangs = [];
   const upserts = [];
   for (const item of locales) {
-    const markdown = coverInBody ? applyGuideCover(item.markdown, body.cover) : item.markdown;
+    let markdown = coverInBody ? applyGuideCover(item.markdown, body.cover) : item.markdown;
+    if (published) markdown = applyGuideDate(markdown, published);
     upserts.push({ path: guidePath(id, item.lang), text: mdText(markdown) });
     savedLangs.push(item.lang);
   }

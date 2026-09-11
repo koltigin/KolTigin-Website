@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import admin_scripts
+from content_order import sort_by_publication_date
 
 ROOT = Path(__file__).resolve().parents[1]
 ABOUT_ROOT = ROOT / "content" / "about"
@@ -155,15 +156,28 @@ def list_project_records() -> list[dict]:
 
 
 def write_guides_index() -> None:
-    ids = []
     GUIDES_ROOT.mkdir(parents=True, exist_ok=True)
+    found = []
     if GUIDES_ROOT.is_dir():
-        for folder in sorted(GUIDES_ROOT.iterdir()):
+        for folder in GUIDES_ROOT.iterdir():
             if not folder.is_dir() or folder.name in {"en", "tr"} or not ID_RE.match(folder.name):
                 continue
             if not (folder / "EN.md").is_file() and not (folder / "TR.md").is_file():
                 continue
-            ids.append(folder.name)
+            found.append(folder.name)
+    found_set = set(found)
+    existing = []
+    index_path = GUIDES_ROOT / "index.json"
+    try:
+        data = json.loads(index_path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and isinstance(data.get("guides"), list):
+            existing = [str(item) for item in data["guides"] if item]
+    except (OSError, json.JSONDecodeError, TypeError):
+        existing = []
+    ids = [item for item in existing if item in found_set]
+    for item in found:
+        if item not in ids:
+            ids.insert(0, item)
     (GUIDES_ROOT / "index.json").write_text(
         json.dumps({"guides": ids}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -239,6 +253,23 @@ def parse_simple_front_matter(text: str) -> tuple[dict, str]:
     return meta, raw[close + 4 :].lstrip("\n")
 
 
+def apply_guide_date(text: str, date: str, overwrite: bool = False) -> str:
+    normalized = str(date or "").strip()
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", normalized):
+        return text or ""
+    raw = (text or "").replace("\r\n", "\n")
+    meta, _body = parse_simple_front_matter(raw)
+    existing = str(meta.get("date") or "").strip()
+    if existing and not overwrite:
+        return raw
+    if not raw.startswith("---"):
+        body = raw.lstrip("\n")
+        return f"---\ndate: {normalized}\n---\n\n{body}"
+    if re.search(r"^date:\s*.*$", raw, flags=re.M):
+        return re.sub(r"^date:\s*.*$", f"date: {normalized}", raw, count=1, flags=re.M)
+    return raw.replace("---\n", f"---\ndate: {normalized}\n", 1)
+
+
 def apply_guide_cover(text: str, cover) -> str:
     if cover is None:
         return text or ""
@@ -284,7 +315,7 @@ def list_guides() -> list[dict]:
     guides = []
     if not GUIDES_ROOT.is_dir():
         return guides
-    for folder in sorted(GUIDES_ROOT.iterdir()):
+    for folder in GUIDES_ROOT.iterdir():
         if not folder.is_dir() or folder.name in {"en", "tr"} or not ID_RE.match(folder.name):
             continue
         en = folder / "EN.md"
@@ -301,18 +332,20 @@ def list_guides() -> list[dict]:
                 for link in (item.get("links") or [])
             )
         ]
+        meta, _body = parse_simple_front_matter(en_text or tr_text)
         guides.append(
             {
                 "id": folder.name,
                 "titleEn": first_heading(en_text) or folder.name,
                 "titleTr": first_heading(tr_text) or folder.name,
+                "date": str(meta.get("date") or "").strip(),
                 "existsEn": en.is_file(),
                 "existsTr": tr.is_file(),
                 "cover": guide_cover_from_markdown(en_text, tr_text),
                 "projects": related,
             }
         )
-    return guides
+    return sort_by_publication_date(guides)
 
 
 def _is_project_guide_link(link: dict, guide_id: str) -> bool:
@@ -779,6 +812,19 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
     if item_id in {"en", "tr", "guide", "writings", "assets", "content"}:
         return json_error(handler, HTTPStatus.BAD_REQUEST, "That guide id is reserved")
     folder = safe_under(GUIDES_ROOT, item_id)
+    existed = (folder / "EN.md").is_file() or (folder / "TR.md").is_file()
+    published = ""
+    for name in ("EN.md", "TR.md"):
+        path = folder / name
+        if not path.is_file():
+            continue
+        meta, _body = parse_simple_front_matter(path.read_text(encoding="utf-8"))
+        published = str(meta.get("date") or "").strip()
+        if published:
+            break
+    if not existed:
+        from datetime import datetime, timezone
+        published = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     folder.mkdir(parents=True, exist_ok=True)
     cover_in_body = "cover" in body
     langs = []
@@ -787,6 +833,8 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
         markdown = item["markdown"]
         if cover_in_body:
             markdown = apply_guide_cover(markdown, body.get("cover"))
+        if published:
+            markdown = apply_guide_date(markdown, published)
         filename = "EN.md" if item["lang"] == "en" else "TR.md"
         path = safe_under(folder, filename)
         path.write_text(markdown if markdown.endswith("\n") else markdown + "\n", encoding="utf-8")

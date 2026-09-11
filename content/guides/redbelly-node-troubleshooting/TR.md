@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Node Sorunlar ve Çözümler
 
 Bu rehber, Redbelly Mainnet node işletimi sırasında karşılaşılabilecek bazı yaygın sorunların çözümünü içerir.

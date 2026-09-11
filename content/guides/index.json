@@ -1,10 +1,10 @@
 {
   "guides": [
-    "aro-network-depin-ubuntu-vps-installation-guide",
-    "optimai-cli-node-setup-guide-ubuntu-24-04-vps",
-    "redbelly-mainnet-node-installation-guide",
-    "redbelly-mainnet-node-update-guide",
     "redbelly-mainnet-telegram-monitoring-bot-installation-guide",
-    "redbelly-node-troubleshooting"
+    "redbelly-node-troubleshooting",
+    "redbelly-mainnet-node-update-guide",
+    "redbelly-mainnet-node-installation-guide",
+    "aro-network-depin-ubuntu-vps-installation-guide",
+    "optimai-cli-node-setup-guide-ubuntu-24-04-vps"
   ]
 }

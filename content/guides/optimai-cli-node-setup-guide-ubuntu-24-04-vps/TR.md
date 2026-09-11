@@ -1,3 +1,7 @@
+---
+date: 2026-09-09
+---
+
 # OptimAI CLI Node Kurulum Rehberi — Ubuntu 24.04 VPS
 
 OptimAI Network'e farklı yöntemlerle katılabilirsiniz.

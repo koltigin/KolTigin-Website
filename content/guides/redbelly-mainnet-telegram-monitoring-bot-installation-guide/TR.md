@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Mainnet Telegram Monitoring Bot Kurulum Rehberi
 
 Bu rehber, Redbelly Mainnet node'unuzu Telegram üzerinden otomatik olarak takip etmek için KolTigin Redbelly Monitor scriptinin kurulumunu açıklar.

@@ -312,25 +312,34 @@ class GuidesParser {
       const data = await indexRes.json();
       const projects = projectsRes.ok ? await projectsRes.json() : {};
       const ids = Array.isArray(data.guides) ? data.guides.filter((id) => /^[a-z0-9-]+$/i.test(id)) : [];
-      const cards = (await Promise.all(ids.map(async (id) => {
+      const cards = (await Promise.all(ids.map(async (id, sourceIndex) => {
         try {
           const markdown = await this.loadMarkdown(id, lang);
           const title = this.firstHeading(markdown);
-          if (!title) return '';
-          return this.createIndexCard({
+          if (!title) return null;
+          return {
             id,
-            lang,
-            title,
-            excerpt: this.excerptFromMarkdown(markdown),
-            cover: this.coverSrc(id, markdown, lang),
-            coverFallback: this.coverFallbackSrc(id, markdown, lang),
-            project: this.projectNameForGuide(projects, id)
-          });
+            date: this.parseFrontMatter(markdown).meta.date || '',
+            sourceIndex,
+            html: this.createIndexCard({
+              id,
+              lang,
+              title,
+              excerpt: this.excerptFromMarkdown(markdown),
+              cover: this.coverSrc(id, markdown, lang),
+              coverFallback: this.coverFallbackSrc(id, markdown, lang),
+              project: this.projectNameForGuide(projects, id)
+            })
+          };
         } catch {
-          return '';
+          return null;
         }
       }))).filter(Boolean);
-      list.innerHTML = cards.join('') || `<li class="writings-empty">${this.t('guides.empty', 'No guides yet.')}</li>`;
+      const order = window.KolTiginContentOrder;
+      const sorted = order && typeof order.sortByPublicationDate === 'function'
+        ? order.sortByPublicationDate(cards, { dateKeys: ['date'], idKeys: ['id'], useSourceIndex: true })
+        : cards;
+      list.innerHTML = sorted.map((item) => item.html).join('') || `<li class="writings-empty">${this.t('guides.empty', 'No guides yet.')}</li>`;
     } catch {
       list.innerHTML = `<li class="writings-empty">${this.t('guides.empty', 'No guides yet.')}</li>`;
     }

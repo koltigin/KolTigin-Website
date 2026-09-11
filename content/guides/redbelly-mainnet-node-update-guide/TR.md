@@ -1,3 +1,7 @@
+---
+date: 2026-09-11
+---
+
 # Redbelly Mainnet Node Güncelleme Rehberi
 
 Bu rehber, yeni bir Redbelly Mainnet node sürümü yayınlandığında mevcut node'un güncel installer kullanılarak nasıl güncelleneceğini anlatır.

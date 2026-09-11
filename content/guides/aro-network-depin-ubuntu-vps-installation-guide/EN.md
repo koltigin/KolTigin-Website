@@ -1,3 +1,7 @@
+---
+date: 2026-09-09
+---
+
 # ARO Network DePIN — Ubuntu / VPS Installation Guide
 
 > Community installation guide for Ubuntu-based computers and VPS servers.

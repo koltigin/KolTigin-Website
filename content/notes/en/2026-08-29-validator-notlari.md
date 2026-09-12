@@ -1,5 +1,5 @@
 ---
-title: "Validator olmak neden sadece bir binary çalıştırmak değildir"
+title: "Being a validator is more than running a binary"
 date: 2026-08-29
 summary: "Uptime, key security, snapshots, and community — field notes."
 slug: validator-olmak-neden-sadece-bir-binary-calistirmak-degildir

@@ -233,7 +233,12 @@
           <h1 class="h2 writings-detail-title">Being a validator is more than running a binary</h1>
           <p class="blog-text">KolTigin</p>
           
-      <div class="share-actions" data-share-actions data-share-url="https://koltigin.xyz/writings/en/notes/2026-08-29-validator-notlari/" data-share-title="Being a validator is more than running a binary"><a class="share-action" data-share-network="x" href="https://x.com/intent/tweet?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary&amp;url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">X</a><a class="share-action" data-share-network="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">LinkedIn</a><a class="share-action" data-share-network="farcaster" href="https://farcaster.xyz/~/compose?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary%0Ahttps%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">Farcaster</a><button type="button" class="share-action" data-share-native>Share</button></div>
+      <div class="share-actions" data-share-actions data-share-url="https://koltigin.xyz/writings/en/notes/2026-08-29-validator-notlari/" data-share-title="Being a validator is more than running a binary">
+        <a class="share-action" data-share-network="x" href="https://x.com/intent/tweet?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary&amp;url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">X</a>
+        <a class="share-action" data-share-network="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a class="share-action" data-share-network="farcaster" href="https://farcaster.xyz/~/compose?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary%0Ahttps%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">Farcaster</a>
+        <button type="button" class="share-action" data-share-native>Share</button>
+      </div>
     
         </header>
         <figure class="writings-detail-cover"><img src="/assets/images/og/writings/en/notes/2026-08-29-validator-notlari.png?v=85f973cd6f2d" alt="Being a validator is more than running a binary" loading="lazy" decoding="async"></figure>
@@ -285,55 +290,6 @@
 <p>A validator is not just its own server.</p>
 <p>Network upgrades, new releases, governance decisions, scheduled maintenance, and problems reported by other operators can directly affect a node.</p>
 <p>This means part of node operations happens outside the terminal.</p>
-<p>Official announcements, repository changes, and the network's communication channels need to be followed.</p>
-<p>Sometimes a problem visible on your node is not caused by your server at all. It may be a network-wide issue.</p>
-<p>Being able to distinguish between the two is part of operating infrastructure.</p>
-<h2>Monitoring should be automated where possible</h2>
-<p>Checking a node manually several times a day is possible. Once you operate multiple nodes, that approach quickly becomes inefficient.</p>
-<p>I prefer to automate checks where it makes sense.</p>
-<p>Service status, block height, disk usage, and specific error conditions can be monitored. When something requires attention, an alert can be delivered through a channel such as Telegram.</p>
-<p>Automation does not mean forgetting about the node.</p>
-<p>The goal is to avoid constantly watching a terminal while still being notified when something actually requires intervention.</p>
-<h2>Conclusion</h2>
-<p>For me, being a validator is not simply running a binary and leaving a server online.</p>
-<p>Installation is only the beginning.</p>
-<p>A good operator understands the normal behavior of the system, watches the logs, monitors resources, prepares for upgrades, protects keys, and tries to prevent problems before they become outages.</p>
-<p>Keeping a node running for a few hours is easy.</p>
-<p>The real challenge is keeping it reliable for weeks, months, and years.</p>
-        </div><pre><code>sudo journalctl -u NODE_SERVICE -f</code></pre></div>
-<p>Here, <code>NODE_SERVICE</code> represents the systemd service name of the node.</p>
-<p>Logs are useful not only after a failure. I also check them after updates and configuration changes.</p>
-<h2>Disk space can become a silent problem</h2>
-<p>Disk usage is one of the operational problems I encounter most often with nodes.</p>
-<p>Blockchain data grows. Log files grow. Snapshots or old backups may remain on the server long after they are needed.</p>
-<p>A node can operate normally one day and run out of disk space a few days later.</p>
-<p>That makes basic system checks important:</p>
-<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -h</code></pre></div>
-<p>Monitoring disk usage regularly is much easier than dealing with a completely full filesystem after the node has already stopped.</p>
-<p>RAM, CPU, and network usage are also useful for understanding what normal behavior looks like for a particular node.</p>
-<h2>An update is more than replacing a binary</h2>
-<p>Updates are a normal part of operating mainnet and testnet infrastructure.</p>
-<p>However, an update may require more than downloading a new binary and replacing the old file.</p>
-<p>Before upgrading, I check release notes and official announcements. I look for configuration changes, whether the upgrade must happen at a specific block height, and what I would need if a rollback became necessary.</p>
-<p>Knowing the currently installed version is equally important.</p>
-<p>If something goes wrong, I want to have answers to questions such as:</p>
-<ul><li>Do I still have the previous binary?</li><li>Are the configuration files backed up?</li><li>Can I safely return to the previous version?</li><li>If resynchronization becomes necessary, do I have a reliable snapshot source?</li></ul>
-<p>The actual upgrade may take only a few minutes. Preparing for it is often more important.</p>
-<h2>Keys are not ordinary files</h2>
-<p>Key management is one of the most sensitive parts of validator operations.</p>
-<p>Private keys, validator keys, and other project-specific identity files should not be treated like ordinary configuration files.</p>
-<p>File permissions should be checked, unnecessary copies should be avoided, and the location of every important backup should be known.</p>
-<p>Moving key files carelessly is particularly risky when migrating or rebuilding a server.</p>
-<p>A node can be installed again. The consequences of losing or exposing a critical key can be much more serious.</p>
-<h2>A backup matters only if it can be restored</h2>
-<p>Copying a file into another directory does not automatically create a good backup strategy.</p>
-<p>The important part is knowing which files are actually required and being able to use them to restore the system when necessary.</p>
-<p>I find this distinction especially important for configuration files, service definitions, and critical identity files.</p>
-<p>Backing up the entire blockchain database is not always necessary. Depending on the network, resynchronizing or using a trusted snapshot may be a better approach.</p>
-<h2>The network itself needs monitoring</h2>
-<p>A validator is not just its own server.</p>
-<p>Network upgrades, new releases, governance decisions, scheduled maintenance, and problems reported by other operators can directly affect a node.</p>
-<p>This means part of node operations happens outside the terminal.</p>
 <p>Official announcements, repository changes, and the network&#x27;s communication channels need to be followed.</p>
 <p>Sometimes a problem visible on your node is not caused by your server at all. It may be a network-wide issue.</p>
 <p>Being able to distinguish between the two is part of operating infrastructure.</p>
@@ -351,7 +307,12 @@
 <p>The real challenge is keeping it reliable for weeks, months, and years.</p>
         </div>
         
-      <div class="share-actions" data-share-actions data-share-url="https://koltigin.xyz/writings/en/notes/2026-08-29-validator-notlari/" data-share-title="Being a validator is more than running a binary"><a class="share-action" data-share-network="x" href="https://x.com/intent/tweet?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary&amp;url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">X</a><a class="share-action" data-share-network="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">LinkedIn</a><a class="share-action" data-share-network="farcaster" href="https://farcaster.xyz/~/compose?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary%0Ahttps%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">Farcaster</a><button type="button" class="share-action" data-share-native>Share</button></div>
+      <div class="share-actions" data-share-actions data-share-url="https://koltigin.xyz/writings/en/notes/2026-08-29-validator-notlari/" data-share-title="Being a validator is more than running a binary">
+        <a class="share-action" data-share-network="x" href="https://x.com/intent/tweet?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary&amp;url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">X</a>
+        <a class="share-action" data-share-network="linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a class="share-action" data-share-network="farcaster" href="https://farcaster.xyz/~/compose?text=Being%20a%20validator%20is%20more%20than%20running%20a%20binary%0Ahttps%3A%2F%2Fkoltigin.xyz%2Fwritings%2Fen%2Fnotes%2F2026-08-29-validator-notlari%2F" target="_blank" rel="noopener noreferrer">Farcaster</a>
+        <button type="button" class="share-action" data-share-native>Share</button>
+      </div>
     
       </section>
     

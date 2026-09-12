@@ -54,7 +54,7 @@ assert(indexHtml.includes('href="/contact/"'), "nav contact href");
 assert(indexHtml.includes("/assets/js/router.js"), "router script");
 assert(indexHtml.includes("/assets/js/share-actions.js?v=prod3"), "share actions script");
 assert(indexHtml.includes("/assets/js/content-order.js?v=prod1"), "content order helper cache bust");
-assert(indexHtml.includes("/assets/js/blog-parser.js?v=prod17"), "blog parser cache bust");
+assert(indexHtml.includes("/assets/js/blog-parser.js?v=prod18"), "blog parser cache bust");
 assert(siteSrc.includes("parseWritingPath(window.location.pathname)"), "route seo keeps writing detail metadata");
 assert(indexHtml.includes("/assets/js/guides-parser.js?v=prod18"), "guides parser cache bust");
 assert(indexHtml.includes("/assets/css/style.css?v=prod29"), "css cache bust");

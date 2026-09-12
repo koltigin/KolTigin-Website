@@ -178,7 +178,7 @@ def writing_og_canonical(
 ) -> str:
     return "\n".join(
         [
-            "og-v1",
+            "og-v2",
             str(lang or ""),
             str(kind or ""),
             str(item_id or ""),

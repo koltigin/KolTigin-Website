@@ -28,7 +28,7 @@ class BlogParser {
   }
 
   writingOgCanonical({ lang, kind, id, title = '', kicker = '', mode = 'titled' }) {
-    return ['og-v1', lang || '', kind || '', id || '', title || '', kicker || '', mode || 'titled'].join('\n');
+    return ['og-v2', lang || '', kind || '', id || '', title || '', kicker || '', mode || 'titled'].join('\n');
   }
 
   async writingOgVersion(fields) {
@@ -523,15 +523,7 @@ class BlogParser {
       if (this.hasCover(item) || this.isExternal(item)) continue;
       const loc = lang === 'tr' ? 'tr' : 'en';
       const key = `${item.kind}/${item.slug}`;
-      item.ogVersion = (this.ogVersions[key] && this.ogVersions[key][loc])
-        || await this.writingOgVersion({
-          lang: loc,
-          kind: item.kind,
-          id: item.slug,
-          title: item.title,
-          kicker: this.ogKicker(item.kind, loc),
-          mode: 'titled'
-        });
+      item.ogVersion = (this.ogVersions[key] && this.ogVersions[key][loc]) || '';
     }
 
     loaded.sort((a, b) => {

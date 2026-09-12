@@ -266,6 +266,18 @@ def main() -> None:
     )
     if node_data.get("c") != py_canonical or node_data.get("v") != en_v:
         fail("JS and Python OG versions must match")
+    if not py_canonical.startswith("og-v2\n"):
+        fail("canonical hash namespace must be og-v2")
+    validator_en_v = generate_share.writing_og_version(
+        lang="en",
+        kind="notes",
+        item_id="2026-08-29-validator-notlari",
+        title="Being a validator is more than running a binary",
+        kicker="TECHNICAL NOTE",
+        mode="titled",
+    )
+    if validator_en_v == "85f973cd6f2d":
+        fail("og-v2 must abandon the poisoned validator EN cache key")
     ok("deterministic per-locale OG cache versions")
 
     with tempfile.TemporaryDirectory() as probe_raw:
@@ -677,6 +689,60 @@ def main() -> None:
         if f"?v={en_note_v}" in updated_html:
             fail("existing cached 404/stale URL must be superseded when the raster version changes")
         ok("update regenerates metadata")
+
+        worker_md = tmp / "content" / "notes" / "en" / "no-cover.md"
+        worker_png = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png"
+        worker_html = tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"
+        published_png = worker_png.read_bytes()
+        published_versions = json.loads((tmp / "content" / "og-versions.json").read_text(encoding="utf-8"))
+        published_en = published_versions["writings"]["notes/no-cover"]["en"]
+        published_tr = published_versions["writings"]["notes/no-cover"]["tr"]
+        write(
+            worker_md,
+            '---\ntitle: "Worker-only title"\ndate: "2026-08-29"\nsummary: "Changed."\n---\n\nChanged body that crawlers must see.\n',
+        )
+        if published_en != updated_v:
+            fail("fixture should still hold the last generate-share titled version before the worker-only edit")
+        if worker_png.read_bytes() != published_png:
+            fail("worker-phase edit must not rewrite generated PNG bytes")
+        if json.loads((tmp / "content" / "og-versions.json").read_text(encoding="utf-8"))["writings"]["notes/no-cover"]["en"] != published_en:
+            fail("worker-phase edit must not advance the published EN version")
+        if json.loads((tmp / "content" / "og-versions.json").read_text(encoding="utf-8"))["writings"]["notes/no-cover"]["tr"] != published_tr:
+            fail("EN worker-phase edit must not advance TR version")
+        generate_share.generate(tmp)
+        generated_en = generate_share.writing_og_version(
+            lang="en",
+            kind="notes",
+            item_id="no-cover",
+            title="Worker-only title",
+            kicker=generate_share.locale_upper(generate_share.kind_label(tmp, "notes", "en"), "en"),
+            mode="titled",
+        )
+        generated_tr = generate_share.writing_og_version(
+            lang="tr",
+            kind="notes",
+            item_id="no-cover",
+            title="Doğrulayıcı notları",
+            kicker=generate_share.locale_upper(generate_share.kind_label(tmp, "notes", "tr"), "tr"),
+            mode="titled",
+        )
+        after_versions = json.loads((tmp / "content" / "og-versions.json").read_text(encoding="utf-8"))
+        after_html = read(worker_html)
+        if generated_en == published_en:
+            fail("generate-share must publish a new titled EN version with the new raster")
+        if after_versions["writings"]["notes/no-cover"]["en"] != generated_en:
+            fail("generate-share must write the new titled EN version into og-versions.json")
+        if after_versions["writings"]["notes/no-cover"]["tr"] != published_tr:
+            fail("generate-share must leave TR version unchanged when TR source is unchanged")
+        if generated_tr != published_tr:
+            fail("unchanged TR source must keep the same titled TR version")
+        if f"?v={generated_en}" not in after_html:
+            fail("generate-share must point EN HTML at the new titled version")
+        if f"?v={published_en}" in after_html:
+            fail("generate-share must drop the previous EN image version")
+        if worker_png.read_bytes() == published_png:
+            fail("generate-share must rewrite EN raster pixels with the new title")
+        ok("titled OG version advances only with matching raster bytes")
 
         shutil.rmtree(tmp / "content" / "notes")
         shutil.rmtree(tmp / "content" / "guides" / "demo-guide")

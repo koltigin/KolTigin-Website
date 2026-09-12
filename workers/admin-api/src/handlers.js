@@ -229,16 +229,14 @@ async function upsertWritingLocale(github, upserts, {
   let coverSrc;
   if (item.cover) {
     versionUpdates.push({ kind, id, lang: item.lang, remove: true });
-  } else {
-    const kicker = localeUpper(writingKindLabel(types, kind, item.lang), item.lang);
-    const mode = wrotePlaceholder ? "placeholder" : "titled";
+  } else if (wrotePlaceholder) {
     const version = await writingOgVersion({
       lang: item.lang,
       kind,
       id,
-      title: mode === "placeholder" ? "" : item.title,
-      kicker: mode === "placeholder" ? "" : kicker,
-      mode
+      title: "",
+      kicker: "",
+      mode: "placeholder"
     });
     versionUpdates.push({ kind, id, lang: item.lang, version });
     image = writingOgAbsoluteUrl(item.lang, kind, id, version);

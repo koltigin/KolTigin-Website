@@ -319,6 +319,16 @@ links:
     assert(bilingualVersions.writings["articles/bilingual-atomic"].en === bilingualEnPh, "bilingual create records EN placeholder version");
     assert(bilingualVersions.writings["articles/bilingual-atomic"].tr === bilingualTrPh, "bilingual create records TR placeholder version");
 
+    const publishedEn = await writingOgVersion({
+      lang: "en", kind: "notes", id: "stale-note", title: "Old title", kicker: "NOTES", mode: "titled"
+    });
+    const publishedTr = await writingOgVersion({
+      lang: "tr", kind: "notes", id: "stale-note", title: "Eski baslik", kicker: "NOTES", mode: "titled"
+    });
+    const ogDoc = JSON.parse(github.files.get("content/og-versions.json") || "{\"writings\":{}}");
+    ogDoc.writings = ogDoc.writings || {};
+    ogDoc.writings["notes/stale-note"] = { en: publishedEn, tr: publishedTr };
+    github.files.set("content/og-versions.json", `${JSON.stringify(ogDoc, null, 2)}\n`);
     github.files.set("content/notes/en/stale-note.md", "---\ntitle: Old title\ndate: 2026-06-01\nsummary: Old summary.\n---\n\nOld short body.\n");
     github.files.set("content/notes/tr/stale-note.md", "---\ntitle: Eski baslik\ndate: 2026-06-01\nsummary: Eski ozet.\n---\n\nEski kisa govde.\n");
     github.files.set("assets/images/og/writings/en/notes/stale-note.png", png);
@@ -330,15 +340,15 @@ links:
       "<link rel=\"canonical\" href=\"https://koltigin.xyz/writings/en/notes/stale-note/\">",
       "<meta property=\"og:title\" content=\"Old title\">",
       "<meta property=\"og:description\" content=\"Old summary.\">",
-      "<meta property=\"og:image\" content=\"https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png\">",
+      `<meta property="og:image" content="https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png?v=${publishedEn}">`,
       "<meta name=\"twitter:title\" content=\"Old title\">",
       "<meta name=\"twitter:description\" content=\"Old summary.\">",
-      "<meta name=\"twitter:image\" content=\"https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png\">",
-      "<script type=\"application/ld+json\">{\"@type\":\"BlogPosting\",\"headline\":\"Old title\",\"description\":\"Old summary.\"}</script>",
+      `<meta name="twitter:image" content="https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png?v=${publishedEn}">`,
+      `<script type="application/ld+json">{"@type":"BlogPosting","headline":"Old title","description":"Old summary.","image":"https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png?v=${publishedEn}"}</script>`,
       "</head><body>",
       "<h1 class=\"h2 writings-detail-title\">Old title</h1>",
       "<p class=\"blog-category\">notes</p>",
-      "<figure class=\"writings-detail-cover\"><img src=\"/assets/images/og/writings/en/notes/stale-note.png\" alt=\"Old title\"></figure>",
+      `<figure class="writings-detail-cover"><img src="/assets/images/og/writings/en/notes/stale-note.png?v=${publishedEn}" alt="Old title"></figure>`,
       "<div class=\"blog-post-content\"><p>Old short body.</p></div>",
       "<div class=\"share-actions\" data-share-title=\"Old title\"></div>",
       "</body></html>"
@@ -350,15 +360,15 @@ links:
       "<link rel=\"canonical\" href=\"https://koltigin.xyz/writings/tr/notes/stale-note/\">",
       "<meta property=\"og:title\" content=\"Eski baslik\">",
       "<meta property=\"og:description\" content=\"Eski ozet.\">",
-      "<meta property=\"og:image\" content=\"https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png\">",
+      `<meta property="og:image" content="https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png?v=${publishedTr}">`,
       "<meta name=\"twitter:title\" content=\"Eski baslik\">",
       "<meta name=\"twitter:description\" content=\"Eski ozet.\">",
-      "<meta name=\"twitter:image\" content=\"https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png\">",
-      "<script type=\"application/ld+json\">{\"@type\":\"BlogPosting\",\"headline\":\"Eski baslik\",\"description\":\"Eski ozet.\"}</script>",
+      `<meta name="twitter:image" content="https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png?v=${publishedTr}">`,
+      `<script type="application/ld+json">{"@type":"BlogPosting","headline":"Eski baslik","description":"Eski ozet.","image":"https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png?v=${publishedTr}"}</script>`,
       "</head><body>",
       "<h1 class=\"h2 writings-detail-title\">Eski baslik</h1>",
       "<p class=\"blog-category\">notes</p>",
-      "<figure class=\"writings-detail-cover\"><img src=\"/assets/images/og/writings/tr/notes/stale-note.png\" alt=\"Eski baslik\"></figure>",
+      `<figure class="writings-detail-cover"><img src="/assets/images/og/writings/tr/notes/stale-note.png?v=${publishedTr}" alt="Eski baslik"></figure>`,
       "<div class=\"blog-post-content\"><p>Eski kisa govde.</p></div>",
       "<div class=\"share-actions\" data-share-title=\"Eski baslik\"></div>",
       "</body></html>"
@@ -391,19 +401,23 @@ links:
     const editCommit = github.commits[github.commits.length - 1];
     assert(editCommit.upserts.includes("writings/en/notes/stale-note/index.html"), "writing save commits EN public html");
     assert(editCommit.upserts.includes("writings/tr/notes/stale-note/index.html"), "writing save commits TR public html");
-    const staleEnVersion = await writingOgVersion({
+    const futureEnVersion = await writingOgVersion({
       lang: "en", kind: "notes", id: "stale-note", title: "Updated English title", kicker: "NOTES", mode: "titled"
     });
-    const staleTrVersion = await writingOgVersion({
+    const futureTrVersion = await writingOgVersion({
       lang: "tr", kind: "notes", id: "stale-note", title: "Guncellenmis Turkce baslik", kicker: "NOTES", mode: "titled"
     });
-    assert(staleEnVersion !== staleTrVersion, "edited EN and TR OG versions stay independent");
-    assert(enHtml.includes(`?v=${staleEnVersion}`), "edit HTML uses titled EN OG version");
-    assert(trHtml.includes(`?v=${staleTrVersion}`), "edit HTML uses titled TR OG version");
-    assert(!enHtml.includes(`?v=${staleTrVersion}`), "EN HTML does not use the TR OG version");
+    assert(futureEnVersion !== publishedEn, "new titled EN version differs from the published raster version");
+    assert(github.files.get("assets/images/og/writings/en/notes/stale-note.png") === png, "edit keeps the existing EN raster bytes");
+    assert(github.files.get("assets/images/og/writings/tr/notes/stale-note.png") === png, "edit keeps the existing TR raster bytes");
+    assert(enHtml.includes(`?v=${publishedEn}`), "edit HTML keeps the last published EN OG version");
+    assert(trHtml.includes(`?v=${publishedTr}`), "edit HTML keeps the last published TR OG version");
+    assert(!enHtml.includes(`?v=${futureEnVersion}`), "Worker does not publish a future titled EN version");
+    assert(!trHtml.includes(`?v=${futureTrVersion}`), "Worker does not publish a future titled TR version");
+    assert(!enHtml.includes(`?v=${publishedTr}`), "EN HTML does not use the TR OG version");
     const staleVersions = JSON.parse(github.files.get("content/og-versions.json"));
-    assert(staleVersions.writings["notes/stale-note"].en === staleEnVersion, "edit records titled EN version");
-    assert(staleVersions.writings["notes/stale-note"].tr === staleTrVersion, "edit records titled TR version");
+    assert(staleVersions.writings["notes/stale-note"].en === publishedEn, "edit does not advance the published EN OG version");
+    assert(staleVersions.writings["notes/stale-note"].tr === publishedTr, "edit does not advance the published TR OG version");
 
     res = await json(await post("/api/admin/save", {
       kind: "social",

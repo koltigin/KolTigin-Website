@@ -16,9 +16,11 @@ export function localeUpper(text, lang) {
   return raw.toUpperCase();
 }
 
+export const WRITING_OG_VERSION_NS = "og-v2";
+
 export function writingOgCanonical({ lang, kind, id, title = "", kicker = "", mode = "titled" }) {
   return [
-    "og-v1",
+    WRITING_OG_VERSION_NS,
     String(lang || ""),
     String(kind || ""),
     String(id || ""),

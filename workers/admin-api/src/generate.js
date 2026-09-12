@@ -10,6 +10,68 @@ export function writingOgPath(lang, kind, id) {
   return `assets/images/og/writings/${lang}/${kind}/${id}.png`;
 }
 
+export function localeUpper(text, lang) {
+  const raw = String(text || "");
+  if (lang === "tr") return raw.replace(/i/g, "İ").replace(/ı/g, "I").toUpperCase();
+  return raw.toUpperCase();
+}
+
+export function writingOgCanonical({ lang, kind, id, title = "", kicker = "", mode = "titled" }) {
+  return [
+    "og-v1",
+    String(lang || ""),
+    String(kind || ""),
+    String(id || ""),
+    String(title || ""),
+    String(kicker || ""),
+    String(mode || "titled")
+  ].join("\n");
+}
+
+function hex12(buffer) {
+  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 12);
+}
+
+export async function writingOgVersion(fields) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(writingOgCanonical(fields)));
+  return hex12(digest);
+}
+
+export function withOgVersion(url, version) {
+  const raw = String(url || "");
+  const versioned = String(version || "").trim();
+  if (!raw || !versioned) return raw;
+  const stripped = raw.replace(/[?&]v=[^&#]*/g, "").replace(/\?$/, "").replace(/\?&/, "?");
+  return `${stripped}${stripped.includes("?") ? "&" : "?"}v=${versioned}`;
+}
+
+export function writingOgAssetUrl(lang, kind, id, version) {
+  return withOgVersion(`/assets/images/og/writings/${lang}/${kind}/${id}.png`, version);
+}
+
+export function writingOgAbsoluteUrl(lang, kind, id, version) {
+  return `https://koltigin.xyz${writingOgAssetUrl(lang, kind, id, version)}`;
+}
+
+export function applyOgVersions(doc, { kind, id, lang, version, remove } = {}) {
+  const data = JSON.parse(JSON.stringify(doc && typeof doc === "object" ? doc : {}));
+  data.writings = data.writings && typeof data.writings === "object" && !Array.isArray(data.writings)
+    ? data.writings
+    : {};
+  const key = `${kind}/${id}`;
+  if (remove) {
+    if (!lang) delete data.writings[key];
+    else if (data.writings[key]) {
+      delete data.writings[key][lang];
+      if (!Object.keys(data.writings[key]).length) delete data.writings[key];
+    }
+    return data;
+  }
+  if (!version) return data;
+  data.writings[key] = { ...(data.writings[key] || {}), [lang]: version };
+  return data;
+}
+
 export function writingShareArtifacts(kind, id) {
   const paths = [];
   for (const lang of SHARE_LANGS) {
@@ -190,7 +252,9 @@ export function patchWritingShareHtml(html, {
   description,
   bodyMarkdown,
   category,
-  dateIso
+  dateIso,
+  image,
+  coverSrc
 }) {
   let out = String(html || "");
   const desc = String(description || title || "").trim();
@@ -209,6 +273,17 @@ export function patchWritingShareHtml(html, {
   out = out.replace(/(<meta property="og:description" content=")[^"]*(")/i, `$1${attrDesc}$2`);
   out = out.replace(/(<meta name="twitter:title" content=")[^"]*(")/i, `$1${attrTitle}$2`);
   out = out.replace(/(<meta name="twitter:description" content=")[^"]*(")/i, `$1${attrDesc}$2`);
+  if (image) {
+    const attrImage = escapeHtml(image);
+    out = out.replace(/(<meta property="og:image" content=")[^"]*(")/i, `$1${attrImage}$2`);
+    out = out.replace(/(<meta name="twitter:image" content=")[^"]*(")/i, `$1${attrImage}$2`);
+  }
+  if (coverSrc) {
+    out = out.replace(
+      /(<figure class="writings-detail-cover"><img src=")[^"]*(")/,
+      `$1${escapeHtml(coverSrc)}$2`
+    );
+  }
   out = out.replace(
     /<h1 class="h2 writings-detail-title">[\s\S]*?<\/h1>/,
     `<h1 class="h2 writings-detail-title">${attrTitle}</h1>`
@@ -229,6 +304,7 @@ export function patchWritingShareHtml(html, {
       const data = JSON.parse(json);
       data.headline = title;
       data.description = desc;
+      if (image) data.image = image;
       return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
     } catch {
       return full;

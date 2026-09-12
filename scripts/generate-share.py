@@ -6,6 +6,7 @@ Markdown remains the source of truth. Generated HTML/PNG/sitemap are derived.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import re
@@ -164,6 +165,58 @@ def kind_label(root: Path, kind: str, lang: str) -> str:
     if isinstance(labels, dict):
         return str(labels.get(lang) or labels.get("en") or kind)
     return str(labels or kind)
+
+
+def writing_og_canonical(
+    *,
+    lang: str,
+    kind: str,
+    item_id: str,
+    title: str = "",
+    kicker: str = "",
+    mode: str = "titled",
+) -> str:
+    return "\n".join(
+        [
+            "og-v1",
+            str(lang or ""),
+            str(kind or ""),
+            str(item_id or ""),
+            str(title or ""),
+            str(kicker or ""),
+            str(mode or "titled"),
+        ]
+    )
+
+
+def writing_og_version(
+    *,
+    lang: str,
+    kind: str,
+    item_id: str,
+    title: str = "",
+    kicker: str = "",
+    mode: str = "titled",
+) -> str:
+    payload = writing_og_canonical(
+        lang=lang,
+        kind=kind,
+        item_id=item_id,
+        title=title,
+        kicker=kicker,
+        mode=mode,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def with_og_version(url: str, version: str) -> str:
+    raw = str(url or "")
+    token = str(version or "").strip()
+    if not raw or not token:
+        return raw
+    stripped = re.sub(r"[?&]v=[^&#]*", "", raw).rstrip("?").replace("?&", "?")
+    sep = "&" if "?" in stripped else "?"
+    return f"{stripped}{sep}v={token}"
 
 
 def locale_upper(text: str, lang: str) -> str:
@@ -1274,6 +1327,7 @@ def generate(root: Path) -> dict:
     keep: set[Path] = set()
     sitemap_entries = [{"loc": f"{base}{spec['path']}"} for spec in PUBLIC_SECTION_ROUTES]
     created = []
+    og_versions: dict[str, dict[str, str]] = {}
 
     for item in discover_writings(root):
         kind = item["kind"]
@@ -1300,12 +1354,22 @@ def generate(root: Path) -> dict:
                     lang=lang,
                 )
             canonical = alternates[lang]
-            image = abs_url(base, og_rel)
-            cover_src = ""
             if used_cover and cover:
+                image = abs_url(base, og_rel)
                 cover_src = "/" + str(cover.relative_to(root)).replace("\\", "/")
             else:
-                cover_src = "/" + og_rel
+                kicker = locale_upper(kind_label(root, kind, lang), lang)
+                version = writing_og_version(
+                    lang=lang,
+                    kind=kind,
+                    item_id=item_id,
+                    title=data["title"],
+                    kicker=kicker,
+                    mode="titled",
+                )
+                og_versions.setdefault(f"{kind}/{item_id}", {})[lang] = version
+                image = with_og_version(abs_url(base, og_rel), version)
+                cover_src = with_og_version("/" + og_rel, version)
             article_html = writing_article_section(
                 lang=lang,
                 title=data["title"],
@@ -1411,6 +1475,11 @@ def generate(root: Path) -> dict:
                 {"loc": canonical, "alternates": alternates, "lastmod": guide_lastmod}
             )
 
+    versions_path = root / "content" / "og-versions.json"
+    write_text(
+        versions_path,
+        json.dumps({"writings": og_versions}, indent=2, ensure_ascii=False) + "\n",
+    )
     sitemap_path = root / "sitemap.xml"
     write_text(sitemap_path, sitemap_xml(base, sitemap_entries))
     keep.add(sitemap_path.resolve())

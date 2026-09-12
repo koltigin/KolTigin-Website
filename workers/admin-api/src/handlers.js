@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts, localeUpper, writingOgVersion, writingOgAbsoluteUrl, writingOgAssetUrl, applyOgVersions } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
 function commitMsg(action, target) {
@@ -182,12 +182,13 @@ async function optionalBytes(github, path) {
 const WRITING_OG_BACKGROUND = "assets/images/og/backgrounds/writing-og-background.png";
 
 async function upsertWritingOgPlaceholder(github, upserts, { lang, kind, id, cover }) {
-  if (cover) return;
+  if (cover) return false;
   const dest = writingOgPath(lang, kind, id);
-  if (await github.exists(dest)) return;
+  if (await github.exists(dest)) return false;
   const bytes = await optionalBytes(github, WRITING_OG_BACKGROUND);
-  if (!bytes || !bytes.length) return;
+  if (!bytes || !bytes.length) return false;
   upserts.push({ path: dest, bytes });
+  return true;
 }
 
 async function optionalText(github, path) {
@@ -200,7 +201,7 @@ async function optionalText(github, path) {
 }
 
 async function upsertWritingLocale(github, upserts, {
-  kind, id, date, types, destExternal, external, item, extraPath
+  kind, id, date, types, destExternal, external, item, extraPath, ogVersionUpdates
 }) {
   const mdPath = writingPath(kind, item.lang, id);
   const existingMd = await optionalText(github, extraPath || mdPath);
@@ -217,12 +218,32 @@ async function upsertWritingLocale(github, upserts, {
     slug: extra.slug || ""
   }));
   upserts.push({ path: mdPath, text });
-  await upsertWritingOgPlaceholder(github, upserts, {
+  const wrotePlaceholder = await upsertWritingOgPlaceholder(github, upserts, {
     lang: item.lang,
     kind,
     id,
     cover: item.cover
   });
+  const versionUpdates = ogVersionUpdates || [];
+  let image;
+  let coverSrc;
+  if (item.cover) {
+    versionUpdates.push({ kind, id, lang: item.lang, remove: true });
+  } else {
+    const kicker = localeUpper(writingKindLabel(types, kind, item.lang), item.lang);
+    const mode = wrotePlaceholder ? "placeholder" : "titled";
+    const version = await writingOgVersion({
+      lang: item.lang,
+      kind,
+      id,
+      title: mode === "placeholder" ? "" : item.title,
+      kicker: mode === "placeholder" ? "" : kicker,
+      mode
+    });
+    versionUpdates.push({ kind, id, lang: item.lang, version });
+    image = writingOgAbsoluteUrl(item.lang, kind, id, version);
+    coverSrc = writingOgAssetUrl(item.lang, kind, id, version);
+  }
   const htmlPath = writingShareHtmlPath(item.lang, kind, id);
   const existingHtml = await optionalText(github, htmlPath);
   if (!existingHtml) return;
@@ -235,7 +256,9 @@ async function upsertWritingLocale(github, upserts, {
       description,
       bodyMarkdown: item.body || "",
       category: writingKindLabel(types, kind, item.lang),
-      dateIso: date
+      dateIso: date,
+      image,
+      coverSrc
     })
   });
 }
@@ -295,7 +318,9 @@ export async function handleSave(body, github) {
   const localeByLang = Object.fromEntries(locales.map((item) => [item.lang, item]));
   const upserts = [];
   const deletes = [];
+  const ogVersionUpdates = [];
   let index = await readJson(github, "content/index.json", {});
+  let ogVersions = await readJson(github, "content/og-versions.json", { writings: {} });
   const savedLangs = [];
 
   if (fromKind && fromKind !== kind) {
@@ -321,7 +346,8 @@ export async function handleSave(body, github) {
       if (item) {
         await upsertWritingLocale(github, upserts, {
           kind, id, date, types, destExternal, external, item,
-          extraPath: writingPath(fromKind, lang, id)
+          extraPath: writingPath(fromKind, lang, id),
+          ogVersionUpdates
         });
         savedLangs.push(lang);
       } else {
@@ -332,19 +358,24 @@ export async function handleSave(body, github) {
       }
       if (await github.exists(src)) deletes.push(src);
       index = applyWritingIndex(index, { kind, lang, file, fromKind });
+      ogVersions = applyOgVersions(ogVersions, { kind: fromKind, id, lang, remove: true });
     }
     await collectExisting(github, writingShareArtifacts(fromKind, id), deletes);
   } else {
     for (const item of locales) {
       await upsertWritingLocale(github, upserts, {
-        kind, id, date, types, destExternal, external, item
+        kind, id, date, types, destExternal, external, item, ogVersionUpdates
       });
       index = applyWritingIndex(index, { kind, lang: item.lang, file });
       savedLangs.push(item.lang);
     }
   }
 
+  for (const update of ogVersionUpdates) {
+    ogVersions = applyOgVersions(ogVersions, update);
+  }
   upserts.push({ path: "content/index.json", text: pretty(index) });
+  upserts.push({ path: "content/og-versions.json", text: pretty(ogVersions) });
   const langLabel = savedLangs.join("+") || locales.map((item) => item.lang).join("+");
   const result = await github.commit({
     message: commitMsg("save writing", `${kind}/${langLabel}/${file}`),
@@ -367,6 +398,7 @@ async function handleWritingDelete(body, github) {
   const file = `${id}.md`;
   const deletes = [];
   let index = await readJson(github, "content/index.json", {});
+  let ogVersions = await readJson(github, "content/og-versions.json", { writings: {} });
   for (const lang of ["en", "tr"]) {
     const path = writingPath(kind, lang, id);
     if (await github.exists(path)) deletes.push(path);
@@ -374,7 +406,11 @@ async function handleWritingDelete(body, github) {
   }
   if (!deletes.length) throw new HttpError(404, "Writing not found");
   await collectExisting(github, writingShareArtifacts(kind, id), deletes);
-  const upserts = [{ path: "content/index.json", text: pretty(index) }];
+  ogVersions = applyOgVersions(ogVersions, { kind, id, remove: true });
+  const upserts = [
+    { path: "content/index.json", text: pretty(index) },
+    { path: "content/og-versions.json", text: pretty(ogVersions) }
+  ];
   const result = await github.commit({ message: commitMsg("delete writing", id), upserts, deletes });
   return { id, deleted: deletes, sha: result.sha };
 }

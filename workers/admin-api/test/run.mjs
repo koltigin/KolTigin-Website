@@ -1,7 +1,7 @@
 import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
-import { applyWritingIndex, applyGuideIndex, upsertListed, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts, patchWritingShareHtml, markdownToHtml } from "../src/generate.js";
+import { applyWritingIndex, applyGuideIndex, upsertListed, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts, patchWritingShareHtml, markdownToHtml, writingOgVersion } from "../src/generate.js";
 import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover, applyGuideDate } from "../src/markdown.js";
 import { HttpError, safeExceptionDetail } from "../src/util.js";
 import { getAllowedDownloadProjects, publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
@@ -127,7 +127,8 @@ async function main() {
     assertSafePath("guide/tr/hello/index.html");
     assertSafePath("sitemap.xml");
     assertSafePath("assets/images/og/writings/en/notes/hello.png");
-    assertSafePath("downloads/redbelly/redbelly-monitor.sh");
+    assertSafePath("content/index.json");
+    assertSafePath("content/og-versions.json");
     try { assertSafePath("../etc/passwd"); assert(false, "traversal"); } catch (error) { assert(error instanceof HttpError, "path traversal blocked"); }
     try { assertSafePath("scripts/admin_cms.py"); assert(false, "scripts"); } catch (error) { assert(error instanceof HttpError, "scripts blocked"); }
 
@@ -262,6 +263,16 @@ links:
     assert(!github.files.has("assets/images/og/writings/tr/articles/smoke-note.png"), "EN-only save does not write a TR OG raster");
     const index = JSON.parse(github.files.get("content/index.json"));
     assert(index.articles.en.includes("smoke-note.md"), "index lists writing");
+    const smokeVersions = JSON.parse(github.files.get("content/og-versions.json"));
+    const smokePlaceholder = await writingOgVersion({
+      lang: "en", kind: "articles", id: "smoke-note", title: "", kicker: "", mode: "placeholder"
+    });
+    const smokeTitled = await writingOgVersion({
+      lang: "en", kind: "articles", id: "smoke-note", title: "Smoke", kicker: "ARTICLES", mode: "titled"
+    });
+    assert(smokePlaceholder !== smokeTitled, "placeholder OG version is not reused as the titled version");
+    assert(smokeVersions.writings["articles/smoke-note"].en === smokePlaceholder, "new EN writing records placeholder OG version");
+    assert(!smokeVersions.writings["articles/smoke-note"].tr, "EN-only save does not write a TR OG version");
 
     res = await json(await post("/api/admin/save", {
       kind: "articles", lang: "tr", id: "smoke-note", title: "Duman", date: "2026-09-01", body: "Merhaba"
@@ -297,9 +308,21 @@ links:
     assert(bilingualCommit.upserts.includes("content/articles/en/bilingual-atomic.md") && bilingualCommit.upserts.includes("content/articles/tr/bilingual-atomic.md"), "one commit upserts both locale files");
     assert(bilingualCommit.upserts.includes("assets/images/og/writings/en/articles/bilingual-atomic.png"), "bilingual create commits EN OG placeholder");
     assert(bilingualCommit.upserts.includes("assets/images/og/writings/tr/articles/bilingual-atomic.png"), "bilingual create commits TR OG placeholder");
+    const bilingualVersions = JSON.parse(github.files.get("content/og-versions.json"));
+    const bilingualEnPh = await writingOgVersion({
+      lang: "en", kind: "articles", id: "bilingual-atomic", title: "", kicker: "", mode: "placeholder"
+    });
+    const bilingualTrPh = await writingOgVersion({
+      lang: "tr", kind: "articles", id: "bilingual-atomic", title: "", kicker: "", mode: "placeholder"
+    });
+    assert(bilingualEnPh !== bilingualTrPh, "EN and TR placeholder versions are independent");
+    assert(bilingualVersions.writings["articles/bilingual-atomic"].en === bilingualEnPh, "bilingual create records EN placeholder version");
+    assert(bilingualVersions.writings["articles/bilingual-atomic"].tr === bilingualTrPh, "bilingual create records TR placeholder version");
 
     github.files.set("content/notes/en/stale-note.md", "---\ntitle: Old title\ndate: 2026-06-01\nsummary: Old summary.\n---\n\nOld short body.\n");
     github.files.set("content/notes/tr/stale-note.md", "---\ntitle: Eski baslik\ndate: 2026-06-01\nsummary: Eski ozet.\n---\n\nEski kisa govde.\n");
+    github.files.set("assets/images/og/writings/en/notes/stale-note.png", png);
+    github.files.set("assets/images/og/writings/tr/notes/stale-note.png", png);
     github.files.set("writings/en/notes/stale-note/index.html", [
       "<!DOCTYPE html><html lang=\"en\"><head>",
       "<title>Old title</title>",
@@ -307,12 +330,15 @@ links:
       "<link rel=\"canonical\" href=\"https://koltigin.xyz/writings/en/notes/stale-note/\">",
       "<meta property=\"og:title\" content=\"Old title\">",
       "<meta property=\"og:description\" content=\"Old summary.\">",
+      "<meta property=\"og:image\" content=\"https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png\">",
       "<meta name=\"twitter:title\" content=\"Old title\">",
       "<meta name=\"twitter:description\" content=\"Old summary.\">",
+      "<meta name=\"twitter:image\" content=\"https://koltigin.xyz/assets/images/og/writings/en/notes/stale-note.png\">",
       "<script type=\"application/ld+json\">{\"@type\":\"BlogPosting\",\"headline\":\"Old title\",\"description\":\"Old summary.\"}</script>",
       "</head><body>",
       "<h1 class=\"h2 writings-detail-title\">Old title</h1>",
       "<p class=\"blog-category\">notes</p>",
+      "<figure class=\"writings-detail-cover\"><img src=\"/assets/images/og/writings/en/notes/stale-note.png\" alt=\"Old title\"></figure>",
       "<div class=\"blog-post-content\"><p>Old short body.</p></div>",
       "<div class=\"share-actions\" data-share-title=\"Old title\"></div>",
       "</body></html>"
@@ -324,12 +350,15 @@ links:
       "<link rel=\"canonical\" href=\"https://koltigin.xyz/writings/tr/notes/stale-note/\">",
       "<meta property=\"og:title\" content=\"Eski baslik\">",
       "<meta property=\"og:description\" content=\"Eski ozet.\">",
+      "<meta property=\"og:image\" content=\"https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png\">",
       "<meta name=\"twitter:title\" content=\"Eski baslik\">",
       "<meta name=\"twitter:description\" content=\"Eski ozet.\">",
+      "<meta name=\"twitter:image\" content=\"https://koltigin.xyz/assets/images/og/writings/tr/notes/stale-note.png\">",
       "<script type=\"application/ld+json\">{\"@type\":\"BlogPosting\",\"headline\":\"Eski baslik\",\"description\":\"Eski ozet.\"}</script>",
       "</head><body>",
       "<h1 class=\"h2 writings-detail-title\">Eski baslik</h1>",
       "<p class=\"blog-category\">notes</p>",
+      "<figure class=\"writings-detail-cover\"><img src=\"/assets/images/og/writings/tr/notes/stale-note.png\" alt=\"Eski baslik\"></figure>",
       "<div class=\"blog-post-content\"><p>Eski kisa govde.</p></div>",
       "<div class=\"share-actions\" data-share-title=\"Eski baslik\"></div>",
       "</body></html>"
@@ -362,6 +391,19 @@ links:
     const editCommit = github.commits[github.commits.length - 1];
     assert(editCommit.upserts.includes("writings/en/notes/stale-note/index.html"), "writing save commits EN public html");
     assert(editCommit.upserts.includes("writings/tr/notes/stale-note/index.html"), "writing save commits TR public html");
+    const staleEnVersion = await writingOgVersion({
+      lang: "en", kind: "notes", id: "stale-note", title: "Updated English title", kicker: "NOTES", mode: "titled"
+    });
+    const staleTrVersion = await writingOgVersion({
+      lang: "tr", kind: "notes", id: "stale-note", title: "Guncellenmis Turkce baslik", kicker: "NOTES", mode: "titled"
+    });
+    assert(staleEnVersion !== staleTrVersion, "edited EN and TR OG versions stay independent");
+    assert(enHtml.includes(`?v=${staleEnVersion}`), "edit HTML uses titled EN OG version");
+    assert(trHtml.includes(`?v=${staleTrVersion}`), "edit HTML uses titled TR OG version");
+    assert(!enHtml.includes(`?v=${staleTrVersion}`), "EN HTML does not use the TR OG version");
+    const staleVersions = JSON.parse(github.files.get("content/og-versions.json"));
+    assert(staleVersions.writings["notes/stale-note"].en === staleEnVersion, "edit records titled EN version");
+    assert(staleVersions.writings["notes/stale-note"].tr === staleTrVersion, "edit records titled TR version");
 
     res = await json(await post("/api/admin/save", {
       kind: "social",
@@ -847,6 +889,7 @@ links:
     assert(!JSON.parse(github.files.get("content/index.json")).articles.en.includes("smoke-note.md"), "writing index updated");
     assert(!JSON.parse(github.files.get("content/index.json")).articles.tr.includes("smoke-note.md"), "writing tr index updated");
     assert(github.commits.at(-1).message === "admin: delete writing smoke-note", "writing delete commit message");
+    assert(!JSON.parse(github.files.get("content/og-versions.json")).writings["articles/smoke-note"], "deleted writing OG versions are removed");
 
     const writingCommits = github.commits.length;
     res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "smoke-note" }, env));

@@ -56,6 +56,7 @@ jobs:
           git add about/index.html resume/index.html projects/index.html writings/index.html videos/index.html contact/index.html 2>/dev/null || true
           git add writings guides 2>/dev/null || true
           git add -u -- guide 2>/dev/null || true
+          git add content/og-versions.json 2>/dev/null || true
           if [ -d assets/images/og ]; then git add assets/images/og; fi
           if git diff --cached --quiet; then
             echo "Share artifacts are already up to date."

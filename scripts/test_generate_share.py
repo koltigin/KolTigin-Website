@@ -7,6 +7,7 @@ import inspect
 import json
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
@@ -188,6 +189,85 @@ def main() -> None:
         fail("EN and TR generated raster paths must not mix locales")
     ok("localized writing kickers and OG paths")
 
+    en_kicker = generate_share.locale_upper(generate_share.kind_label(ROOT, "articles", "en"), "en")
+    tr_kicker = generate_share.locale_upper(generate_share.kind_label(ROOT, "articles", "tr"), "tr")
+    en_v = generate_share.writing_og_version(
+        lang="en",
+        kind="articles",
+        item_id="clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+        title="CLARITY Act: All Eyes on the U.S. Senate",
+        kicker=en_kicker,
+        mode="titled",
+    )
+    tr_v = generate_share.writing_og_version(
+        lang="tr",
+        kind="articles",
+        item_id="clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+        title="CLARITY Act: ABD Kripto Piyasasında Gözler Senato'da",
+        kicker=tr_kicker,
+        mode="titled",
+    )
+    en_v2 = generate_share.writing_og_version(
+        lang="en",
+        kind="articles",
+        item_id="clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+        title="CLARITY Act: All Eyes on the Senate Floor",
+        kicker=en_kicker,
+        mode="titled",
+    )
+    tr_unchanged = generate_share.writing_og_version(
+        lang="tr",
+        kind="articles",
+        item_id="clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+        title="CLARITY Act: ABD Kripto Piyasasında Gözler Senato'da",
+        kicker=tr_kicker,
+        mode="titled",
+    )
+    placeholder = generate_share.writing_og_version(
+        lang="en",
+        kind="articles",
+        item_id="clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+        title="",
+        kicker="",
+        mode="placeholder",
+    )
+    if en_v == tr_v:
+        fail("EN and TR OG versions must be independent")
+    if en_v2 == en_v:
+        fail("changing EN title must change EN OG version")
+    if tr_unchanged != tr_v:
+        fail("changing EN title must not change TR OG version")
+    if placeholder == en_v:
+        fail("placeholder OG version must not be reused after titled raster generation")
+    if generate_share.with_og_version("/assets/images/og/writings/en/articles/x.png", en_v) != f"/assets/images/og/writings/en/articles/x.png?v={en_v}":
+        fail("generated raster URLs must contain deterministic version information")
+    node_payload = subprocess.check_output(
+        [
+            "node",
+            "--input-type=module",
+            "-e",
+            "import { writingOgCanonical, writingOgVersion } from './workers/admin-api/src/generate.js';"
+            "const fields={lang:'en',kind:'articles',id:'clarity-act-abd-kripto-piyasasinda-gozler-senato-da',title:'CLARITY Act: All Eyes on the U.S. Senate',kicker:'ARTICLE',mode:'titled'};"
+            "const c=writingOgCanonical(fields);"
+            "const v=await writingOgVersion(fields);"
+            "process.stdout.write(JSON.stringify({c,v}));",
+        ],
+        cwd=ROOT,
+        text=True,
+    )
+    node_data = json.loads(node_payload)
+    py_canonical = generate_share.writing_og_canonical(
+        lang="en",
+        kind="articles",
+        item_id="clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+        title="CLARITY Act: All Eyes on the U.S. Senate",
+        kicker="ARTICLE",
+        mode="titled",
+    )
+    if node_data.get("c") != py_canonical or node_data.get("v") != en_v:
+        fail("JS and Python OG versions must match")
+    ok("deterministic per-locale OG cache versions")
+
     with tempfile.TemporaryDirectory() as probe_raw:
         probe = Path(probe_raw)
         en_dest = probe / "clarity-en.png"
@@ -320,6 +400,37 @@ def main() -> None:
             fail("tr writing html must not redirect")
         ok("bilingual writing metadata")
 
+        en_note_v = generate_share.writing_og_version(
+            lang="en",
+            kind="notes",
+            item_id="no-cover",
+            title="Validator notes",
+            kicker=generate_share.locale_upper(generate_share.kind_label(tmp, "notes", "en"), "en"),
+            mode="titled",
+        )
+        tr_note_v = generate_share.writing_og_version(
+            lang="tr",
+            kind="notes",
+            item_id="no-cover",
+            title="Doğrulayıcı notları",
+            kicker=generate_share.locale_upper(generate_share.kind_label(tmp, "notes", "tr"), "tr"),
+            mode="titled",
+        )
+        versions = json.loads((tmp / "content" / "og-versions.json").read_text(encoding="utf-8"))
+        if versions.get("writings", {}).get("notes/no-cover", {}).get("en") != en_note_v:
+            fail("og-versions must store the EN titled raster version")
+        if versions.get("writings", {}).get("notes/no-cover", {}).get("tr") != tr_note_v:
+            fail("og-versions must store the TR titled raster version")
+        if f"?v={en_note_v}" not in html or "/writings/en/" not in html:
+            fail("EN detail must use the EN versioned generated raster")
+        if f"?v={tr_note_v}" not in tr_html:
+            fail("TR detail must use the TR versioned generated raster")
+        if f"?v={tr_note_v}" in html or f"?v={en_note_v}" in tr_html:
+            fail("EN and TR generated raster URLs must not share versions")
+        if "articles/with-cover" in json.dumps(versions.get("writings") or {}):
+            fail("custom-cover writings must not receive generated raster versions")
+        ok("generated writing OG URLs are locale-versioned")
+
         note_ld = json_ld(html)
         if note_ld.get("@type") != "BlogPosting":
             fail("writing json-ld type")
@@ -333,8 +444,10 @@ def main() -> None:
             fail("writing json-ld url")
         if note_ld.get("mainEntityOfPage") != note_ld.get("url"):
             fail("writing json-ld mainEntityOfPage")
-        if note_ld.get("image") != "https://koltigin.xyz/assets/images/og/writings/en/notes/no-cover.png":
-            fail("writing json-ld image")
+        if not str(note_ld.get("image") or "").startswith(
+            "https://koltigin.xyz/assets/images/og/writings/en/notes/no-cover.png?v="
+        ):
+            fail("writing json-ld image must be the versioned EN generated raster")
         if (note_ld.get("author") or {}).get("name") != "KolTigin":
             fail("writing json-ld author from displayName")
         if note_ld.get("datePublished") != "2026-08-29":
@@ -548,6 +661,21 @@ def main() -> None:
             fail("update did not regenerate article body")
         if "Body." in read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"):
             fail("stale article body survived a markdown update")
+        updated_html = read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html")
+        updated_v = generate_share.writing_og_version(
+            lang="en",
+            kind="notes",
+            item_id="no-cover",
+            title="Updated title",
+            kicker=generate_share.locale_upper(generate_share.kind_label(tmp, "notes", "en"), "en"),
+            mode="titled",
+        )
+        if updated_v == en_note_v:
+            fail("changing EN title/source must change EN version")
+        if f"?v={updated_v}" not in updated_html:
+            fail("final titled raster must supersede the previous cached image URL")
+        if f"?v={en_note_v}" in updated_html:
+            fail("existing cached 404/stale URL must be superseded when the raster version changes")
         ok("update regenerates metadata")
 
         shutil.rmtree(tmp / "content" / "notes")

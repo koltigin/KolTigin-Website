@@ -14,10 +14,48 @@ class BlogParser {
     this.filterNav = this.section?.querySelector('[data-writings-filter]');
     this.typeList = [];
     this.kinds = {};
+    this.ogVersions = {};
   }
 
   t(key, fallback) {
     return window.KolTiginI18n ? window.KolTiginI18n.t(key, null, fallback) : fallback || key;
+  }
+
+  localeUpper(text, lang) {
+    const raw = String(text || '');
+    if (lang === 'tr') return raw.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+    return raw.toUpperCase();
+  }
+
+  writingOgCanonical({ lang, kind, id, title = '', kicker = '', mode = 'titled' }) {
+    return ['og-v1', lang || '', kind || '', id || '', title || '', kicker || '', mode || 'titled'].join('\n');
+  }
+
+  async writingOgVersion(fields) {
+    const cryptoObj = globalThis.crypto;
+    if (!cryptoObj || !cryptoObj.subtle) return '';
+    const digest = await cryptoObj.subtle.digest('SHA-256', new TextEncoder().encode(this.writingOgCanonical(fields)));
+    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 12);
+  }
+
+  ogKicker(kind, lang) {
+    const type = (this.typeList || []).find((row) => row && row.id === kind);
+    const labels = type && type.label;
+    const label = labels && typeof labels === 'object'
+      ? String(labels[lang] || labels.en || kind)
+      : String(this.kindMeta(kind).card || kind);
+    return this.localeUpper(label, lang);
+  }
+
+  async readOgVersions() {
+    try {
+      const response = await fetch(publicPath('./content/og-versions.json'), { cache: 'no-store' });
+      if (!response.ok) return {};
+      const data = await response.json();
+      return data && data.writings && typeof data.writings === 'object' ? data.writings : {};
+    } catch {
+      return {};
+    }
   }
 
   loc(value, fallback) {
@@ -443,6 +481,7 @@ class BlogParser {
 
   async loadItems() {
     const index = await this.readIndex();
+    this.ogVersions = await this.readOgVersions();
     const loaded = [];
     const lang = index.lang || 'en';
     this.typeList = index.types || [];
@@ -478,6 +517,21 @@ class BlogParser {
           console.warn(`Could not load writing: ${kind}/${file}`, error);
         }
       }
+    }
+
+    for (const item of loaded) {
+      if (this.hasCover(item) || this.isExternal(item)) continue;
+      const loc = lang === 'tr' ? 'tr' : 'en';
+      const key = `${item.kind}/${item.slug}`;
+      item.ogVersion = (this.ogVersions[key] && this.ogVersions[key][loc])
+        || await this.writingOgVersion({
+          lang: loc,
+          kind: item.kind,
+          id: item.slug,
+          title: item.title,
+          kicker: this.ogKicker(item.kind, loc),
+          mode: 'titled'
+        });
     }
 
     loaded.sort((a, b) => {
@@ -560,7 +614,10 @@ class BlogParser {
     const kind = String(item?.kind || '').trim();
     const slug = String(item?.slug || '').trim();
     if (!kind || !slug) return '';
-    return publicPath(`./assets/images/og/writings/${loc}/${kind}/${slug}.png`);
+    const key = `${kind}/${slug}`;
+    const version = (this.ogVersions[key] && this.ogVersions[key][loc]) || item.ogVersion || '';
+    const src = publicPath(`./assets/images/og/writings/${loc}/${kind}/${slug}.png`);
+    return version ? `${src}${src.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}` : src;
   }
 
   coverMarkup(item) {

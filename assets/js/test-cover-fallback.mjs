@@ -23,6 +23,8 @@ const generatedFn = blogSrc.slice(blogSrc.indexOf("generatedCoverSrc(item)"), bl
 const brokenFn = blogSrc.slice(blogSrc.indexOf("replaceBrokenCover(img)"), blogSrc.indexOf("escapeHtml(value)"));
 
 assert(generatedFn.includes("./assets/images/og/writings/${loc}/${kind}/${slug}.png"), "coverless writings use generated OG rasters");
+assert(generatedFn.includes("v=${encodeURIComponent(version)}"), "generated cover URLs include a deterministic version");
+assert(blogSrc.includes("content/og-versions.json"), "list reads locale OG versions without hashing image bytes");
 assert(generatedFn.includes("const loc = this.contentLang()"), "generated cover lang follows the public writings locale");
 assert(!generatedFn.includes("writings/tr/${kind}") && !generatedFn.includes('writings/en/${kind}'), "generated cover path is not hardcoded to one locale");
 assert(markupFn.includes("generatedCoverSrc(item)"), "coverMarkup uses generated OG when there is no custom cover");

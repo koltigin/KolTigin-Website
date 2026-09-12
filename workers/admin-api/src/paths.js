@@ -13,6 +13,7 @@ const ALLOWED_PREFIXES = [
   "content/projects/",
   "content/guides/",
   "content/index.json",
+  "content/og-versions.json",
   "projects/projects.json",
   "guides/",
   "guide/",

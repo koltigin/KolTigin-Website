@@ -73,6 +73,13 @@ assert(tabBlock.includes("showWritingLocalePanels"), "language tabs toggle visib
 assert(!tabBlock.includes("renderWritingEditor()"), "language tabs do not innerHTML-replace the editor");
 assert(adminSrc.includes("mergeLocaleField"), "typing updates only the active locale field through mergeLocaleField");
 assert(adminSrc.includes("applyLocaleFields"), "Save reads both locale panels through applyLocaleFields");
+assert(adminSrc.includes("kindDisplayKicker(kind, lang)"), "cover preview kicker uses the writing locale, not the Admin UI language");
+assert(adminSrc.includes("data-cover-preview-kicker"), "cover preview kicker is addressable on tab switch");
+assert(adminSrc.includes("kindDisplayKicker(state.editor.kind, loc)"), "tab switch updates the localized cover kicker");
+assert(adminSrc.includes("data-cover-preview-title"), "tab switch can update the cover preview title");
+assert(adminSrc.includes("localeUpper"), "Admin preview uses locale-aware uppercase for kickers");
+assert(adminSrc.includes("Sync.localizedText(meta.label, lang || uiLang()"), "typeLabel uses the writing locale argument, not only Admin UI language");
+assert(adminSrc.includes("if (titleEl) titleEl.textContent = draft.title"), "tab switch updates the cover preview title from the active locale draft");
 
 if (failed) {
   console.error(`${failed} failed`);

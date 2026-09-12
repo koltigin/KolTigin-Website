@@ -2,17 +2,21 @@ import { yamlQuote } from "./util.js";
 
 export const SHARE_LANGS = ["en", "tr"];
 
+export function writingShareHtmlPath(lang, kind, id) {
+  return `writings/${lang}/${kind}/${id}/index.html`;
+}
+
+export function writingOgPath(lang, kind, id) {
+  return `assets/images/og/writings/${lang}/${kind}/${id}.png`;
+}
+
 export function writingShareArtifacts(kind, id) {
   const paths = [];
   for (const lang of SHARE_LANGS) {
     paths.push(writingShareHtmlPath(lang, kind, id));
-    paths.push(`assets/images/og/writings/${lang}/${kind}/${id}.png`);
+    paths.push(writingOgPath(lang, kind, id));
   }
   return paths;
-}
-
-export function writingShareHtmlPath(lang, kind, id) {
-  return `writings/${lang}/${kind}/${id}/index.html`;
 }
 
 const MONTHS_EN = [

@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
 function commitMsg(action, target) {
@@ -170,6 +170,26 @@ function mdText(text) {
   return text.endsWith("\n") ? text : `${text}\n`;
 }
 
+async function optionalBytes(github, path) {
+  try {
+    return await github.getBytes(path);
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+const WRITING_OG_BACKGROUND = "assets/images/og/backgrounds/writing-og-background.png";
+
+async function upsertWritingOgPlaceholder(github, upserts, { lang, kind, id, cover }) {
+  if (cover) return;
+  const dest = writingOgPath(lang, kind, id);
+  if (await github.exists(dest)) return;
+  const bytes = await optionalBytes(github, WRITING_OG_BACKGROUND);
+  if (!bytes || !bytes.length) return;
+  upserts.push({ path: dest, bytes });
+}
+
 async function optionalText(github, path) {
   try {
     return await github.getText(path);
@@ -197,6 +217,12 @@ async function upsertWritingLocale(github, upserts, {
     slug: extra.slug || ""
   }));
   upserts.push({ path: mdPath, text });
+  await upsertWritingOgPlaceholder(github, upserts, {
+    lang: item.lang,
+    kind,
+    id,
+    cover: item.cover
+  });
   const htmlPath = writingShareHtmlPath(item.lang, kind, id);
   const existingHtml = await optionalText(github, htmlPath);
   if (!existingHtml) return;

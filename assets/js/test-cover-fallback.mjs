@@ -23,6 +23,8 @@ const generatedFn = blogSrc.slice(blogSrc.indexOf("generatedCoverSrc(item)"), bl
 const brokenFn = blogSrc.slice(blogSrc.indexOf("replaceBrokenCover(img)"), blogSrc.indexOf("escapeHtml(value)"));
 
 assert(generatedFn.includes("./assets/images/og/writings/${loc}/${kind}/${slug}.png"), "coverless writings use generated OG rasters");
+assert(generatedFn.includes("const loc = this.contentLang()"), "generated cover lang follows the public writings locale");
+assert(!generatedFn.includes("writings/tr/${kind}") && !generatedFn.includes('writings/en/${kind}'), "generated cover path is not hardcoded to one locale");
 assert(markupFn.includes("generatedCoverSrc(item)"), "coverMarkup uses generated OG when there is no custom cover");
 assert(markupFn.includes("this.hasCover(item)"), "custom covers still win over generated OG");
 assert(markupFn.includes("<figure") && markupFn.includes("<img src="), "custom covers still render as images");
@@ -37,6 +39,11 @@ assert(guidesSrc.includes("coverFallbackSrc") && guidesSrc.includes("coverImage"
 assert(cssSrc.includes(".blog-banner-box > img"), "banner cover photos are direct-child images only");
 assert(!cssSrc.includes(".blog-banner-box img {"), "banner img rule no longer swallows nested avatars");
 assert(siteSrc.includes("site.avatar"), "sidebar already uses the site avatar asset");
+
+const soulEn = readFileSync(join(root, "../../content/articles/en/2026-08-31-soulmemory.md"), "utf8");
+const soulTr = readFileSync(join(root, "../../content/articles/tr/2026-08-31-soulmemory.md"), "utf8");
+assert(/cover:\s*"soulmemory\.png"/.test(soulEn), "SoulMemory EN keeps its custom cover");
+assert(/cover:\s*"soulmemory\.png"/.test(soulTr), "SoulMemory TR keeps its custom cover");
 
 if (failed) {
   console.error(`${failed} failed`);

@@ -61,6 +61,7 @@ links:
 `,
     "content/guides/index.json": JSON.stringify({ guides: [] }, null, 2) + "\n",
     "i18n/en.json": JSON.stringify({ contact: { title: "Contact", submit: "Send" } }, null, 2) + "\n",
+    "assets/images/og/backgrounds/writing-og-background.png": png,
     "i18n/tr.json": JSON.stringify({ contact: { title: "İletişim", submit: "Gönder" } }, null, 2) + "\n",
     "content/about/en.md": "# About\n"
   };
@@ -257,6 +258,8 @@ links:
     }, env));
     assert(res.status === 200 && res.body.ok === true, "save writing ok");
     assert(github.files.has("content/articles/en/smoke-note.md"), "writing file written");
+    assert(github.files.has("assets/images/og/writings/en/articles/smoke-note.png"), "new EN writing gets same-locale OG placeholder");
+    assert(!github.files.has("assets/images/og/writings/tr/articles/smoke-note.png"), "EN-only save does not write a TR OG raster");
     const index = JSON.parse(github.files.get("content/index.json"));
     assert(index.articles.en.includes("smoke-note.md"), "index lists writing");
 
@@ -265,6 +268,12 @@ links:
     }, env));
     assert(res.status === 200, "save writing tr pair");
     assert(github.files.has("content/articles/tr/smoke-note.md"), "writing tr file written");
+    assert(github.files.has("assets/images/og/writings/tr/articles/smoke-note.png"), "new TR writing gets same-locale OG placeholder");
+    assert(
+      github.files.get("assets/images/og/writings/en/articles/smoke-note.png")
+      === github.files.get("assets/images/og/backgrounds/writing-og-background.png"),
+      "EN OG placeholder stays the EN path after TR save"
+    );
 
     const beforeBilingual = github.commits.length;
     res = await json(await post("/api/admin/save", {
@@ -286,6 +295,8 @@ links:
     assert(Array.isArray(res.body.langs) && res.body.langs.join(",") === "en,tr", "save response reports both langs");
     const bilingualCommit = github.commits[github.commits.length - 1];
     assert(bilingualCommit.upserts.includes("content/articles/en/bilingual-atomic.md") && bilingualCommit.upserts.includes("content/articles/tr/bilingual-atomic.md"), "one commit upserts both locale files");
+    assert(bilingualCommit.upserts.includes("assets/images/og/writings/en/articles/bilingual-atomic.png"), "bilingual create commits EN OG placeholder");
+    assert(bilingualCommit.upserts.includes("assets/images/og/writings/tr/articles/bilingual-atomic.png"), "bilingual create commits TR OG placeholder");
 
     github.files.set("content/notes/en/stale-note.md", "---\ntitle: Old title\ndate: 2026-06-01\nsummary: Old summary.\n---\n\nOld short body.\n");
     github.files.set("content/notes/tr/stale-note.md", "---\ntitle: Eski baslik\ndate: 2026-06-01\nsummary: Eski ozet.\n---\n\nEski kisa govde.\n");

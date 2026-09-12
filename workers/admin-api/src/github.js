@@ -126,12 +126,28 @@ export class GitHubClient {
     return response.json();
   }
 
+  async getBytes(path) {
+    this.bytesCache = this.bytesCache || new Map();
+    const raw = String(path || "").replace(/\\/g, "/").replace(/^\/+/, "");
+    if (this.bytesCache.has(raw)) return this.bytesCache.get(raw);
+    const data = await this.api(`/contents/${raw}?ref=${encodeURIComponent(this.branch)}`);
+    let bytes;
+    if (data && data.content) {
+      const binary = atob(String(data.content).replace(/\n/g, ""));
+      bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    } else if (data && data.sha) {
+      const blob = await this.api(`/git/blobs/${data.sha}`);
+      const binary = atob(String(blob.content || "").replace(/\n/g, ""));
+      bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    } else {
+      throw new HttpError(404, "File not found");
+    }
+    this.bytesCache.set(raw, bytes);
+    return bytes;
+  }
+
   async getText(path) {
-    const data = await this.api(`/contents/${path}?ref=${encodeURIComponent(this.branch)}`);
-    if (!data || !data.content) throw new HttpError(404, "File not found");
-    const binary = atob(String(data.content).replace(/\n/g, ""));
-    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-    return new TextDecoder().decode(bytes);
+    return new TextDecoder().decode(await this.getBytes(path));
   }
 
   async exists(path) {

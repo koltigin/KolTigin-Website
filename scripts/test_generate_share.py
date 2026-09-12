@@ -170,6 +170,50 @@ def main() -> None:
                 fail(f"Poppins is missing glyph for {ch!r}")
     ok("turkish uppercase helper and Poppins glyphs")
 
+    if generate_share.locale_upper(generate_share.kind_label(ROOT, "articles", "en"), "en") != "ARTICLE":
+        fail("article EN kicker must be ARTICLE")
+    if generate_share.locale_upper(generate_share.kind_label(ROOT, "articles", "tr"), "tr") != "MAKALE":
+        fail("article TR kicker must be MAKALE")
+    if generate_share.locale_upper(generate_share.kind_label(ROOT, "notes", "en"), "en") != "TECHNICAL NOTE":
+        fail("note EN kicker must be TECHNICAL NOTE")
+    if generate_share.locale_upper(generate_share.kind_label(ROOT, "notes", "tr"), "tr") != "TEKNİK NOT":
+        fail("note TR kicker must be TEKNİK NOT")
+    en_og = generate_share.writing_og_path("en", "articles", "clarity-act-abd-kripto-piyasasinda-gozler-senato-da")
+    tr_og = generate_share.writing_og_path("tr", "articles", "clarity-act-abd-kripto-piyasasinda-gozler-senato-da")
+    if "/writings/en/" not in en_og.replace("\\", "/"):
+        fail("EN generated raster path must contain /writings/en/")
+    if "/writings/tr/" not in tr_og.replace("\\", "/"):
+        fail("TR generated raster path must contain /writings/tr/")
+    if "/writings/tr/" in en_og.replace("\\", "/") or "/writings/en/" in tr_og.replace("\\", "/"):
+        fail("EN and TR generated raster paths must not mix locales")
+    ok("localized writing kickers and OG paths")
+
+    with tempfile.TemporaryDirectory() as probe_raw:
+        probe = Path(probe_raw)
+        en_dest = probe / "clarity-en.png"
+        tr_dest = probe / "clarity-tr.png"
+        generate_share.render_fallback_png(
+            ROOT,
+            en_dest,
+            title="CLARITY Act: All Eyes on the U.S. Senate",
+            kicker="Article",
+            kind="articles",
+            lang="en",
+        )
+        generate_share.render_fallback_png(
+            ROOT,
+            tr_dest,
+            title="CLARITY Act: ABD Kripto Piyasasında Gözler Senato'da",
+            kicker="Makale",
+            kind="articles",
+            lang="tr",
+        )
+        if en_dest.read_bytes() == tr_dest.read_bytes():
+            fail("EN and TR CLARITY rasters must be generated independently")
+        if Image.open(en_dest).size != (1200, 630) or Image.open(tr_dest).size != (1200, 630):
+            fail("CLARITY fallback rasters must stay 1200x630")
+    ok("CLARITY EN/TR fallback rasters stay locale-specific")
+
     numbered_head = generate_share.patch_section_head(
         """<!DOCTYPE html><html><head>
   <title>Old</title>
@@ -811,6 +855,15 @@ def main() -> None:
     if not og_guides.is_file() or og_guides.stat().st_size < 32:
         fail("og-guides.png must exist as the Guides section asset")
     ok("guides section OG vs projects and detail rasters")
+
+    soul_en = (ROOT / "content" / "articles" / "en" / "2026-08-31-soulmemory.md").read_text(encoding="utf-8")
+    soul_tr = (ROOT / "content" / "articles" / "tr" / "2026-08-31-soulmemory.md").read_text(encoding="utf-8")
+    if 'cover: "soulmemory.png"' not in soul_en or 'cover: "soulmemory.png"' not in soul_tr:
+        fail("SoulMemory must keep its custom cover in both locales")
+    soul_cover = generate_share.resolve_cover(ROOT, "soulmemory.png")
+    if soul_cover is None or soul_cover.name != "soulmemory.png":
+        fail("SoulMemory custom cover must resolve to soulmemory.png")
+    ok("SoulMemory remains a custom-cover writing")
     print("all generate-share tests passed")
 
 

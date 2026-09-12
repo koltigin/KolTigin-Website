@@ -179,9 +179,19 @@
     return Sync.localizedText(value, uiLang(), fallback);
   }
 
-  function typeLabel(id) {
+  function typeLabel(id, lang) {
     const meta = typeMeta(id);
-    return pickLoc(meta.label, t(`kinds.${id}`) || id);
+    return Sync.localizedText(meta.label, lang || uiLang(), t(`kinds.${id}`) || id);
+  }
+
+  function localeUpper(text, lang) {
+    const raw = String(text || '');
+    if (lang === 'tr') return raw.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+    return raw.toUpperCase();
+  }
+
+  function kindDisplayKicker(id, lang) {
+    return localeUpper(typeLabel(id, lang), lang);
   }
 
   function typeFilterLabel(id) {
@@ -935,8 +945,8 @@
     if (draft.coverPreview) return `<div class="cover-preview"><img src="${escapeHtml(draft.coverPreview)}" alt=""></div>`;
     if (draft.cover) return `<div class="cover-preview"><img src="${escapeHtml(coverSrc(draft.cover))}" alt=""></div>`;
     return `<div class="cover-fallback">
-      <div class="title">${escapeHtml(draft.title || t('writings.titleField'))}</div>
-      <div class="kicker">${escapeHtml(kindLabel)}</div>
+      <div class="title" data-cover-preview-title>${escapeHtml(draft.title || t('writings.titleField'))}</div>
+      <div class="kicker" data-cover-preview-kicker>${escapeHtml(kindLabel)}</div>
     </div>`;
   }
 
@@ -995,7 +1005,7 @@
       id: id || t('preview.idHint'),
       filename,
       language: lang === 'en' ? t('tabs.contentEn') : t('tabs.contentTr'),
-      kind: typeLabel(kind),
+      kind: typeLabel(kind, lang),
       slug: id ? `#/yazilar/${kind}/${id}` : '#/yazilar/…',
       excerpt: excerpt(draft.body) || t('preview.excerptHint'),
       readingTime: `${readingMinutes(draft.body)} min`,
@@ -1080,7 +1090,7 @@
           </div>
           <div class="auto-card" style="margin-top:12px">
             <h3>${escapeHtml(t('preview.fallback'))}</h3>
-            ${coverBlock(draft, typeLabel(kind))}
+            ${coverBlock(draft, kindDisplayKicker(kind, lang))}
           </div>
           <div class="md-card" style="margin-top:12px">
             <h3>${escapeHtml(t('preview.markdown'))}</h3>
@@ -1791,6 +1801,12 @@
     app.querySelectorAll('.tabs [data-lang]').forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.lang === state.editor.lang);
     });
+    const loc = state.editor.lang;
+    const draft = state.editor.langs[loc] || emptyLang();
+    const titleEl = app.querySelector('[data-cover-preview-title]');
+    const kickerEl = app.querySelector('[data-cover-preview-kicker]');
+    if (titleEl) titleEl.textContent = draft.title || t('writings.titleField');
+    if (kickerEl) kickerEl.textContent = kindDisplayKicker(state.editor.kind, loc);
   }
 
   function isImageFile(file) {

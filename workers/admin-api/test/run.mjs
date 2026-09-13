@@ -770,6 +770,51 @@ links:
     res = await json(await postForm("/api/admin/cover", { name: "shot.png", bytes: png }, {}, env));
     assert(res.status === 200 && res.body.filename.endsWith(".png"), "cover upload");
     assert([...github.files.keys()].some((path) => path.startsWith("assets/images/blog/")), "cover stored under blog");
+    const blogCoverPath = [...github.files.keys()].find((path) => path.startsWith("assets/images/blog/") && path.endsWith(".png"));
+
+    assert(assertSafePath("assets/images/writings/demo-id/x.png") === "assets/images/writings/demo-id/x.png", "writings asset path is allowlisted");
+
+    res = await json(await postForm("/api/admin/writing-image", { name: "shot.png", bytes: png }, {}, env));
+    assert(res.status === 400 && String(res.body.error).toLowerCase().includes("writing id"), "writing-image rejects missing id");
+
+    res = await json(await postForm("/api/admin/writing-image", { name: "shot.png", bytes: png }, { id: "!!!" }, env));
+    assert(res.status === 400, "writing-image rejects invalid id");
+
+    const jpeg = Uint8Array.from([0xff, 0xd8, 0xff, 0xd9, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const webp = Uint8Array.from([
+      0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50
+    ]);
+    res = await json(await postForm("/api/admin/writing-image", { name: "server.png", bytes: png }, { id: "smoke-note" }, env));
+    assert(res.status === 200, "writing-image accepts PNG");
+    assert(res.body.path === "/assets/images/writings/smoke-note/server.png", "writing-image returns root-absolute path");
+    assert(String(res.body.markdown || "").startsWith("![](/assets/images/writings/"), "writing-image markdown is root-absolute");
+    assert(github.files.has("assets/images/writings/smoke-note/server.png"), "writing-image stored under writings/{id}/");
+
+    res = await json(await postForm("/api/admin/writing-image", { name: "photo.jpg", bytes: jpeg }, { id: "smoke-note" }, env));
+    assert(res.status === 200 && res.body.path.endsWith(".jpg"), "writing-image accepts JPEG");
+
+    res = await json(await postForm("/api/admin/writing-image", { name: "shot.webp", bytes: webp }, { id: "smoke-note" }, env));
+    assert(res.status === 200 && res.body.path.endsWith(".webp"), "writing-image accepts WebP");
+
+    res = await json(await postForm("/api/admin/writing-image", { name: "server.png", bytes: Uint8Array.from([...png, 1, 2, 3]) }, { id: "smoke-note" }, env));
+    assert(res.status === 200 && res.body.filename === "server-2.png", "writing-image collision allocates unique filename");
+
+    const huge = new Uint8Array(2_000_001);
+    huge.set(png, 0);
+    res = await json(await postForm("/api/admin/writing-image", { name: "huge.png", bytes: huge }, { id: "smoke-note" }, env));
+    assert(res.status === 413, "writing-image rejects >2MB");
+
+    res = await json(await postForm("/api/admin/writing-image", { name: "note.txt", bytes: new TextEncoder().encode("not-an-image!!!!") }, { id: "smoke-note" }, env));
+    assert(res.status === 400 && String(res.body.error).toLowerCase().includes("png"), "writing-image rejects non-image");
+
+    res = await json(await postForm("/api/admin/guide-image", { name: "step.png", bytes: png }, { id: "demo-guide" }, env));
+    assert(res.status === 200 && res.body.path === "/assets/images/guides/demo-guide/step.png", "guide-image returns root-absolute path");
+    assert(String(res.body.markdown) === "![](/assets/images/guides/demo-guide/step.png)", "guide-image markdown is root-absolute");
+
+    assert(
+      markdownToHtml("![Server](/assets/images/writings/smoke-note/server.png)").includes('src="/assets/images/writings/smoke-note/server.png"'),
+      "writing renderer keeps root-absolute inline image src"
+    );
 
     const sh = new TextEncoder().encode("#!/bin/sh\necho ok\n");
     const beforeScripts = github.commits.length;
@@ -895,11 +940,16 @@ links:
 
     github.files.set("writings/en/articles/smoke-note/index.html", "<html></html>");
     github.files.set("assets/images/og/writings/en/articles/smoke-note.png", png);
+    github.files.set("assets/images/writings/smoke-note/server.png", png);
+    if (blogCoverPath) github.files.set(blogCoverPath, png);
     res = await json(await post("/api/admin/save", { action: "delete", kind: "articles", id: "smoke-note" }, env));
     assert(res.status === 200, "delete existing writing");
     assert(!github.files.has("content/articles/en/smoke-note.md") && !github.files.has("content/articles/tr/smoke-note.md"), "writing files removed");
     assert(!github.files.has("writings/en/articles/smoke-note/index.html"), "writing share html removed");
     assert(!github.files.has("assets/images/og/writings/en/articles/smoke-note.png"), "writing og image removed");
+    assert(!github.files.has("assets/images/writings/smoke-note/server.png"), "writing inline assets removed on delete");
+    assert(![...github.files.keys()].some((path) => path.startsWith("assets/images/writings/smoke-note/")), "writing asset directory cleared");
+    if (blogCoverPath) assert(github.files.has(blogCoverPath), "writing delete does not remove blog covers");
     assert(!JSON.parse(github.files.get("content/index.json")).articles.en.includes("smoke-note.md"), "writing index updated");
     assert(!JSON.parse(github.files.get("content/index.json")).articles.tr.includes("smoke-note.md"), "writing tr index updated");
     assert(github.commits.at(-1).message === "admin: delete writing smoke-note", "writing delete commit message");

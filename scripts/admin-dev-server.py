@@ -33,8 +33,10 @@ HOST = "127.0.0.1"
 SESSION_TTL_SEC = 12 * 60 * 60
 MAX_BODY = 512 * 1024
 MAX_UPLOAD = 8 * 1024 * 1024
+MAX_IMAGE_UPLOAD = 2 * 1024 * 1024
 BLOG_DIR = ROOT / "assets" / "images" / "blog"
 PROFILE_DIR = ROOT / "assets" / "images" / "profile"
+WRITING_ASSETS = ROOT / "assets" / "images" / "writings"
 SITE_PATH = ROOT / "config" / "site.json"
 ALLOWED_IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}
 WRITING_KINDS = ("articles", "notes", "social")
@@ -886,6 +888,8 @@ class AdminHandler(SimpleHTTPRequestHandler):
         guide_id = slugify(guide_raw[1].decode("utf-8", errors="replace") if isinstance(guide_raw[1], bytes) else str(guide_raw[1]))
         if not data:
             return json_error(self, HTTPStatus.BAD_REQUEST, "Choose an image file")
+        if len(data) > MAX_IMAGE_UPLOAD:
+            return json_error(self, HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "Image is too large")
         if not ID_RE.match(guide_id):
             return json_error(self, HTTPStatus.BAD_REQUEST, "Guide id is required before adding images")
         sniffed = sniff_image_ext(data)
@@ -900,8 +904,39 @@ class AdminHandler(SimpleHTTPRequestHandler):
         dest = folder / stored
         if not dest.exists():
             dest.write_bytes(data)
-        rel = f"./assets/images/guides/{guide_id}/{stored}"
-        return json_ok(self, {"filename": stored, "path": rel, "markdown": f"![]({rel})"})
+        public = f"/assets/images/guides/{guide_id}/{stored}"
+        return json_ok(self, {"filename": stored, "path": public, "markdown": f"![]({public})"})
+
+    def handle_writing_image_upload(self) -> None:
+        try:
+            parts = parse_multipart(self)
+        except ValueError as exc:
+            return json_error(self, HTTPStatus.BAD_REQUEST, str(exc))
+        filename, data = parts.get("file") or ("", b"")
+        writing_raw = parts.get("id") or ("", b"")
+        writing_id = slugify(
+            writing_raw[1].decode("utf-8", errors="replace") if isinstance(writing_raw[1], bytes) else str(writing_raw[1])
+        )
+        if not data:
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Choose an image file")
+        if len(data) > MAX_IMAGE_UPLOAD:
+            return json_error(self, HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "Image is too large")
+        if not ID_RE.match(writing_id):
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Writing id is required before adding images")
+        sniffed = sniff_image_ext(data)
+        if not sniffed:
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Only PNG, JPEG, or WebP images are accepted")
+        folder = WRITING_ASSETS / writing_id
+        stem = slugify(Path(filename).stem) or "image"
+        try:
+            stored = unique_image_filename(folder, stem, sniffed, data)
+        except RuntimeError as exc:
+            return json_error(self, HTTPStatus.CONFLICT, str(exc))
+        dest = folder / stored
+        if not dest.exists():
+            dest.write_bytes(data)
+        public = f"/assets/images/writings/{writing_id}/{stored}"
+        return json_ok(self, {"filename": stored, "path": public, "markdown": f"![]({public})"})
 
     def handle_avatar_upload(self) -> None:
         try:
@@ -1054,6 +1089,10 @@ class AdminHandler(SimpleHTTPRequestHandler):
             if not self.is_authed():
                 return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
             return self.handle_guide_image_upload()
+        if parsed.path == "/admin/api/writing-image":
+            if not self.is_authed():
+                return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
+            return self.handle_writing_image_upload()
         if parsed.path == "/admin/api/script-upload":
             if not self.is_authed():
                 return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
@@ -1242,6 +1281,10 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 deleted.append(str(path.relative_to(ROOT)))
         if not deleted:
             return json_error(self, HTTPStatus.NOT_FOUND, "Writing not found")
+        writing_assets = WRITING_ASSETS / item_id
+        if writing_assets.is_dir():
+            shutil.rmtree(writing_assets)
+            deleted.append(str(writing_assets.relative_to(ROOT)))
         try:
             generator_log = regenerate_writings_index()
         except RuntimeError as exc:

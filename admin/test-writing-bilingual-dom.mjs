@@ -80,6 +80,9 @@ assert(adminSrc.includes("data-cover-preview-title"), "tab switch can update the
 assert(adminSrc.includes("localeUpper"), "Admin preview uses locale-aware uppercase for kickers");
 assert(adminSrc.includes("Sync.localizedText(meta.label, lang || uiLang()"), "typeLabel uses the writing locale argument, not only Admin UI language");
 assert(adminSrc.includes("if (titleEl) titleEl.textContent = draft.title"), "tab switch updates the cover preview title from the active locale draft");
+assert(adminSrc.includes("data-writing-image") && adminSrc.includes("/admin/api/writing-image"), "writing Add image uses writing-image endpoint");
+assert(adminSrc.includes('state.editor.langs[lang].body = ta.value'), "writing image insert updates only the active locale body");
+assert(adminSrc.includes("writingIsSaved") && adminSrc.includes("saveWritingBeforeImages"), "unsaved writings cannot upload inline images");
 
 if (failed) {
   console.error(`${failed} failed`);

@@ -186,9 +186,22 @@ const iH2 = adminSrc.indexOf("'h2'");
 const iH3 = adminSrc.indexOf("'h3'");
 const iBold = adminSrc.indexOf("'bold'");
 assert(iH1 !== -1 && iH1 < iH2 && iH2 < iH3 && iH3 < iBold, "writings toolbar order is H1 H2 H3 then existing controls");
+const writingToolbar = adminSrc.slice(adminSrc.indexOf("function toolbar"), adminSrc.indexOf("function writingIsSaved"));
+assert(writingToolbar.includes("'hr'"), "writing toolbar contains HR");
+assert(writingToolbar.includes("'codeblock'"), "writing toolbar contains Code block");
+assert(writingToolbar.includes("data-writing-image"), "writing toolbar contains Add image");
+assert(writingToolbar.includes("'quote'") && writingToolbar.includes("'code'"), "writing toolbar still has Quote and Code");
+assert(adminSrc.includes("localePanel") && adminSrc.includes("${toolbar()}"), "all writing locale panels use the shared toolbar");
+assert(adminSrc.includes("writingIsSaved") && adminSrc.includes("saveWritingBeforeImages"), "unsaved writing blocks Add image");
+assert(adminSrc.includes("/admin/api/writing-image"), "writing Add image uploads to writing-image");
+assert(adminSrc.includes("rootAbsoluteAssetPath"), "writing image insert normalizes to root-absolute paths");
+
 const guideToolbar = cmsSrc.slice(cmsSrc.indexOf("function guideToolbar"), cmsSrc.indexOf("function renderPageEditor"));
 assert(guideToolbar.includes("headingButtons") && guideToolbar.indexOf("headingButtons") < guideToolbar.indexOf("'bold'"), "guides toolbar starts with shared H1 H2 H3 buttons");
+assert(guideToolbar.includes("'hr'") && guideToolbar.includes("'codeblock'") && guideToolbar.includes("data-guide-image"), "guide toolbar keeps HR, Code block, Add image");
 assert(adminSrc.includes("headingButtons") && cmsSrc.includes("headingButtons"), "shared heading buttons helper is used");
+assert(cmsSrc.includes(".replace(/^\\.\\//, '/')"), "guide Add image normalizes to root-absolute path");
+assert(cmsSrc.includes("publicPath") || cmsSrc.includes("path.startsWith('/')"), "guide image insertion uses root-absolute path");
 
 const guideEditor = cmsSrc.slice(cmsSrc.indexOf("function renderGuideEditor"), cmsSrc.indexOf("async function openGuide"));
 assert(!guideEditor.includes("editor-layout"), "guide editor is not a two-column editor/preview grid");

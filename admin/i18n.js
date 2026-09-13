@@ -227,6 +227,7 @@ window.ADMIN_I18N = {
     errors: {
       xUrl: 'Original X URL is required and must be an https://x.com/… or twitter.com link.',
       titleFirst: 'Fill a title first so the shared ID can be created.',
+      saveWritingBeforeImages: 'Save the Writing first before adding images.',
       coverType: 'Choose a PNG, JPEG, or WebP image.',
       youtube: 'A valid YouTube URL is required.',
       socialUrl: 'Each social link needs a valid https:// URL.',
@@ -551,6 +552,7 @@ window.ADMIN_I18N = {
     errors: {
       xUrl: 'Orijinal X URL zorunlu ve https://x.com/… veya twitter.com olmalı.',
       titleFirst: 'Shared ID için önce bir başlık yazın.',
+      saveWritingBeforeImages: 'Görsel eklemeden önce Yazıyı kaydedin.',
       coverType: 'PNG, JPEG veya WebP görsel seçin.',
       youtube: 'Geçerli bir YouTube URL gerekli.',
       socialUrl: 'Her sosyal bağlantı geçerli bir https:// URL içermeli.',

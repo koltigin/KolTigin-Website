@@ -931,8 +931,24 @@
       ${mdButton('ul', t('md.bullet'), t('md.bulletShort'))}
       ${mdButton('ol', t('md.numbered'), t('md.numberedShort'))}
       ${mdButton('quote', t('md.quote'))}
+      ${mdButton('hr', t('md.hr'))}
       ${mdButton('code', t('md.code'))}
+      ${mdButton('codeblock', t('md.codeBlock'))}
+      <button type="button" data-writing-image title="${escapeHtml(t('md.addImage'))}" aria-label="${escapeHtml(t('md.addImage'))}">${escapeHtml(t('md.addImage'))}</button>
     </div>`;
+  }
+
+  function writingIsSaved(editor) {
+    if (!editor || editor.kind === 'videos') return false;
+    if (editor.mode === 'edit') return true;
+    return Boolean((editor.langs.en && editor.langs.en.exists) || (editor.langs.tr && editor.langs.tr.exists));
+  }
+
+  function rootAbsoluteAssetPath(path) {
+    const raw = String(path || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return raw.startsWith('/') ? raw : `/${raw.replace(/^\.\//, '')}`;
   }
 
   const Md = window.KTAdminMd;
@@ -1067,6 +1083,7 @@
           ${localePanel(editor, 'en')}
           ${localePanel(editor, 'tr')}
         </form>
+      <input id="writing-image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save>${escapeHtml(saveActionLabel('writings.save'))}</button>
@@ -1921,6 +1938,21 @@
           return;
         }
       }
+      if (event.target.closest('[data-writing-image]')) {
+        event.preventDefault();
+        if (!state.editor || state.editor.kind === 'videos') return;
+        syncDraftFromForm();
+        if (!writingIsSaved(state.editor)) {
+          showError(t('errors.saveWritingBeforeImages'));
+          return;
+        }
+        if (!state.editor.sharedId) {
+          showError(t('errors.titleFirst'));
+          return;
+        }
+        document.getElementById('writing-image')?.click();
+        return;
+      }
       if (event.target.closest('[data-preview-md]')) {
         event.preventDefault();
         const videoPreview = state.editor && (state.editor.kind === 'videos' || Boolean(app.querySelector('form[data-video]')));
@@ -2105,7 +2137,7 @@
       }
     });
 
-    app.addEventListener('change', (event) => {
+    app.addEventListener('change', async (event) => {
       if (event.target.matches('[data-kind-select]') && state.editor) {
         syncDraftFromForm();
         const next = event.target.value;
@@ -2134,6 +2166,44 @@
         if (draft.coverPreview) URL.revokeObjectURL(draft.coverPreview);
         draft.coverPreview = URL.createObjectURL(file);
         renderWritingEditor();
+        return;
+      }
+      if (event.target.id === 'writing-image' && state.editor && event.target.files && event.target.files[0]) {
+        const file = event.target.files[0];
+        event.target.value = '';
+        syncDraftFromForm();
+        if (!writingIsSaved(state.editor)) {
+          showError(t('errors.saveWritingBeforeImages'));
+          return;
+        }
+        const writingId = state.editor.sharedId;
+        if (!writingId) {
+          showError(t('errors.titleFirst'));
+          return;
+        }
+        if (!isImageFile(file)) {
+          showError(t('errors.coverType'));
+          return;
+        }
+        const lang = state.editor.lang;
+        const ta = app.querySelector(`[data-locale-panel="${lang}"] textarea[data-field="body"]`)
+          || app.querySelector('[data-locale-panel]:not(.is-hidden) textarea[data-field="body"]');
+        try {
+          const data = await uploadImage('/admin/api/writing-image', file, { id: writingId });
+          const path = rootAbsoluteAssetPath(data.path);
+          const alt = window.prompt(t('cms.altText'), '') || '';
+          const snippet = `![${alt}](${path})\n`;
+          if (ta) {
+            insertSnippet(ta, snippet);
+            state.editor.langs[lang].body = ta.value;
+          }
+          if (state.authed) markDirty();
+          clearStatus();
+          renderWritingEditor();
+        } catch (error) {
+          showError(`${t('cms.failed')} ${error.message || ''}`.trim());
+          renderWritingEditor();
+        }
         return;
       }
       if (event.target.id === 'avatar-file') {

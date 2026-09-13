@@ -158,6 +158,13 @@ def main() -> None:
         fail("English uppercase must keep ASCII I")
     if generate_share.locale_upper("Technical Note", "en") != "TECHNICAL NOTE":
         fail("English kicker must not use Turkish casing")
+    inline_html = generate_share.markdown_to_html(
+        "![Server monitoring](/assets/images/writings/demo/server-monitoring.png)\n"
+    )
+    if 'src="/assets/images/writings/demo/server-monitoring.png"' not in inline_html:
+        fail("generated Writing HTML must keep root-absolute inline image URLs")
+    if 'alt="Server monitoring"' not in inline_html:
+        fail("generated Writing HTML must preserve inline image alt text")
     for word in ("İşletim", "Çalıştırmak", "Güncelleme", "Çözüm", "Önemli", "Şifre", "Ağ", "Kurulum"):
         uppered = generate_share.turkish_upper(word)
         if any(ch in uppered for ch in "iı"):

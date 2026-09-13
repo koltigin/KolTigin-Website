@@ -1422,7 +1422,9 @@
           const data = await H().uploadImage('/admin/api/guide-image', event.target.files[0], { id: g.id });
           const ta = document.querySelector('[data-guide-md]');
           const alt = window.prompt(t('cms.altText'), '') || '';
-          const snippet = `![${alt}](${data.path})\n`;
+          const path = String(data.path || '').trim().replace(/^\.\//, '/');
+          const publicPath = path.startsWith('/') ? path : `/${path}`;
+          const snippet = `![${alt}](${publicPath})\n`;
           if (ta) {
             H().insertSnippet(ta, snippet);
             g.langs[g.lang] = ta.value;

@@ -404,6 +404,10 @@ async function handleWritingDelete(body, github) {
   }
   if (!deletes.length) throw new HttpError(404, "Writing not found");
   await collectExisting(github, writingShareArtifacts(kind, id), deletes);
+  const writingAssets = await github.listPrefix(`assets/images/writings/${id}/`);
+  for (const path of writingAssets) {
+    if (!deletes.includes(path)) deletes.push(path);
+  }
   ogVersions = applyOgVersions(ogVersions, { kind, id, remove: true });
   const upserts = [
     { path: "content/index.json", text: pretty(index) },
@@ -1087,7 +1091,6 @@ export async function handleUpload(kind, file, fields, github) {
   const ext = sniffImageExt(file.bytes, file.name, { allowSvg });
   if (!ext) throw new HttpError(400, allowSvg ? "Only PNG, JPEG, WebP, or SVG logos are accepted" : "Only PNG, JPEG, and WebP images are accepted");
   let dir = "assets/images/blog";
-  let field = "filename";
   if (kind === "avatar") dir = "assets/images/profile";
   if (kind === "project-logo") dir = "assets/images/projects";
   if (kind === "guide-image") {
@@ -1095,19 +1098,25 @@ export async function handleUpload(kind, file, fields, github) {
     if (!ID_RE.test(guideId)) throw new HttpError(400, "Guide id is required before adding images");
     dir = `assets/images/guides/${guideId}`;
   }
+  if (kind === "writing-image") {
+    const writingId = slugify(fields.id || "");
+    if (!ID_RE.test(writingId)) throw new HttpError(400, "Writing id is required before adding images");
+    dir = `assets/images/writings/${writingId}`;
+  }
   assertSafePath(`${dir}/x${ext}`);
   const existing = (await github.listPrefix(`${dir}/`)).map((path) => path.slice(dir.length + 1));
-  const stored = uniqueName(existing, file.name.replace(/\.[^.]+$/, "") || kind, ext);
+  const stored = uniqueName(existing, file.name.replace(/\.[^.]+$/, "") || (kind === "writing-image" ? "image" : kind), ext);
   const path = `${dir}/${stored}`;
-  const rel = `./${path}`;
+  const absoluteKinds = kind === "guide-image" || kind === "writing-image";
+  const publicPath = absoluteKinds ? `/${path}` : `./${path}`;
   const result = await github.commit({
     message: commitMsg("upload", path),
     upserts: [{ path, bytes: file.bytes }]
   });
-  const payload = { filename: stored, path: rel, sha: result.sha };
-  if (kind === "avatar") payload.avatar = rel;
-  if (kind === "project-logo") payload.logo = rel;
-  if (kind === "guide-image") payload.markdown = `![](${rel})`;
+  const payload = { filename: stored, path: publicPath, sha: result.sha };
+  if (kind === "avatar") payload.avatar = publicPath;
+  if (kind === "project-logo") payload.logo = publicPath;
+  if (kind === "guide-image" || kind === "writing-image") payload.markdown = `![](${publicPath})`;
   return payload;
 }
 

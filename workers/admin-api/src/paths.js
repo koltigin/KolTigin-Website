@@ -25,6 +25,7 @@ const ALLOWED_PREFIXES = [
   "assets/images/profile/",
   "assets/images/projects/",
   "assets/images/guides/",
+  "assets/images/writings/",
   "assets/images/og/",
   "downloads/"
 ];

@@ -2,7 +2,7 @@
 date: 2026-09-13
 ---
 
-# ArNS Domain Purchasing Guide
+# ArNS Domain Purchasing
 
 ArNS (Ar.io Name System) allows you to register a human-readable domain for the Arweave ecosystem.
 

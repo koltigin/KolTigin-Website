@@ -2,7 +2,7 @@
 date: 2026-09-13
 ---
 
-# ArNS Domain Alma Rehberi
+# ArNS Domain Alma
 
 ArNS (Ar.io Name System), Arweave ekosisteminde kolay okunabilir bir domain kaydetmenizi sağlar.
 

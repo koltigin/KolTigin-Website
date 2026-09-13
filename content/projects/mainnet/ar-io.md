@@ -17,4 +17,8 @@ links:
     en: "Installation Guide"
     tr: "Kurulum Rehberi"
   guide: ar-io-gateway-installation
+- label:
+    en: "Update Guide"
+    tr: "Güncelleme Rehberi"
+  guide: ar-io-gateway-update
 ---

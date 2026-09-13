@@ -25,4 +25,8 @@ links:
     en: Troubleshooting
     tr: Sorunlar
   guide: ar-io-gateway-troubleshooting
+- label:
+    en: "Domain Registration"
+    tr: "ArNS Domain Alma"
+  guide: arns-domain-purchasing-guide
 ---

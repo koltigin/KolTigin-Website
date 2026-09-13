@@ -25,4 +25,8 @@ links:
     en: Troubleshooting
     tr: Sorunlar
   guide: ar-io-gateway-troubleshooting
+- label:
+    en: "ArNS Domain"
+    tr: "ArNS Domain"
+  guide: how-to-get-an-arns-domain
 ---

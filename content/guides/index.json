@@ -1,5 +1,6 @@
 {
   "guides": [
+    "ar-io-gateway-installation",
     "redbelly-mainnet-telegram-monitoring-bot-installation-guide",
     "redbelly-node-troubleshooting",
     "redbelly-mainnet-node-update-guide",

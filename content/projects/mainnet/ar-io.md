@@ -13,4 +13,8 @@ links:
   url: https://ar.io
 - label: Gateway
   url: https://gateways.ar.io/#/dashboard
+- label:
+    en: "Installation Guide"
+    tr: "Kurulum Rehberi"
+  guide: ar-io-gateway-installation
 ---

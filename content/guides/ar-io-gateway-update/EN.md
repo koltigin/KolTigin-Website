@@ -2,7 +2,7 @@
 date: 2026-09-13
 ---
 
-# AR.IO Gateway Update
+# AR.IO Gateway Update 
 
 Keeping your AR.IO Gateway up to date is important for compatibility, security and reliable participation in the network.
 

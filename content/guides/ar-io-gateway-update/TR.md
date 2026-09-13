@@ -2,7 +2,7 @@
 date: 2026-09-13
 ---
 
-# AR.IO Gateway Güncelleme
+# AR.IO Gateway Güncelleme 
 
 AR.IO Gateway'in güncel tutulması ağ uyumluluğu, güvenlik ve gateway'in güvenilir biçimde çalışması açısından önemlidir.
 

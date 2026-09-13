@@ -1,5 +1,6 @@
 {
   "guides": [
+    "ar-io-gateway-troubleshooting",
     "ar-io-gateway-update",
     "ar-io-gateway-installation",
     "redbelly-mainnet-telegram-monitoring-bot-installation-guide",

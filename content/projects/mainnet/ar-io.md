@@ -21,4 +21,8 @@ links:
     en: "Update Guide"
     tr: "Güncelleme Rehberi"
   guide: ar-io-gateway-update
+- label:
+    en: Troubleshooting
+    tr: Sorunlar
+  guide: ar-io-gateway-troubleshooting
 ---

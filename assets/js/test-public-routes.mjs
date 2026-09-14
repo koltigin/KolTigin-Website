@@ -107,6 +107,32 @@ assert(
 );
 assert(!guideDetail.includes("og-guides.png"), "guide detail does not use section OG");
 
+const aboutSandbox = {
+  window: {
+    KolTiginRouter: {
+      publicPath(path) {
+        return String(path || "").replace(/^\.\//, "/");
+      }
+    }
+  },
+  document: {
+    querySelector() {
+      return null;
+    },
+    addEventListener() {}
+  }
+};
+vm.runInNewContext(readFileSync(join(root, "about-parser.js"), "utf8"), aboutSandbox);
+const aboutParser = new aboutSandbox.window.AboutParser();
+const aboutIconHtml = aboutParser.renderServiceIcon("./assets/images/icons/icon-dev.svg");
+assert(aboutIconHtml.includes('src="/assets/images/icons/icon-dev.svg"'), "About icon relative local asset becomes root-absolute");
+assert(!aboutIconHtml.includes("/about/assets/"), "About icon src never nests under /about/");
+assert(!aboutIconHtml.includes('src="./assets/'), "About icon does not keep relative ./assets src");
+const aboutRemote = aboutParser.renderServiceIcon("https://cdn.example/icon.svg");
+assert(aboutRemote.includes('src="https://cdn.example/icon.svg"'), "About remote icon URLs stay absolute");
+const aboutIon = aboutParser.renderServiceIcon("logo-github");
+assert(aboutIon.includes('<ion-icon name="logo-github">'), "About ionicon names stay non-image");
+
 if (failed) {
   console.error(`${failed} failed`);
   process.exit(1);

@@ -1,7 +1,7 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate } from "./markdown.js";
-import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts, localeUpper, writingOgVersion, writingOgAbsoluteUrl, writingOgAssetUrl, applyOgVersions } from "./generate.js";
+import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, guideOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts, localeUpper, writingOgVersion, writingOgAbsoluteUrl, writingOgAssetUrl, applyOgVersions } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
 function commitMsg(action, target) {
@@ -180,12 +180,31 @@ async function optionalBytes(github, path) {
 }
 
 const WRITING_OG_BACKGROUND = "assets/images/og/backgrounds/writing-og-background.png";
+const GUIDE_OG_BACKGROUND = "assets/images/og/backgrounds/guide-og-background.png";
 
 async function upsertWritingOgPlaceholder(github, upserts, { lang, kind, id, cover }) {
   if (cover) return false;
   const dest = writingOgPath(lang, kind, id);
   if (await github.exists(dest)) return false;
   const bytes = await optionalBytes(github, WRITING_OG_BACKGROUND);
+  if (!bytes || !bytes.length) return false;
+  upserts.push({ path: dest, bytes });
+  return true;
+}
+
+function guideCoverFromMarkdown(markdown) {
+  const meta = parseFrontMatter(markdown).meta || {};
+  const raw = String(meta.cover || meta.image || meta.coverImage || meta.thumbnail || "").trim();
+  if (!raw || ["null", "none", "false"].includes(raw.toLowerCase())) return "";
+  return raw;
+}
+
+async function upsertGuideOgPlaceholder(github, upserts, { lang, id, cover }) {
+  if (cover) return false;
+  const dest = guideOgPath(lang, id);
+  if (await github.exists(dest)) return false;
+  if (upserts.some((item) => item.path === dest)) return false;
+  const bytes = await optionalBytes(github, GUIDE_OG_BACKGROUND);
   if (!bytes || !bytes.length) return false;
   upserts.push({ path: dest, bytes });
   return true;
@@ -724,6 +743,11 @@ export async function handleGuideSave(body, github) {
     let markdown = coverInBody ? applyGuideCover(item.markdown, body.cover) : item.markdown;
     if (published) markdown = applyGuideDate(markdown, published);
     upserts.push({ path: guidePath(id, item.lang), text: mdText(markdown) });
+    await upsertGuideOgPlaceholder(github, upserts, {
+      lang: item.lang,
+      id,
+      cover: guideCoverFromMarkdown(markdown)
+    });
     savedLangs.push(item.lang);
   }
   const index = applyGuideIndex(await readJson(github, guideIndexPath(), { guides: [] }), { id });

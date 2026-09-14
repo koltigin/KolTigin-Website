@@ -118,8 +118,11 @@ class AboutParser {
     renderServiceIcon(icon) {
         const value = String(icon || '').trim();
         if (!value) return '';
-        if (/\.svg(\?|$)/i.test(value) || value.includes('/assets/') || value.startsWith('./')) {
+        if (/^https?:\/\//i.test(value)) {
             return `<img src="${value}" alt="" width="40" loading="lazy" decoding="async">`;
+        }
+        if (/\.svg(\?|$)/i.test(value) || value.includes('/assets/') || value.startsWith('./') || value.startsWith('assets/')) {
+            return `<img src="${publicPath(value)}" alt="" width="40" loading="lazy" decoding="async">`;
         }
         if (/^[a-z0-9-]+$/i.test(value)) {
             return `<ion-icon name="${value}"></ion-icon>`;

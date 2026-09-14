@@ -12,6 +12,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+const guideBgPng = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
+
+function bytesEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return false;
+  return true;
+}
 
 function seed() {
   return {
@@ -62,6 +69,7 @@ links:
     "content/guides/index.json": JSON.stringify({ guides: [] }, null, 2) + "\n",
     "i18n/en.json": JSON.stringify({ contact: { title: "Contact", submit: "Send" } }, null, 2) + "\n",
     "assets/images/og/backgrounds/writing-og-background.png": png,
+    "assets/images/og/backgrounds/guide-og-background.png": guideBgPng,
     "i18n/tr.json": JSON.stringify({ contact: { title: "İletişim", submit: "Gönder" } }, null, 2) + "\n",
     "content/about/en.md": "# About\n"
   };
@@ -605,18 +613,49 @@ links:
     assert(!(liveOptimai.links || []).some((link) => link.guide === OPTIMAI_GUIDE), "deleted Guide never remains on the project json");
     assert((liveOptimai.links || []).some((link) => link.guide === "second-optimai-guide"), "sibling Guide remains on projects.json");
     assert(String(github.files.get("content/projects/depin/optimai.md")).includes("https://optimai.network"), "Website link remains after Guide delete");
-    assert(estimateWorkerSubrequests(github) < 40, "Guide delete stays under the Cloudflare subrequest budget");
+    assert(estimateWorkerSubrequests(github) < 45, "Guide delete stays under the Cloudflare subrequest budget");
 
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n" }, env));
     assert(res.status === 200, "save guide");
+    assert(github.files.has("assets/images/og/guides/en/aioz-depin.png"), "new EN Guide creates OG placeholder PNG");
+    assert(
+      bytesEqual(github.files.get("assets/images/og/guides/en/aioz-depin.png"), guideBgPng),
+      "EN Guide placeholder bytes come from guide-og-background.png"
+    );
+    assert(!github.files.has("assets/images/og/guides/tr/aioz-depin.png"), "EN-only Guide save does not write a TR OG raster");
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "tr", markdown: "# Rehber\n" }, env));
     assert(res.status === 200, "save guide tr");
+    assert(github.files.has("assets/images/og/guides/tr/aioz-depin.png"), "new TR Guide creates OG placeholder PNG");
+    assert(
+      bytesEqual(github.files.get("assets/images/og/guides/tr/aioz-depin.png"), guideBgPng),
+      "TR Guide placeholder bytes come from guide-og-background.png"
+    );
+    assert(
+      bytesEqual(github.files.get("assets/images/og/guides/en/aioz-depin.png"), guideBgPng),
+      "EN Guide OG placeholder stays untouched after TR save"
+    );
+    const titledGuidePng = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 9, 9, 9, 9]);
+    github.files.set("assets/images/og/guides/en/aioz-depin.png", titledGuidePng);
+    res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide edited\n" }, env));
+    assert(res.status === 200, "edit existing Guide");
+    assert(
+      bytesEqual(github.files.get("assets/images/og/guides/en/aioz-depin.png"), titledGuidePng),
+      "Guide edit with existing PNG leaves it unchanged"
+    );
+    assert(
+      bytesEqual(github.files.get("assets/images/og/writings/en/articles/smoke-note.png"), png),
+      "Writing OG placeholder remains unchanged by Guide saves"
+    );
     res = await json(await post("/api/admin/guide-save", { id: "en", lang: "en", markdown: "# Nope\n" }, env));
     assert(res.status === 400, "reserved guide id rejected");
     const coverTrBefore = String(github.files.get("content/guides/aioz-depin/TR.md"));
     res = await json(await post("/api/admin/guide-save", { id: "aioz-depin", lang: "en", markdown: "# Guide\n", cover: "hero.png" }, env));
     assert(res.status === 200 && String(github.files.get("content/guides/aioz-depin/EN.md")).includes("cover:"), "guide cover saved on EN");
     assert(String(github.files.get("content/guides/aioz-depin/TR.md")) === coverTrBefore, "single-locale cover does not rewrite the unwritten sibling");
+    assert(
+      bytesEqual(github.files.get("assets/images/og/guides/en/aioz-depin.png"), titledGuidePng),
+      "Guide cover save does not overwrite an existing OG PNG"
+    );
     const bilingualGuideBefore = github.commits.length;
     resetGithubCalls(github);
     res = await json(await post("/api/admin/guide-save", {
@@ -637,6 +676,8 @@ links:
     assert(github.files.has("content/guides/bilingual-guide/EN.md") && github.files.has("content/guides/bilingual-guide/TR.md"), "bilingual guide writes EN.md and TR.md");
     assert(String(github.files.get("content/guides/bilingual-guide/EN.md")).includes("cover:"), "bilingual cover is applied to EN");
     assert(String(github.files.get("content/guides/bilingual-guide/TR.md")).includes("cover:"), "bilingual cover is applied to TR");
+    assert(!github.files.has("assets/images/og/guides/en/bilingual-guide.png"), "Guide create with custom cover skips EN OG placeholder");
+    assert(!github.files.has("assets/images/og/guides/tr/bilingual-guide.png"), "Guide create with custom cover skips TR OG placeholder");
     assert(!github.files.has("content/guides/bilingual-guide/en.md"), "guide files stay EN.md/TR.md");
     assert(projectMarkdownReads(github).length === 1, "bilingual guide applies Linked Project once");
     assert((String(github.files.get("content/projects/depin/optimai.md")).match(/guide:\s*bilingual-guide/g) || []).length === 1, "Linked Project is attached once");

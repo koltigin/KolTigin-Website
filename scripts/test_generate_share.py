@@ -544,6 +544,17 @@ def main() -> None:
             fail("guides must use the guide master background")
         ok("guide without cover")
 
+        guide_bg = tmp / "assets" / "images" / "og" / "backgrounds" / "guide-og-background.png"
+        guide_og.write_bytes(guide_bg.read_bytes())
+        placeholder_bytes = guide_og.read_bytes()
+        generate_share.generate(tmp)
+        replaced = guide_og.read_bytes()
+        if replaced == placeholder_bytes:
+            fail("generate-share must replace a Guide OG placeholder with titled output")
+        if Image.open(guide_og).size != (1200, 630):
+            fail("generate-share Guide replacement must stay 1200x630")
+        ok("guide generate-share replaces placeholder")
+
         guide_ld = json_ld(ghtml)
         if guide_ld.get("@type") != "TechArticle":
             fail("guide json-ld type")

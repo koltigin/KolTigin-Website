@@ -10,6 +10,10 @@ export function writingOgPath(lang, kind, id) {
   return `assets/images/og/writings/${lang}/${kind}/${id}.png`;
 }
 
+export function guideOgPath(lang, id) {
+  return `assets/images/og/guides/${lang}/${id}.png`;
+}
+
 export function localeUpper(text, lang) {
   const raw = String(text || "");
   if (lang === "tr") return raw.replace(/i/g, "İ").replace(/ı/g, "I").toUpperCase();
@@ -321,7 +325,7 @@ export function guideShareArtifacts(id) {
     const code = lang === "tr" ? "TR" : "EN";
     paths.push(`guides/${id}/${code}/index.html`);
     paths.push(`guide/${lang}/${id}/index.html`);
-    paths.push(`assets/images/og/guides/${lang}/${id}.png`);
+    paths.push(guideOgPath(lang, id));
   }
   return paths;
 }

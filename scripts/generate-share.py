@@ -1008,6 +1008,15 @@ def writing_detail_html(
     return f"""<!DOCTYPE html>
 <html lang="{html.escape(lang)}">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CD89YCN426"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CD89YCN426');
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="{html.escape(WRITINGS_MARKER)}" content="1">

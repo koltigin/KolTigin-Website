@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "phase": 3,
+  "comment": "Generator-owned dual-publish localized destinations. Stable-ID pages are not listed. Stale entries are pruned via keep-set.",
+  "paths": [
+    "guides/ar-io-gateway-guncelleme/TR/index.html",
+    "guides/ar-io-gateway-kurulumu/TR/index.html",
+    "guides/ar-io-gateway-sorun-giderme/TR/index.html",
+    "guides/arns-domain-nasil-alinir/TR/index.html",
+    "guides/aro-network-depin-ubuntu-vps-kurulum-rehberi/TR/index.html",
+    "guides/optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps/TR/index.html",
+    "guides/redbelly-mainnet-node-guncelleme-rehberi/TR/index.html",
+    "guides/redbelly-mainnet-node-kurulum-rehberi/TR/index.html",
+    "guides/redbelly-mainnet-telegram-monitoring-bot-kurulum-rehberi/TR/index.html",
+    "guides/redbelly-node-sorunlar-ve-cozumler/TR/index.html",
+    "writings/en/articles/clarity-act-all-eyes-on-the-us-senate/index.html",
+    "writings/en/articles/soulmemory-on-chain-mood-diary/index.html",
+    "writings/en/notes/being-a-validator-is-more-than-running-a-binary/index.html",
+    "writings/en/notes/three-rules-i-follow-when-writing-node-guides/index.html",
+    "writings/tr/articles/soulmemory-on-chain-duygu-gunlugu/index.html",
+    "writings/tr/notes/node-rehberi-yazarken-dikkat-ettigim-uc-temel-kural/index.html",
+    "writings/tr/notes/validator-olmak-neden-sadece-bir-binary-calistirmak-degildir/index.html"
+  ]
+}

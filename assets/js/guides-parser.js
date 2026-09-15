@@ -113,6 +113,13 @@ class GuidesParser {
         }
         return;
       }
+      if (parsed.unresolved || !parsed.id) {
+        window.activatePage?.('guide', { skipHistory: true, instantScroll: true });
+        if (this.bodyEl) {
+          this.bodyEl.innerHTML = `<p class="guide-status">${this.escapeHtml(this.t('guides.loadError', 'The guide could not be loaded.'))}</p>`;
+        }
+        return;
+      }
       if (
         this.currentId === parsed.id
         && this.currentLang === (parsed.lang || this.currentLang)
@@ -126,9 +133,36 @@ class GuidesParser {
       this.open(parsed.id, { heading: parsed.heading, lang: parsed.lang });
     };
 
-    window.addEventListener('hashchange', apply);
-    window.addEventListener('popstate', apply);
-    apply();
+    const runWhenMapReady = () => {
+      const router = window.KolTiginRouter;
+      const onGuideDetail = Boolean(router && typeof router.parseGuidePath === 'function'
+        && router.parseGuidePath(window.location.pathname));
+      const map = window.KolTiginUrlMap;
+      // Phase 3: never resolve/open a guide detail route before url-map is ready.
+      // Localized dual-publish paths would otherwise fall back to the route key as an ID.
+      if (onGuideDetail && map && typeof map.load === 'function') {
+        map.load()
+          .then(() => {
+            if (typeof map.isReady === 'function' && !map.isReady()) {
+              throw new Error('url-map not ready');
+            }
+            apply();
+          })
+          .catch((error) => {
+            console.error('guides-parser url-map:', error);
+            window.activatePage?.('guide', { skipHistory: true, instantScroll: true });
+            if (this.bodyEl) {
+              this.bodyEl.innerHTML = `<p class="guide-status">${this.escapeHtml(this.t('guides.loadError', 'The guide could not be loaded.'))}</p>`;
+            }
+          });
+        return;
+      }
+      apply();
+    };
+
+    window.addEventListener('hashchange', runWhenMapReady);
+    window.addEventListener('popstate', runWhenMapReady);
+    runWhenMapReady();
   }
 
   parseGuideHash() {
@@ -148,8 +182,26 @@ class GuidesParser {
       ? router.parseGuidePath(window.location.pathname)
       : null;
     if (fromPath) {
+      const map = window.KolTiginUrlMap;
+      // Hard refresh / direct localized URL: wait for map; do not treat route key as ID.
+      if (map && typeof map.isReady === 'function' && !map.isReady()) {
+        return null;
+      }
+      const stableId = router.guideStableIdFromRoute
+        ? router.guideStableIdFromRoute(fromPath)
+        : null;
+      if (!stableId) {
+        return {
+          id: '',
+          unresolved: true,
+          routeKey: fromPath.routeKey || fromPath.id,
+          lang: fromPath.lang,
+          heading: router.parseGuideHeading(window.location.hash)
+        };
+      }
       return {
-        id: fromPath.id,
+        id: stableId,
+        routeKey: fromPath.routeKey || fromPath.id,
         lang: fromPath.lang,
         heading: router.parseGuideHeading(window.location.hash)
       };
@@ -172,12 +224,37 @@ class GuidesParser {
   }
 
   isOnThisGuidePath() {
-    const parsed = window.KolTiginRouter?.parseGuidePath(window.location.pathname);
-    return Boolean(parsed && parsed.id === this.currentId && (!this.currentLang || parsed.lang === this.currentLang));
+    const router = window.KolTiginRouter;
+    const parsed = router?.parseGuidePath(window.location.pathname);
+    if (!parsed) return false;
+    const stableId = router.guideStableIdFromRoute
+      ? router.guideStableIdFromRoute(parsed)
+      : null;
+    if (!stableId) return false;
+    return Boolean(stableId === this.currentId && (!this.currentLang || parsed.lang === this.currentLang));
   }
 
   syncGuideUrl(heading, replace) {
-    const next = this.guidePublicPath(heading);
+    const router = window.KolTiginRouter;
+    const parsed = router?.parseGuidePath(window.location.pathname);
+    const stableFromPath = parsed && router.guideStableIdFromRoute
+      ? router.guideStableIdFromRoute(parsed)
+      : '';
+    const onMatchingPublicPath = Boolean(
+      parsed
+      && stableFromPath
+      && stableFromPath === this.currentId
+      && (!this.currentLang || parsed.lang === this.currentLang)
+    );
+    // Stay on the visited public path (ID or localized) while it maps to this guide.
+    // Language switches that leave the path fall back to the live ID-based public path.
+    const basePath = onMatchingPublicPath
+      ? router.normalizePath(window.location.pathname)
+      : (router && typeof router.guidePublicPath === 'function'
+        ? router.guidePublicPath(this.currentId, this.currentLang || this.siteGuideLang())
+        : `/guides/${this.currentId}/${this.currentLang || this.siteGuideLang()}/`);
+    const slug = String(heading || '').trim();
+    const next = slug ? `${basePath}#${slug}` : basePath;
     const current = `${window.location.pathname}${window.location.hash}`;
     if (current === next) return;
     history[replace ? 'replaceState' : 'pushState'](null, '', next);

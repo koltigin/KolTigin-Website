@@ -46,6 +46,40 @@ OG_BG_CENTERING = (0.5, 0.34)
 
 WRITINGS_MARKER = "koltigin-share-writing"
 GUIDES_MARKER = "koltigin-share-guide"
+LOCALIZED_MANIFEST_REL = "content/localized-dual-publish.json"
+ROBOTS_NOINDEX_FOLLOW = "noindex,follow"
+
+
+class DualPublishError(RuntimeError):
+    """Raised when dual-publish destinations collide or are ambiguous."""
+
+
+class DestinationRegistry:
+    """Claim generated public destinations; reject cross-item collisions."""
+
+    def __init__(self) -> None:
+        self._owners: dict[str, str] = {}
+
+    @staticmethod
+    def normalize(rel: str) -> str:
+        path = str(rel or "").replace("\\", "/").strip("/")
+        if path.endswith("/index.html"):
+            path = path[: -len("/index.html")]
+        elif path.endswith("index.html"):
+            path = path[: -len("index.html")].rstrip("/")
+        return path
+
+    def claim(self, rel: str, owner: str) -> str:
+        key = self.normalize(rel)
+        if not key:
+            raise DualPublishError(f"empty dual-publish destination for {owner}")
+        previous = self._owners.get(key)
+        if previous is not None and previous != owner:
+            raise DualPublishError(
+                f"output collision at '{key}': owned by {previous}, also claimed by {owner}"
+            )
+        self._owners[key] = owner
+        return key
 
 PUBLIC_SECTION_ROUTES = [
     {"id": "home", "path": "/", "dir": None},
@@ -895,8 +929,11 @@ def writing_head_extras(
     marker: str,
     alternates: dict[str, str],
     json_ld: dict,
+    robots: str | None = None,
 ) -> str:
     extras = [f'  <meta name="{html.escape(marker)}" content="1">']
+    if robots:
+        extras.append(f'  <meta name="robots" content="{html.escape(robots)}">')
     for code, url in alternates.items():
         extras.append(
             f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
@@ -915,6 +952,15 @@ def writing_head_extras(
         f'  <script>try{{localStorage.setItem("siteLang","{html.escape(lang)}");}}catch(e){{}}</script>'
     )
     return "\n".join(extras)
+
+
+def strip_robots_meta(source: str) -> str:
+    return re.sub(
+        r"\n?\s*<meta\s+name=[\"']robots[\"']\s+content=[\"'][^\"']*[\"']\s*/?>",
+        "",
+        source,
+        flags=re.IGNORECASE,
+    )
 
 
 def inject_content_identity_attrs(
@@ -966,6 +1012,7 @@ def writing_detail_html(
     content_kind: str = "",
     en_slug: str = "",
     tr_slug: str = "",
+    robots: str | None = None,
 ) -> str:
     if '<meta name="description"' in source and 'rel="canonical"' in source:
         html_out = patch_section_head(
@@ -975,6 +1022,7 @@ def writing_detail_html(
             canonical=canonical,
             image=image,
         )
+        html_out = strip_robots_meta(html_out)
         if content_id:
             html_out = inject_content_identity_attrs(
                 html_out,
@@ -1009,6 +1057,7 @@ def writing_detail_html(
             marker=WRITINGS_MARKER,
             alternates=alternates,
             json_ld=json_ld,
+            robots=robots,
         )
         html_out = html_out.replace("</head>", extras + "\n</head>", 1)
         html_out = html_out.replace('class="about active"', 'class="about"', 1)
@@ -1053,8 +1102,21 @@ def writing_detail_html(
         hreflang.append(
             f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">'
         )
+    robots_line = (
+        f'  <meta name="robots" content="{html.escape(robots)}">\n' if robots else ""
+    )
+    identity_bits = []
+    if content_id:
+        identity_bits.append(f'data-content-id="{html.escape(content_id, quote=True)}"')
+        if content_kind:
+            identity_bits.append(f'data-content-kind="{html.escape(content_kind, quote=True)}"')
+        if en_slug:
+            identity_bits.append(f'data-en-slug="{html.escape(en_slug, quote=True)}"')
+        if tr_slug:
+            identity_bits.append(f'data-tr-slug="{html.escape(tr_slug, quote=True)}"')
+    identity = (" " + " ".join(identity_bits)) if identity_bits else ""
     return f"""<!DOCTYPE html>
-<html lang="{html.escape(lang)}">
+<html lang="{html.escape(lang)}"{identity}>
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-CD89YCN426"></script>
@@ -1068,7 +1130,7 @@ def writing_detail_html(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="{html.escape(WRITINGS_MARKER)}" content="1">
-  <title>{html.escape(title)}</title>
+{robots_line}  <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(description)}">
   <link rel="canonical" href="{html.escape(canonical)}">
 {chr(10).join(hreflang)}
@@ -1309,6 +1371,7 @@ def patch_guide_spa_page(
     content_id: str = "",
     en_slug: str = "",
     tr_slug: str = "",
+    robots: str | None = None,
 ) -> str:
     html_out = patch_section_head(
         strip_homepage_jsonld(source),
@@ -1317,6 +1380,7 @@ def patch_guide_spa_page(
         canonical=canonical,
         image=image,
     )
+    html_out = strip_robots_meta(html_out)
     if content_id:
         html_out = inject_content_identity_attrs(
             html_out,
@@ -1347,6 +1411,8 @@ def patch_guide_spa_page(
         flags=re.IGNORECASE,
     )
     extras = ['  <meta name="koltigin-share-guide" content="1">']
+    if robots:
+        extras.append(f'  <meta name="robots" content="{html.escape(robots)}">')
     for code, url in alternates.items():
         extras.append(
             f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
@@ -1390,6 +1456,43 @@ def write_section_pages(root: Path) -> list[str]:
     return written
 
 
+def plan_dual_publish_destinations(
+    writings: list[dict],
+    guides: list[dict],
+) -> tuple[DestinationRegistry, list[str]]:
+    """Preflight all dual-publish output claims before any file mutation.
+
+    Raises DualPublishError if any destination is claimed by two different owners.
+    slug == ID for the same owner is a single destination (no duplicate copy).
+    """
+    destinations = DestinationRegistry()
+    localized: list[str] = []
+    for item in writings:
+        kind = item["kind"]
+        item_id = item["id"]
+        owner = f"writing:{kind}/{item_id}"
+        for lang, data in item["langs"].items():
+            legacy_rel = writing_share_path(lang, kind, item_id)
+            destinations.claim(legacy_rel, owner)
+            locale_slug = str(data.get("slug") or "").strip()
+            if locale_slug and locale_slug != item_id:
+                localized_rel = writing_share_path(lang, kind, locale_slug)
+                destinations.claim(localized_rel, owner)
+                localized.append(localized_rel)
+    for item in guides:
+        item_id = item["id"]
+        owner = f"guide:{item_id}"
+        for lang, data in item["langs"].items():
+            legacy_rel = guide_share_path(lang, item_id)
+            destinations.claim(legacy_rel, owner)
+            locale_slug = str(data.get("slug") or "").strip()
+            if locale_slug and locale_slug != item_id:
+                localized_rel = guide_share_path(lang, locale_slug)
+                destinations.claim(localized_rel, owner)
+                localized.append(localized_rel)
+    return destinations, localized
+
+
 def generate(root: Path) -> dict:
     base = origin(root)
     brand = display_name(root)
@@ -1397,12 +1500,20 @@ def generate(root: Path) -> dict:
     keep: set[Path] = set()
     sitemap_entries = [{"loc": f"{base}{spec['path']}"} for spec in PUBLIC_SECTION_ROUTES]
     created = []
+    localized_created: list[str] = []
     og_versions: dict[str, dict[str, str]] = {}
 
-    for item in discover_writings(root):
+    writings = discover_writings(root)
+    guides = discover_guides(root)
+    # Fail loudly on collisions before writing HTML/PNG/sitemap outputs.
+    _destinations, planned_localized = plan_dual_publish_destinations(writings, guides)
+    del _destinations  # claims already validated; write loop re-derives paths deterministically
+
+    for item in writings:
         kind = item["kind"]
         item_id = item["id"]
         langs = item["langs"]
+        # Phase 3: SEO/sitemap stay on stable-ID URLs (no localized cutover).
         alternates = {
             lang: abs_url(base, f"writings/{lang}/{kind}/{item_id}/")
             for lang in langs
@@ -1410,9 +1521,14 @@ def generate(root: Path) -> dict:
         en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
         tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
         for lang, data in langs.items():
-            html_rel = writing_share_path(lang, kind, item_id)
+            legacy_rel = writing_share_path(lang, kind, item_id)
+            locale_slug = str(data.get("slug") or "").strip()
+            localized_rel = None
+            if locale_slug and locale_slug != item_id:
+                localized_rel = writing_share_path(lang, kind, locale_slug)
+
+            html_path = root / legacy_rel
             og_rel = writing_og_path(lang, kind, item_id)
-            html_path = root / html_rel
             og_path = root / og_rel
             cover = resolve_cover(root, data["cover"])
             used_cover = bool(cover and render_cover_png(cover, og_path))
@@ -1457,54 +1573,73 @@ def generate(root: Path) -> dict:
                 if (root / "index.html").is_file()
                 else ""
             )
-            write_text(
-                html_path,
-                writing_detail_html(
-                    index_source,
-                    lang=lang,
-                    title=data["title"],
-                    description=data["description"] or data["title"],
-                    canonical=canonical,
-                    image=image,
-                    article_html=article_html,
-                    alternates=alternates,
-                    content_id=item_id,
-                    content_kind=kind,
-                    en_slug=en_slug,
-                    tr_slug=tr_slug,
-                    json_ld=json_ld_payload(
-                        schema_type="BlogPosting",
-                        headline=data["title"],
-                        description=data["description"] or data["title"],
-                        author=brand,
-                        image=image,
-                        url=canonical,
-                        in_language="tr" if lang == "tr" else "en",
-                        date_published=data.get("date"),
-                        date_modified=data.get("updated"),
-                    ),
-                ),
+            payload = json_ld_payload(
+                schema_type="BlogPosting",
+                headline=data["title"],
+                description=data["description"] or data["title"],
+                author=brand,
+                image=image,
+                url=canonical,
+                in_language="tr" if lang == "tr" else "en",
+                date_published=data.get("date"),
+                date_modified=data.get("updated"),
             )
+            detail_kwargs = dict(
+                lang=lang,
+                title=data["title"],
+                description=data["description"] or data["title"],
+                canonical=canonical,
+                image=image,
+                article_html=article_html,
+                alternates=alternates,
+                content_id=item_id,
+                content_kind=kind,
+                en_slug=en_slug,
+                tr_slug=tr_slug,
+                json_ld=payload,
+            )
+            write_text(html_path, writing_detail_html(index_source, robots=None, **detail_kwargs))
             keep.add(html_path.resolve())
             keep.add(og_path.resolve())
-            created.append(html_rel)
+            created.append(legacy_rel)
+
+            if localized_rel:
+                localized_path = root / localized_rel
+                write_text(
+                    localized_path,
+                    writing_detail_html(
+                        index_source,
+                        robots=ROBOTS_NOINDEX_FOLLOW,
+                        **detail_kwargs,
+                    ),
+                )
+                keep.add(localized_path.resolve())
+                created.append(localized_rel)
+                localized_created.append(localized_rel)
+
             writing_lastmod = data.get("updated") or data.get("date")
+            # Sitemap stays ID-based only.
             sitemap_entries.append(
                 {"loc": canonical, "alternates": alternates, "lastmod": writing_lastmod}
             )
 
     index_source = (root / "index.html").read_text(encoding="utf-8") if (root / "index.html").is_file() else ""
 
-    for item in discover_guides(root):
+    for item in guides:
         item_id = item["id"]
         langs = item["langs"]
         alternates = {lang: guide_public_url(base, item_id, lang) for lang in langs}
         en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
         tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
         for lang, data in langs.items():
-            html_rel = guide_share_path(lang, item_id)
+            legacy_rel = guide_share_path(lang, item_id)
+            locale_slug = str(data.get("slug") or "").strip()
+            localized_rel = None
+            if locale_slug and locale_slug != item_id:
+                localized_rel = guide_share_path(lang, locale_slug)
+
+            html_path = root / legacy_rel
             og_rel = guide_og_path(lang, item_id)
-            html_path = root / html_rel
             og_path = root / og_rel
             cover = resolve_cover(root, data["cover"], guide_id=item_id)
             used_cover = bool(cover and render_cover_png(cover, og_path))
@@ -1531,30 +1666,51 @@ def generate(root: Path) -> dict:
                 date_published=data.get("date"),
                 date_modified=data.get("updated"),
             )
+            guide_kwargs = dict(
+                lang=lang,
+                title=data["title"],
+                description=data["description"] or data["title"],
+                canonical=canonical,
+                image=image,
+                alternates=alternates,
+                json_ld=payload,
+                content_id=item_id,
+                en_slug=en_slug,
+                tr_slug=tr_slug,
+            )
             if index_source:
                 write_text(
                     html_path,
-                    patch_guide_spa_page(
-                        index_source,
-                        lang=lang,
-                        title=data["title"],
-                        description=data["description"] or data["title"],
-                        canonical=canonical,
-                        image=image,
-                        alternates=alternates,
-                        json_ld=payload,
-                        content_id=item_id,
-                        en_slug=en_slug,
-                        tr_slug=tr_slug,
-                    ),
+                    patch_guide_spa_page(index_source, robots=None, **guide_kwargs),
                 )
             keep.add(html_path.resolve())
             keep.add(og_path.resolve())
-            created.append(html_rel)
+            created.append(legacy_rel)
+
+            if localized_rel and index_source:
+                localized_path = root / localized_rel
+                write_text(
+                    localized_path,
+                    patch_guide_spa_page(
+                        index_source,
+                        robots=ROBOTS_NOINDEX_FOLLOW,
+                        **guide_kwargs,
+                    ),
+                )
+                keep.add(localized_path.resolve())
+                created.append(localized_rel)
+                localized_created.append(localized_rel)
+
             guide_lastmod = data.get("updated") or data.get("date")
             sitemap_entries.append(
                 {"loc": canonical, "alternates": alternates, "lastmod": guide_lastmod}
             )
+
+    if sorted(localized_created) != sorted(planned_localized):
+        raise DualPublishError(
+            "localized dual-publish output drifted from preflight plan: "
+            f"planned={len(planned_localized)} wrote={len(localized_created)}"
+        )
 
     versions_path = root / "content" / "og-versions.json"
     write_text(
@@ -1566,6 +1722,23 @@ def generate(root: Path) -> dict:
     except UrlMapError as exc:
         raise RuntimeError(f"url-map validation failed: {exc}") from exc
     keep.add(url_map_path.resolve())
+
+    localized_manifest = {
+        "version": 1,
+        "phase": 3,
+        "comment": (
+            "Generator-owned dual-publish localized destinations. "
+            "Stable-ID pages are not listed. Stale entries are pruned via keep-set."
+        ),
+        "paths": sorted(localized_created),
+    }
+    localized_manifest_path = root / LOCALIZED_MANIFEST_REL
+    write_text(
+        localized_manifest_path,
+        json.dumps(localized_manifest, indent=2, ensure_ascii=False) + "\n",
+    )
+    keep.add(localized_manifest_path.resolve())
+
     sitemap_path = root / "sitemap.xml"
     write_text(sitemap_path, sitemap_xml(base, sitemap_entries))
     keep.add(sitemap_path.resolve())
@@ -1585,9 +1758,11 @@ def generate(root: Path) -> dict:
     )
     return {
         "created": created + section_pages,
+        "localized": localized_created,
         "removed": removed,
         "sitemap": str(sitemap_path.relative_to(root)),
         "url_map": str(url_map_path.relative_to(root)),
+        "localized_manifest": str(localized_manifest_path.relative_to(root)),
     }
 
 
@@ -1602,7 +1777,9 @@ def main() -> int:
         sys.stderr.write(f"generate-share failed: {exc}\n")
         return 1
     sys.stdout.write(
-        f"generate-share wrote {len(result['created'])} pages, removed {len(result['removed'])} stale files\n"
+        f"generate-share wrote {len(result['created'])} pages "
+        f"({len(result.get('localized') or [])} localized dual-publish), "
+        f"removed {len(result['removed'])} stale files\n"
     )
     return 0
 

@@ -808,9 +808,12 @@ if (window.KolTiginI18n) {
     window.blogParser.applyKindLabels();
     const parsed = window.blogParser.publicWritingPath();
     if (parsed) {
+      const stableId = window.KolTiginRouter && window.KolTiginRouter.writingStableIdFromRoute
+        ? (window.KolTiginRouter.writingStableIdFromRoute(parsed) || parsed.id)
+        : parsed.id;
       const dest = window.KolTiginRouter
-        ? window.KolTiginRouter.writingPublicPath(window.blogParser.contentLang(), parsed.kind, parsed.id)
-        : `/writings/${window.blogParser.contentLang()}/${parsed.kind}/${parsed.id}/`;
+        ? window.KolTiginRouter.writingPublicPath(window.blogParser.contentLang(), parsed.kind, stableId)
+        : `/writings/${window.blogParser.contentLang()}/${parsed.kind}/${stableId}/`;
       const current = window.KolTiginRouter
         ? window.KolTiginRouter.normalizePath(window.location.pathname)
         : window.location.pathname;

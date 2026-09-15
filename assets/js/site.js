@@ -80,14 +80,18 @@ function routeSeo(site, lang) {
   const router = window.KolTiginRouter;
   const writing = router && router.parseWritingPath(window.location.pathname);
   if (writing) {
+    // Phase 3: even on localized dual-publish paths, SEO/share stay ID-based.
+    const stableId = router.writingStableIdFromRoute
+      ? (router.writingStableIdFromRoute(writing) || writing.id)
+      : writing.id;
     return {
       routeId: 'writing',
       type: 'article',
       title: document.title || 'KolTigin',
       description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
-      url: `${originUrl(site)}${router.writingPublicPath(writing.lang, writing.kind, writing.id)}`,
+      url: `${originUrl(site)}${router.writingPublicPath(writing.lang, writing.kind, stableId)}`,
       image: document.querySelector('meta[property="og:image"]')?.getAttribute('content')
-        || absoluteAssetUrl(site, `./assets/images/og/writings/${writing.lang}/${writing.kind}/${writing.id}.png`)
+        || absoluteAssetUrl(site, `./assets/images/og/writings/${writing.lang}/${writing.kind}/${stableId}.png`)
     };
   }
   const guide = router && router.parseGuidePath(window.location.pathname);
@@ -95,13 +99,16 @@ function routeSeo(site, lang) {
     const loc = guide.lang === 'TR' ? 'tr' : 'en';
     const parser = window.guidesParser;
     const title = (parser && parser.currentTitle) || document.title || 'Guide';
+    const stableId = router.guideStableIdFromRoute
+      ? (router.guideStableIdFromRoute(guide) || guide.id)
+      : guide.id;
     return {
       routeId: 'guide',
       type: 'article',
       title,
       description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
-      url: `${originUrl(site)}${router.guidePublicPath(guide.id, guide.lang)}`,
-      image: absoluteAssetUrl(site, `./assets/images/og/guides/${loc}/${guide.id}.png`)
+      url: `${originUrl(site)}${router.guidePublicPath(stableId, guide.lang)}`,
+      image: absoluteAssetUrl(site, `./assets/images/og/guides/${loc}/${stableId}.png`)
     };
   }
   const routeId = router ? router.sectionForPath(window.location.pathname).id : 'home';
@@ -232,9 +239,7 @@ function bindLangSwitch() {
     const writing = window.KolTiginRouter && window.KolTiginRouter.parseWritingPath(window.location.pathname);
     if (writing) {
       const loc = button.getAttribute('data-set-lang') === 'tr' ? 'tr' : 'en';
-      // Phase 2: keep live language switch on stable-ID URLs.
-      // Resolve routeKey -> stable ID when the map is ready so a future slug path
-      // would still land on the current ID counterpart (not the localized slug URL).
+      // Phase 3: language switch stays on stable-ID URLs even from localized dual-publish paths.
       const stableId = window.KolTiginRouter.writingStableIdFromRoute
         ? window.KolTiginRouter.writingStableIdFromRoute(writing)
         : writing.id;

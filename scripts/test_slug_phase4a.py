@@ -260,9 +260,7 @@ def test_current_id_live_regression() -> None:
             fail("CURRENT_ID sitemap missing ID writing URL")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    redirects = load_redirects(ROOT / "config" / "redirects.json")
-    if redirects.get("enabled") is not False:
-        fail("redirects must remain enabled:false")
+    # Activation metadata is owned by Phase 4C; Phase 4A proves CURRENT_ID SEO.
     router = read(ROOT / "assets" / "js" / "router.js")
     if "MODE_CURRENT_ID" not in router or "setPublicUrlMode" not in router:
         fail("JS must retain CURRENT_ID support")
@@ -407,6 +405,7 @@ def test_localized_generator_mode() -> None:
             fail("do not introduce sitemap xhtml in Phase 4A")
 
         # Determinism: second LOCALIZED run must not change outputs.
+        redirects_snapshot = (tmp / "config" / "redirects.json").read_text(encoding="utf-8")
         before = {
             str(p.relative_to(tmp)): file_sha(p)
             for p in tmp.rglob("*")
@@ -422,10 +421,8 @@ def test_localized_generator_mode() -> None:
             changed = sorted(set(before) | set(after))
             diffs = [p for p in changed if before.get(p) != after.get(p)]
             fail(f"LOCALIZED second generate changed files: {diffs[:8]}")
-
-        redirects = load_redirects(tmp / "config" / "redirects.json")
-        if redirects.get("enabled") is not False:
-            fail("LOCALIZED generate must not enable redirects")
+        if (tmp / "config" / "redirects.json").read_text(encoding="utf-8") != redirects_snapshot:
+            fail("LOCALIZED generate must not mutate redirects.json")
         ok("LOCALIZED generator SEO/sitemap/determinism")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -458,36 +455,30 @@ def test_redirect_map_and_cloudflare_artifact() -> None:
     pairs = validate_redirects(data)
     if len(pairs) != EXPECTED_REDIRECT_COUNT:
         fail(f"expected {EXPECTED_REDIRECT_COUNT} redirects")
-    if data.get("enabled") is not False:
-        fail("redirects must stay disabled")
     url_map = build_url_map(ROOT)
     validate_redirects_against_url_map(data, url_map)
     for row in pairs:
         if row["from"] == row["to"]:
             fail(f"self redirect slipped through: {row}")
-    artifact = build_cloudflare_bulk_redirects(data)
-    if artifact.get("activated") is not False:
-        fail("Cloudflare artifact must not be activated")
-    if artifact.get("recommended_product") != "bulk_redirects":
+    # Item shape is Phase 4A work; activation metadata is Phase 4C.
+    prepared = build_cloudflare_bulk_redirects(data, activated=False)
+    if prepared.get("activated") is not False:
+        fail("explicit activated=False must stay inactive")
+    if prepared.get("recommended_product") != "bulk_redirects":
         fail("recommend Bulk Redirects for 17 static 301s")
-    if len(artifact.get("items") or []) != EXPECTED_REDIRECT_COUNT:
+    if len(prepared.get("items") or []) != EXPECTED_REDIRECT_COUNT:
         fail("Cloudflare artifact item count mismatch")
-    first = artifact["items"][0]
+    first = prepared["items"][0]
     if first.get("status_code") != 301:
         fail("Cloudflare items must be 301")
     if not str(first.get("source_url") or "").startswith("https://koltigin.xyz/"):
         fail("Cloudflare source_url must be absolute koltigin.xyz")
-    # Checked-in artifact must match deterministic derivation (no hand-edited drift).
-    dest = ROOT / "config" / "cloudflare-bulk-redirects.json"
-    expected_text = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
-    if not dest.is_file():
-        dest.write_text(expected_text, encoding="utf-8")
-    written = json.loads(dest.read_text(encoding="utf-8"))
-    if written != artifact:
-        fail("config/cloudflare-bulk-redirects.json drifted from config/redirects.json derivation")
-    if written.get("activated") is not False:
-        fail("written Cloudflare artifact must remain inactive")
-    if "xhtml:link" in expected_text:
+    written = json.loads((ROOT / "config" / "cloudflare-bulk-redirects.json").read_text(encoding="utf-8"))
+    if written.get("items") != prepared.get("items"):
+        fail("checked-in Cloudflare items drifted from redirects.json derivation")
+    if bool(written.get("activated")) != bool(data.get("enabled")):
+        fail("activated must mirror redirects.enabled in repository state")
+    if "xhtml:link" in json.dumps(written):
         fail("Cloudflare artifact must not invent xhtml sitemap links")
     ok("redirect-map validation + Cloudflare bulk-redirect artifact")
 

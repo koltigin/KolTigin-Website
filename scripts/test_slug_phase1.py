@@ -290,15 +290,20 @@ def test_url_map_rejects_missing_and_duplicates() -> None:
 
 
 def test_redirect_manifest() -> None:
+    """Phase 1 historical: mapping data exists and generate-share never executes it.
+
+    Live ``enabled`` may be true after Phase 4C (Cloudflare edge). Execution must
+    still not live in the static generator.
+    """
     data = load_redirects(ROOT / "config" / "redirects.json")
-    if data.get("enabled") is not False:
-        fail("Phase 1 redirects must remain disabled")
+    if data.get("enabled") is not True and data.get("enabled") is not False:
+        fail("redirects.enabled must be a boolean")
     rows = validate_redirects(data)
     if len(rows) != 17:
         fail(f"expected 17 planned redirects, got {len(rows)}")
     generate_src = (ROOT / "scripts" / "generate-share.py").read_text(encoding="utf-8")
     if "validate_redirects" in generate_src or "config/redirects.json" in generate_src:
-        fail("generate-share must not activate redirects in Phase 1")
+        fail("generate-share must not activate redirects")
     bad = {
         "enabled": False,
         "redirects": [
@@ -311,7 +316,7 @@ def test_redirect_manifest() -> None:
     except Exception as exc:  # noqa: BLE001
         if "self redirect" not in str(exc):
             fail(f"unexpected self-redirect error: {exc}")
-    ok("redirect manifest validated and disabled")
+    ok("redirect manifest validated (generator still non-executing)")
 
 
 def test_public_urls_unchanged() -> None:

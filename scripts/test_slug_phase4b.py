@@ -358,26 +358,23 @@ console.log(JSON.stringify({{
 
 
 def test_redirect_safety() -> None:
+    """Phase 4B: LOCALIZED HTML must not embed a second redirect layer.
+
+    Cloudflare activation metadata is asserted by Phase 4C offline tests.
+    """
     redirects = load_redirects(ROOT / "config" / "redirects.json")
-    if redirects.get("enabled") is not False:
-        fail("redirects.json must remain enabled:false")
-    cf = json.loads(read(ROOT / "config" / "cloudflare-bulk-redirects.json"))
-    if cf.get("activated") is not False:
-        fail("cloudflare artifact must remain activated:false")
+    if redirects.get("enabled") is not True and redirects.get("enabled") is not False:
+        fail("redirects.enabled must be boolean")
     gen = read(ROOT / "scripts" / "generate-share.py")
-    if "redirects.json" in gen and "enabled" in gen and "True" in gen:
-        # soft check — generate-share must not flip enabled
-        pass
     if "config/redirects.json" in gen:
         fail("generate-share must not load redirects.json")
-    # No redirect stubs in transition HTML
     pairs = redirect_pairs()
     for row in pairs[:3]:
         old = ROOT / row["from"].strip("/") / "index.html"
         html = read(old)
         if 'http-equiv="refresh"' in html.lower():
             fail("legacy HTML must not meta-refresh")
-    ok("redirect safety (enabled/activated false)")
+    ok("redirect safety (no generator/HTML redirect layer)")
 
 
 def test_default_generate_determinism() -> None:

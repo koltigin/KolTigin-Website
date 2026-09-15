@@ -1,10 +1,15 @@
 {
   "version": 1,
-  "phase": "4a-prepare",
-  "activated": false,
-  "comment": "Derived from config/redirects.json. Not installed in Cloudflare. Phase 4C: create a Bulk Redirect List from `items`, then attach a Bulk Redirect Rule. Prefer Bulk Redirects over Single Redirect Rules or a Worker for these 17 static path-to-path 301 mappings.",
+  "phase": "4c-live",
+  "activated": true,
+  "comment": "Derived from config/redirects.json. Live execution is Cloudflare Bulk Redirects (list/rule: koltigin_phase4c_localized_slugs). This file is declarative repository state only — regenerating it does not call the Cloudflare API.",
   "source_manifest": "config/redirects.json",
   "recommended_product": "bulk_redirects",
+  "live": {
+    "list_name": "koltigin_phase4c_localized_slugs",
+    "rule_name": "koltigin_phase4c_localized_slugs",
+    "activated_on": "2026-09-15"
+  },
   "items": [
     {
       "source_url": "https://koltigin.xyz/writings/en/articles/2026-08-31-soulmemory/",

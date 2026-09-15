@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "enabled": false,
-  "comment": "Phase 1 data only. Do not apply these redirects in Cloudflare or the static generator.",
+  "enabled": true,
+  "comment": "Phase 4C live. Execution layer is Cloudflare Bulk Redirects only (list/rule koltigin_phase4c_localized_slugs). enabled=true is declarative repository state — it does not generate HTML/meta/JS/Worker redirects.",
   "redirects": [
     {
       "from": "/writings/en/articles/2026-08-31-soulmemory/",

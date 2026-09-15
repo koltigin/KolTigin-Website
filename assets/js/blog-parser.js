@@ -656,11 +656,11 @@ class BlogParser {
     const isExternal = this.isExternal(item);
     const loc = this.contentLang();
     const stableId = item.stableId || item.slug;
-    // Phase 2: card hrefs remain stable-ID public paths.
+    // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
     const href = isExternal
       ? this.escapeHtml(item.externalUrl)
-      : (window.KolTiginRouter && typeof window.KolTiginRouter.writingLegacyPublicPath === 'function'
-        ? window.KolTiginRouter.writingLegacyPublicPath(loc, item.kind, stableId)
+      : (window.KolTiginRouter && typeof window.KolTiginRouter.writingPublicPath === 'function'
+        ? window.KolTiginRouter.writingPublicPath(loc, item.kind, stableId)
         : `/writings/${loc}/${encodeURIComponent(item.kind)}/${encodeURIComponent(stableId)}/`);
     const extra = isExternal
       ? ' target="_blank" rel="noopener noreferrer"'

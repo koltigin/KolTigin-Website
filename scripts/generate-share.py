@@ -19,6 +19,15 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from public_url_policy import (  # noqa: E402
+    DEFAULT_MODE,
+    guide_alternates,
+    is_localized_mode,
+    normalize_mode,
+    robots_for_destination,
+    writing_alternates,
+    x_default_url,
+)
 from url_map import UrlMapError, write_url_map  # noqa: E402
 CANONICAL_ORIGIN = "https://koltigin.xyz"
 ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -47,7 +56,6 @@ OG_BG_CENTERING = (0.5, 0.34)
 WRITINGS_MARKER = "koltigin-share-writing"
 GUIDES_MARKER = "koltigin-share-guide"
 LOCALIZED_MANIFEST_REL = "content/localized-dual-publish.json"
-ROBOTS_NOINDEX_FOLLOW = "noindex,follow"
 
 
 class DualPublishError(RuntimeError):
@@ -938,13 +946,11 @@ def writing_head_extras(
         extras.append(
             f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
         )
-    if "en" in alternates:
+    x_default = x_default_url(alternates)
+    if x_default:
         extras.append(
-            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">'
+            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(x_default)}">'
         )
-    elif alternates:
-        first = next(iter(alternates.values()))
-        extras.append(f'  <link rel="alternate" hreflang="x-default" href="{html.escape(first)}">')
     extras.append('  <meta property="og:image:width" content="1200">')
     extras.append('  <meta property="og:image:height" content="630">')
     extras.append(json_ld_script(json_ld))
@@ -1417,9 +1423,10 @@ def patch_guide_spa_page(
         extras.append(
             f'  <link rel="alternate" hreflang="{html.escape(code)}" href="{html.escape(url)}">'
         )
-    if "en" in alternates:
+    x_default = x_default_url(alternates)
+    if x_default:
         extras.append(
-            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(alternates["en"])}">'
+            f'  <link rel="alternate" hreflang="x-default" href="{html.escape(x_default)}">'
         )
     extras.append('  <meta property="og:image:width" content="1200">')
     extras.append('  <meta property="og:image:height" content="630">')
@@ -1493,7 +1500,9 @@ def plan_dual_publish_destinations(
     return destinations, localized
 
 
-def generate(root: Path) -> dict:
+def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
+    mode = normalize_mode(public_url_mode)
+    localized_mode = is_localized_mode(mode)
     base = origin(root)
     brand = display_name(root)
     avatar_path(root)
@@ -1513,11 +1522,9 @@ def generate(root: Path) -> dict:
         kind = item["kind"]
         item_id = item["id"]
         langs = item["langs"]
-        # Phase 3: SEO/sitemap stay on stable-ID URLs (no localized cutover).
-        alternates = {
-            lang: abs_url(base, f"writings/{lang}/{kind}/{item_id}/")
-            for lang in langs
-        }
+        # CURRENT_ID: SEO/sitemap stay on stable-ID URLs.
+        # LOCALIZED: primary URLs use persisted locale slugs (slug==ID stays identical).
+        alternates = writing_alternates(mode, base, kind, item_id, langs)
         en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
         tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
         for lang, data in langs.items():
@@ -1541,6 +1548,8 @@ def generate(root: Path) -> dict:
                     kind=kind,
                     lang=lang,
                 )
+            # Primary canonical for this locale under the active mode.
+            # In LOCALIZED mode, legacy ID HTML also points at the localized primary URL.
             canonical = alternates[lang]
             if used_cover and cover:
                 image = abs_url(base, og_rel)
@@ -1609,7 +1618,7 @@ def generate(root: Path) -> dict:
                     localized_path,
                     writing_detail_html(
                         index_source,
-                        robots=ROBOTS_NOINDEX_FOLLOW,
+                        robots=robots_for_destination(mode, is_extra_localized_copy=True),
                         **detail_kwargs,
                     ),
                 )
@@ -1618,7 +1627,7 @@ def generate(root: Path) -> dict:
                 localized_created.append(localized_rel)
 
             writing_lastmod = data.get("updated") or data.get("date")
-            # Sitemap stays ID-based only.
+            # One primary sitemap loc per content+locale under the active mode.
             sitemap_entries.append(
                 {"loc": canonical, "alternates": alternates, "lastmod": writing_lastmod}
             )
@@ -1628,7 +1637,7 @@ def generate(root: Path) -> dict:
     for item in guides:
         item_id = item["id"]
         langs = item["langs"]
-        alternates = {lang: guide_public_url(base, item_id, lang) for lang in langs}
+        alternates = guide_alternates(mode, base, item_id, langs)
         en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
         tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
         for lang, data in langs.items():
@@ -1693,7 +1702,7 @@ def generate(root: Path) -> dict:
                     localized_path,
                     patch_guide_spa_page(
                         index_source,
-                        robots=ROBOTS_NOINDEX_FOLLOW,
+                        robots=robots_for_destination(mode, is_extra_localized_copy=True),
                         **guide_kwargs,
                     ),
                 )
@@ -1725,10 +1734,12 @@ def generate(root: Path) -> dict:
 
     localized_manifest = {
         "version": 1,
-        "phase": 3,
+        "phase": 4 if localized_mode else 3,
+        "public_url_mode": mode,
         "comment": (
             "Generator-owned dual-publish localized destinations. "
-            "Stable-ID pages are not listed. Stale entries are pruned via keep-set."
+            "Stable-ID pages are not listed. Stale entries are pruned via keep-set. "
+            f"SEO/discovery mode={mode} (default remains CURRENT_ID until Phase 4B)."
         ),
         "paths": sorted(localized_created),
     }
@@ -1763,22 +1774,30 @@ def generate(root: Path) -> dict:
         "sitemap": str(sitemap_path.relative_to(root)),
         "url_map": str(url_map_path.relative_to(root)),
         "localized_manifest": str(localized_manifest_path.relative_to(root)),
+        "public_url_mode": mode,
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=str(ROOT))
+    parser.add_argument(
+        "--public-url-mode",
+        default=DEFAULT_MODE,
+        choices=[DEFAULT_MODE, "LOCALIZED"],
+        help="SEO/public URL mode. Default CURRENT_ID keeps Phase 3 production behavior.",
+    )
     args = parser.parse_args()
     root = Path(args.root).resolve()
     try:
-        result = generate(root)
+        result = generate(root, public_url_mode=args.public_url_mode)
     except Exception as exc:  # noqa: BLE001
         sys.stderr.write(f"generate-share failed: {exc}\n")
         return 1
     sys.stdout.write(
         f"generate-share wrote {len(result['created'])} pages "
         f"({len(result.get('localized') or [])} localized dual-publish), "
+        f"mode={result.get('public_url_mode')}, "
         f"removed {len(result['removed'])} stale files\n"
     )
     return 0

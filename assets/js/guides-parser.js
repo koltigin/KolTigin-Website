@@ -352,9 +352,9 @@ class GuidesParser {
   }
 
   createIndexCard(item) {
-    // Phase 2: live guide cards remain stable-ID paths.
-    const href = window.KolTiginRouter && typeof window.KolTiginRouter.guideLegacyPublicPath === 'function'
-      ? window.KolTiginRouter.guideLegacyPublicPath(item.id, item.lang)
+    // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+    const href = window.KolTiginRouter && typeof window.KolTiginRouter.guidePublicPath === 'function'
+      ? window.KolTiginRouter.guidePublicPath(item.id, item.lang)
       : `/guides/${this.escapeHtml(item.id)}/${item.lang}/`;
     const project = item.project
       ? `<p class="blog-category">${this.escapeHtml(item.project)}</p>`

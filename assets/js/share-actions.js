@@ -34,6 +34,10 @@
   }
 
   function writingShareUrl(lang, kind, id) {
+    const router = global.KolTiginRouter;
+    if (router && typeof router.writingPublicPath === 'function') {
+      return `${siteOrigin()}${router.writingPublicPath(lang, kind, id)}`;
+    }
     const loc = locale(lang);
     const type = String(kind || '').trim();
     const stableId = String(id || '').trim();
@@ -48,6 +52,10 @@
   }
 
   function guideShareUrl(lang, id) {
+    const router = global.KolTiginRouter;
+    if (router && typeof router.guidePublicPath === 'function') {
+      return `${siteOrigin()}${router.guidePublicPath(id, locale(lang) === 'tr' ? 'TR' : 'EN')}`;
+    }
     const code = locale(lang) === 'tr' ? 'TR' : 'EN';
     const stableId = String(id || '').trim();
     return `${siteOrigin()}/guides/${encodeURIComponent(stableId)}/${code}/`;

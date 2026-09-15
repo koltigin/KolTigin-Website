@@ -142,9 +142,9 @@ class ProjectsParser {
 
   guideShareHref(guideId) {
     const code = this.currentLang() === 'tr' ? 'TR' : 'EN';
-    // Phase 2: live project guide links remain stable-ID paths.
-    if (window.KolTiginRouter && typeof window.KolTiginRouter.guideLegacyPublicPath === 'function') {
-      return window.KolTiginRouter.guideLegacyPublicPath(guideId, code);
+    // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+    if (window.KolTiginRouter && typeof window.KolTiginRouter.guidePublicPath === 'function') {
+      return window.KolTiginRouter.guidePublicPath(guideId, code);
     }
     return `/guides/${encodeURIComponent(guideId)}/${code}/`;
   }

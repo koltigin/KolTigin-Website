@@ -80,7 +80,7 @@ function routeSeo(site, lang) {
   const router = window.KolTiginRouter;
   const writing = router && router.parseWritingPath(window.location.pathname);
   if (writing) {
-    // Phase 3: even on localized dual-publish paths, SEO/share stay ID-based.
+    // Mode-aware via writingPublicPath (default CURRENT_ID = Phase 3 ID SEO/share).
     const stableId = router.writingStableIdFromRoute
       ? (router.writingStableIdFromRoute(writing) || writing.id)
       : writing.id;

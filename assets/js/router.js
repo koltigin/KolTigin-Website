@@ -2,6 +2,10 @@
 
 (function (global) {
   const ORIGIN = 'https://koltigin.xyz';
+  const MODE_CURRENT_ID = 'CURRENT_ID';
+  const MODE_LOCALIZED = 'LOCALIZED';
+  // Phase 4A: default stays CURRENT_ID (Phase 3 production behavior).
+  let publicUrlMode = MODE_CURRENT_ID;
 
   const SECTIONS = [
     { id: 'home', path: '/', page: 'about', nav: 'about' },
@@ -42,6 +46,23 @@
     return `${trimmed}/`;
   }
 
+  function getPublicUrlMode() {
+    return publicUrlMode === MODE_LOCALIZED ? MODE_LOCALIZED : MODE_CURRENT_ID;
+  }
+
+  function setPublicUrlMode(mode) {
+    const text = String(mode || '').trim().toUpperCase();
+    if (text === MODE_LOCALIZED) {
+      publicUrlMode = MODE_LOCALIZED;
+      return publicUrlMode;
+    }
+    if (text === MODE_CURRENT_ID || text === '') {
+      publicUrlMode = MODE_CURRENT_ID;
+      return publicUrlMode;
+    }
+    throw new Error(`unknown public URL mode: ${mode}`);
+  }
+
   function writingLegacyPublicPath(lang, kind, id) {
     const loc = String(lang || 'en').toLowerCase() === 'tr' ? 'tr' : 'en';
     return `/writings/${loc}/${kind}/${id}/`;
@@ -52,8 +73,21 @@
     return `/writings/${loc}/${kind}/${publicSlug}/`;
   }
 
-  // Phase 2 default: stable-ID public paths remain live.
+  function writingLocaleSlug(lang, kind, id) {
+    const loc = String(lang || 'en').toLowerCase() === 'tr' ? 'tr' : 'en';
+    const map = global.KolTiginUrlMap;
+    if (!map || typeof map.resolveWriting !== 'function' || !map.isReady()) return '';
+    const resolved = map.resolveWriting(kind, id, loc);
+    if (!resolved || !resolved.slugs) return '';
+    return String(resolved.slugs[loc] || '').trim();
+  }
+
+  // Mode-aware primary public path. Default CURRENT_ID keeps stable-ID live paths.
   function writingPublicPath(lang, kind, id) {
+    if (getPublicUrlMode() === MODE_LOCALIZED) {
+      const slug = writingLocaleSlug(lang, kind, id) || id;
+      return writingLocalizedPublicPath(lang, kind, slug);
+    }
     return writingLegacyPublicPath(lang, kind, id);
   }
 
@@ -67,8 +101,21 @@
     return `/guides/${publicSlug}/${code}/`;
   }
 
-  // Phase 2 default: stable-ID public paths remain live.
+  function guideLocaleSlug(id, lang) {
+    const loc = String(lang || 'EN').toUpperCase() === 'TR' ? 'tr' : 'en';
+    const map = global.KolTiginUrlMap;
+    if (!map || typeof map.resolveGuide !== 'function' || !map.isReady()) return '';
+    const resolved = map.resolveGuide(id);
+    if (!resolved || !resolved.slugs) return '';
+    return String(resolved.slugs[loc] || '').trim();
+  }
+
+  // Mode-aware primary public path. Default CURRENT_ID keeps stable-ID live paths.
   function guidePublicPath(id, lang) {
+    if (getPublicUrlMode() === MODE_LOCALIZED) {
+      const slug = guideLocaleSlug(id, lang) || id;
+      return guideLocalizedPublicPath(slug, lang);
+    }
     return guideLegacyPublicPath(id, lang);
   }
 
@@ -127,7 +174,7 @@
   }
 
   /**
-   * Future localized language-switch target. Not used by live navigation in Phase 2.
+   * Localized language-switch target (uses locale slugs). Used when mode=LOCALIZED.
    */
   function writingLocalizedCounterpartPath(parsed, nextLang) {
     const map = global.KolTiginUrlMap;
@@ -139,7 +186,7 @@
   }
 
   /**
-   * Future localized language-switch target for guides. Not used live in Phase 2.
+   * Localized language-switch target for guides. Used when mode=LOCALIZED.
    */
   function guideLocalizedCounterpartPath(parsed, nextLang) {
     const map = global.KolTiginUrlMap;
@@ -276,6 +323,10 @@
   global.KolTiginRouter = {
     SECTIONS,
     ORIGIN,
+    MODE_CURRENT_ID,
+    MODE_LOCALIZED,
+    getPublicUrlMode,
+    setPublicUrlMode,
     normalizePath,
     sectionForPath,
     pathForPage,

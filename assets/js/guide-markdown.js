@@ -48,10 +48,9 @@ window.KolTiginGuideMarkdown = {
       const trimmed = href.trim();
       if (/^(TR|EN)\.md$/i.test(trimmed)) {
         const lang = trimmed.slice(0, 2).toUpperCase();
-        // Phase 2: rendered TR.md/EN.md language links remain ID-based.
-        // Future localized path helper is available via KolTiginRouter.guideLocalizedPublicPath.
-        const path = window.KolTiginRouter && typeof window.KolTiginRouter.guideLegacyPublicPath === 'function'
-          ? window.KolTiginRouter.guideLegacyPublicPath(guideId, lang)
+        // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+        const path = window.KolTiginRouter && typeof window.KolTiginRouter.guidePublicPath === 'function'
+          ? window.KolTiginRouter.guidePublicPath(guideId, lang)
           : `/guides/${this.escapeHtml(guideId)}/${lang}/`;
         return `<a href="${path}" data-guide-lang="${lang}">${label}</a>`;
       }

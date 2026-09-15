@@ -230,15 +230,18 @@ def test_current_public_output_unchanged() -> None:
     if "writingLocalizedCounterpartPath" in site_js and "location.assign(window.KolTiginRouter.writingLocalizedCounterpartPath" in site_js:
         fail("language switch must not activate localized navigation yet")
     blog = (ROOT / "assets" / "js" / "blog-parser.js").read_text(encoding="utf-8")
-    if "writingLegacyPublicPath" not in blog:
-        fail("writing cards should prefer legacy path helper")
+    if "writingPublicPath" not in blog:
+        fail("writing cards should use mode-aware writingPublicPath")
     if "publicSlug" not in blog or "stableId" not in blog:
         fail("writing records must expose publicSlug/stableId")
     guides = (ROOT / "assets" / "js" / "guides-parser.js").read_text(encoding="utf-8")
-    if "guideLegacyPublicPath" not in guides:
-        fail("guide cards should prefer legacy path helper")
+    if "guidePublicPath" not in guides:
+        fail("guide cards should use mode-aware guidePublicPath")
     if "data-guide-public-slug" not in guides:
         fail("guide cards should expose public slug metadata")
+    router = (ROOT / "assets" / "js" / "router.js").read_text(encoding="utf-8")
+    if "CURRENT_ID" not in router or "setPublicUrlMode" not in router:
+        fail("router must expose public URL mode with CURRENT_ID default")
     ok("current public directories / SEO / language-switch unchanged")
 
 

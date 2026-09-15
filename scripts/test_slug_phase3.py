@@ -239,10 +239,13 @@ def test_links_share_language_switch_still_id() -> None:
         fail("language switch must keep writingPublicPath")
     if "writingStableIdFromRoute" not in blog:
         fail("blog-parser language switch must resolve stable IDs")
-    if "guideLegacyPublicPath" not in guides:
-        fail("guide cards must remain legacy/ID hrefs")
-    if "writingLegacyPublicPath" not in blog:
-        fail("writing cards must remain legacy/ID hrefs")
+    if "guidePublicPath" not in guides:
+        fail("guide cards must use mode-aware guidePublicPath")
+    if "writingPublicPath" not in blog:
+        fail("writing cards must use mode-aware writingPublicPath")
+    router = read(ROOT / "assets" / "js" / "router.js")
+    if "let publicUrlMode = MODE_CURRENT_ID" not in router and 'publicUrlMode = MODE_CURRENT_ID' not in router:
+        fail("router default public URL mode must remain CURRENT_ID")
     if "writingLocalizedShareUrl" in share and "function writingShareUrl" not in share:
         fail("live share helper writingShareUrl must remain")
     if "`/guides/${encodeURIComponent(guideId)}/${code}/`" not in projects and "guideShareHref" not in projects:

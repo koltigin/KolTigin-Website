@@ -1079,13 +1079,13 @@ def writing_detail_html(
         html_out = html_out.replace('class="about active"', 'class="about"', 1)
         html_out = html_out.replace('class="blog"', 'class="blog active"', 1)
         html_out = html_out.replace(
-            'navbar-link active" data-nav-link data-nav-page="about"',
+            'navbar-link active" data-nav-link data-nav-page="about" aria-current="page"',
             'navbar-link" data-nav-link data-nav-page="about"',
             1,
         )
         html_out = html_out.replace(
-            'navbar-link" data-nav-link data-nav-page="blog"',
-            'navbar-link active" data-nav-link data-nav-page="blog"',
+            'navbar-link" data-nav-link data-nav-page="blog">',
+            'navbar-link active" data-nav-link data-nav-page="blog" aria-current="page">',
             1,
         )
         html_out = re.sub(

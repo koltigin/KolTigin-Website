@@ -55,7 +55,10 @@ function activatePage(pageName, options = {}) {
   navigationLinks.forEach((link) => {
     const target = link.dataset.navPage || link.innerHTML.trim().toLowerCase();
     const highlight = (pageName === "guide" || pageName === "guides") ? "guides" : pageName;
-    link.classList.toggle("active", target === highlight);
+    const isActive = target === highlight;
+    link.classList.toggle("active", isActive);
+    if (isActive) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
   });
   if (!options.skipHistory) {
     syncDocumentUrl(pageName, {

@@ -31,7 +31,7 @@
   <link rel="icon" href="/assets/images/common/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="shortcut icon" href="/assets/images/common/favicon-32.png" type="image/png">
   <link rel="apple-touch-icon" href="/assets/images/common/apple-touch-icon.png" sizes="180x180">
-  <link rel="stylesheet" href="/assets/css/style.css?v=prod29">
+  <link rel="stylesheet" href="/assets/css/style.css?v=prod30">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -173,25 +173,46 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about" data-i18n="nav.about">About</a>
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
+              <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.about">About</span>
+            </a>
           </li>
           <li class="navbar-item">
-            <a href="/resume/" class="navbar-link" data-nav-link data-nav-page="resume" data-i18n="nav.resume">Resume</a>
+            <a href="/resume/" class="navbar-link" data-nav-link data-nav-page="resume">
+              <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.resume">Resume</span>
+            </a>
           </li>
           <li class="navbar-item">
-            <a href="/projects/" class="navbar-link" data-nav-link data-nav-page="projects" data-i18n="nav.projects">Projects</a>
+            <a href="/projects/" class="navbar-link" data-nav-link data-nav-page="projects">
+              <ion-icon name="layers-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.projects">Projects</span>
+            </a>
           </li>
           <li class="navbar-item">
-            <a href="/writings/" class="navbar-link active" data-nav-link data-nav-page="blog" data-i18n="nav.blog">Writings</a>
+            <a href="/writings/" class="navbar-link active" data-nav-link data-nav-page="blog" aria-current="page">
+              <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.blog">Writings</span>
+            </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides" data-i18n="nav.guides">Guides</a>
+            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+              <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.guides">Guides</span>
+            </a>
           </li>
           <li class="navbar-item">
-            <a href="/videos/" class="navbar-link" data-nav-link data-nav-page="videos" data-i18n="nav.videos">Videos</a>
+            <a href="/videos/" class="navbar-link" data-nav-link data-nav-page="videos">
+              <ion-icon name="play-circle-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.videos">Videos</span>
+            </a>
           </li>
           <li class="navbar-item">
-            <a href="/contact/" class="navbar-link" data-nav-link data-nav-page="contact" data-i18n="nav.contact">Contact</a>
+            <a href="/contact/" class="navbar-link" data-nav-link data-nav-page="contact">
+              <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.contact">Contact</span>
+            </a>
           </li>
         </ul>
         <div class="site-lang-switch site-lang-switch--nav" data-lang-switch role="group" aria-label="Language">

@@ -275,16 +275,20 @@ class GuidesParser {
   }
 
   createIndexCard(item) {
-    const href = `/guides/${this.escapeHtml(item.id)}/${item.lang}/`;
+    // Phase 2: live guide cards remain stable-ID paths.
+    const href = window.KolTiginRouter && typeof window.KolTiginRouter.guideLegacyPublicPath === 'function'
+      ? window.KolTiginRouter.guideLegacyPublicPath(item.id, item.lang)
+      : `/guides/${this.escapeHtml(item.id)}/${item.lang}/`;
     const project = item.project
       ? `<p class="blog-category">${this.escapeHtml(item.project)}</p>`
       : '';
     const excerpt = item.excerpt
       ? `<p class="blog-text">${this.escapeHtml(item.excerpt)}</p>`
       : '';
+    const publicSlug = this.escapeHtml(item.publicSlug || '');
     return `
       <li class="blog-post-item">
-        <a class="writings-card guides-card" href="${href}" data-guide-open="${this.escapeHtml(item.id)}" data-guide-lang="${this.escapeHtml(item.lang)}">
+        <a class="writings-card guides-card" href="${href}" data-guide-open="${this.escapeHtml(item.id)}" data-guide-lang="${this.escapeHtml(item.lang)}"${publicSlug ? ` data-guide-public-slug="${publicSlug}"` : ''}>
           <figure class="blog-banner-box writings-cover" data-cover-for="${this.escapeHtml(item.id)}">
             <img src="${this.escapeHtml(item.cover)}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async"${item.coverFallback && item.coverFallback !== item.cover ? ` onerror="this.onerror=null;this.src='${this.escapeHtml(item.coverFallback)}'"` : ''}>
           </figure>
@@ -317,12 +321,15 @@ class GuidesParser {
           const markdown = await this.loadMarkdown(id, lang);
           const title = this.firstHeading(markdown);
           if (!title) return null;
+          const meta = this.parseFrontMatter(markdown).meta || {};
           return {
             id,
-            date: this.parseFrontMatter(markdown).meta.date || '',
+            publicSlug: String(meta.slug || '').trim(),
+            date: meta.date || '',
             sourceIndex,
             html: this.createIndexCard({
               id,
+              publicSlug: String(meta.slug || '').trim(),
               lang,
               title,
               excerpt: this.excerptFromMarkdown(markdown),

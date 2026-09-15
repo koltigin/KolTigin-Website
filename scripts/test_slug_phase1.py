@@ -353,8 +353,10 @@ def test_public_urls_unchanged() -> None:
     if "/writings/en/articles/soulmemory-on-chain-mood-diary/" in sample:
         fail("generated HTML must not use migrated public slug paths yet")
     site_js = (ROOT / "assets" / "js" / "site.js").read_text(encoding="utf-8")
-    if "writingPublicPath(loc, writing.kind, writing.id)" not in site_js:
+    if "writingPublicPath(loc, writing.kind," not in site_js:
         fail("language-switch must still reuse path id in Phase 1")
+    if re.search(r"location\.assign\(\s*window\.KolTiginRouter\.writingLocalizedCounterpartPath", site_js):
+        fail("language-switch must not navigate to localized slug paths yet")
     ok("current public/canonical/sitemap/language-switch unchanged")
 
 

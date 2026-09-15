@@ -142,7 +142,27 @@ class ProjectsParser {
 
   guideShareHref(guideId) {
     const code = this.currentLang() === 'tr' ? 'TR' : 'EN';
+    // Phase 2: live project guide links remain stable-ID paths.
+    if (window.KolTiginRouter && typeof window.KolTiginRouter.guideLegacyPublicPath === 'function') {
+      return window.KolTiginRouter.guideLegacyPublicPath(guideId, code);
+    }
     return `/guides/${encodeURIComponent(guideId)}/${code}/`;
+  }
+
+  guideLocalizedShareHref(guideId) {
+    const code = this.currentLang() === 'tr' ? 'TR' : 'EN';
+    const map = window.KolTiginUrlMap;
+    const lang = code === 'TR' ? 'tr' : 'en';
+    let publicSlug = '';
+    if (map && map.isReady()) {
+      const resolved = map.resolveGuide(guideId);
+      publicSlug = resolved && resolved.slugs ? resolved.slugs[lang] : '';
+    }
+    if (!publicSlug) return this.guideShareHref(guideId);
+    if (window.KolTiginRouter && typeof window.KolTiginRouter.guideLocalizedPublicPath === 'function') {
+      return window.KolTiginRouter.guideLocalizedPublicPath(publicSlug, code);
+    }
+    return `/guides/${encodeURIComponent(publicSlug)}/${code}/`;
   }
 
   normalizeLinks(links) {

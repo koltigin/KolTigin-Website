@@ -36,13 +36,26 @@
   function writingShareUrl(lang, kind, id) {
     const loc = locale(lang);
     const type = String(kind || '').trim();
-    const slug = String(id || '').trim();
+    const stableId = String(id || '').trim();
+    return `${siteOrigin()}/writings/${loc}/${encodeURIComponent(type)}/${encodeURIComponent(stableId)}/`;
+  }
+
+  function writingLocalizedShareUrl(lang, kind, publicSlug) {
+    const loc = locale(lang);
+    const type = String(kind || '').trim();
+    const slug = String(publicSlug || '').trim();
     return `${siteOrigin()}/writings/${loc}/${encodeURIComponent(type)}/${encodeURIComponent(slug)}/`;
   }
 
   function guideShareUrl(lang, id) {
     const code = locale(lang) === 'tr' ? 'TR' : 'EN';
-    const slug = String(id || '').trim();
+    const stableId = String(id || '').trim();
+    return `${siteOrigin()}/guides/${encodeURIComponent(stableId)}/${code}/`;
+  }
+
+  function guideLocalizedShareUrl(lang, publicSlug) {
+    const code = locale(lang) === 'tr' ? 'TR' : 'EN';
+    const slug = String(publicSlug || '').trim();
     return `${siteOrigin()}/guides/${encodeURIComponent(slug)}/${code}/`;
   }
 
@@ -176,7 +189,9 @@
   global.KolTiginShareActions = {
     siteOrigin,
     writingShareUrl,
+    writingLocalizedShareUrl,
     guideShareUrl,
+    guideLocalizedShareUrl,
     intentUrls,
     render,
     shareNative,

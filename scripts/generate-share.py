@@ -917,6 +917,40 @@ def writing_head_extras(
     return "\n".join(extras)
 
 
+def inject_content_identity_attrs(
+    source: str,
+    *,
+    content_id: str,
+    content_kind: str = "",
+    en_slug: str = "",
+    tr_slug: str = "",
+) -> str:
+    """Attach stable identity metadata for future cutover. Does not change SEO URLs."""
+    attrs = [f'data-content-id="{html.escape(content_id, quote=True)}"']
+    if content_kind:
+        attrs.append(f'data-content-kind="{html.escape(content_kind, quote=True)}"')
+    if en_slug:
+        attrs.append(f'data-en-slug="{html.escape(en_slug, quote=True)}"')
+    if tr_slug:
+        attrs.append(f'data-tr-slug="{html.escape(tr_slug, quote=True)}"')
+    attr_text = " " + " ".join(attrs)
+
+    def replacer(match: re.Match[str]) -> str:
+        tag = match.group(0)
+        cleaned = re.sub(
+            r'\sdata-(?:content-id|content-kind|en-slug|tr-slug)="[^"]*"',
+            "",
+            tag,
+            flags=re.IGNORECASE,
+        )
+        if cleaned.endswith(">"):
+            return cleaned[:-1] + attr_text + ">"
+        return cleaned + attr_text
+
+    updated, count = re.subn(r"<html\b[^>]*>", replacer, source, count=1, flags=re.IGNORECASE)
+    return updated if count else source
+
+
 def writing_detail_html(
     source: str,
     *,
@@ -928,6 +962,10 @@ def writing_detail_html(
     article_html: str,
     alternates: dict[str, str],
     json_ld: dict,
+    content_id: str = "",
+    content_kind: str = "",
+    en_slug: str = "",
+    tr_slug: str = "",
 ) -> str:
     if '<meta name="description"' in source and 'rel="canonical"' in source:
         html_out = patch_section_head(
@@ -937,6 +975,14 @@ def writing_detail_html(
             canonical=canonical,
             image=image,
         )
+        if content_id:
+            html_out = inject_content_identity_attrs(
+                html_out,
+                content_id=content_id,
+                content_kind=content_kind,
+                en_slug=en_slug,
+                tr_slug=tr_slug,
+            )
         html_out = re.sub(
             r'(<html[^>]*\blang=")[^"]*(")',
             rf"\1{html.escape(lang)}\2",
@@ -1078,6 +1124,7 @@ def discover_writings(root: Path) -> list[dict]:
                     "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
                     "date": published_date(meta.get("date")),
                     "updated": published_date(meta.get("updated") or meta.get("modified")),
+                    "slug": str(meta.get("slug") or "").strip(),
                     "body": body,
                 }
     return [items[key] for key in sorted(items)]
@@ -1107,6 +1154,7 @@ def discover_guides(root: Path) -> list[dict]:
                 "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
                 "date": published_date(meta.get("date")),
                 "updated": published_date(meta.get("updated") or meta.get("modified")),
+                "slug": str(meta.get("slug") or "").strip(),
             }
         if rec["langs"]:
             items.append(rec)
@@ -1258,6 +1306,9 @@ def patch_guide_spa_page(
     image: str,
     alternates: dict[str, str],
     json_ld: dict,
+    content_id: str = "",
+    en_slug: str = "",
+    tr_slug: str = "",
 ) -> str:
     html_out = patch_section_head(
         strip_homepage_jsonld(source),
@@ -1266,6 +1317,14 @@ def patch_guide_spa_page(
         canonical=canonical,
         image=image,
     )
+    if content_id:
+        html_out = inject_content_identity_attrs(
+            html_out,
+            content_id=content_id,
+            content_kind="guides",
+            en_slug=en_slug,
+            tr_slug=tr_slug,
+        )
     html_out = re.sub(
         r'(<html[^>]*\blang=")[^"]*(")',
         rf"\1{html.escape(lang)}\2",
@@ -1348,6 +1407,8 @@ def generate(root: Path) -> dict:
             lang: abs_url(base, f"writings/{lang}/{kind}/{item_id}/")
             for lang in langs
         }
+        en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
+        tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
         for lang, data in langs.items():
             html_rel = writing_share_path(lang, kind, item_id)
             og_rel = writing_og_path(lang, kind, item_id)
@@ -1407,6 +1468,10 @@ def generate(root: Path) -> dict:
                     image=image,
                     article_html=article_html,
                     alternates=alternates,
+                    content_id=item_id,
+                    content_kind=kind,
+                    en_slug=en_slug,
+                    tr_slug=tr_slug,
                     json_ld=json_ld_payload(
                         schema_type="BlogPosting",
                         headline=data["title"],
@@ -1434,6 +1499,8 @@ def generate(root: Path) -> dict:
         item_id = item["id"]
         langs = item["langs"]
         alternates = {lang: guide_public_url(base, item_id, lang) for lang in langs}
+        en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
+        tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
         for lang, data in langs.items():
             html_rel = guide_share_path(lang, item_id)
             og_rel = guide_og_path(lang, item_id)
@@ -1476,6 +1543,9 @@ def generate(root: Path) -> dict:
                         image=image,
                         alternates=alternates,
                         json_ld=payload,
+                        content_id=item_id,
+                        en_slug=en_slug,
+                        tr_slug=tr_slug,
                     ),
                 )
             keep.add(html_path.resolve())

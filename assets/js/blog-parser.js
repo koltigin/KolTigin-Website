@@ -495,21 +495,24 @@ class BlogParser {
           if (!response.ok) continue;
           const raw = await response.text();
           const { metadata, body } = this.parseFrontMatter(raw);
-          const slug = String(file.replace(/\.md$/i, '')).trim();
-          const legacySlug = String(metadata.slug || '').trim();
+          const stableId = String(file.replace(/\.md$/i, '')).trim();
+          const publicSlug = String(metadata.slug || '').trim();
           const legacyAliases = String(metadata.aliases || '')
             .split(',')
             .map((part) => part.trim())
             .filter(Boolean);
           const cover = String(metadata.cover || metadata.image || '').trim();
           loaded.push({
-            id: `${kind}/${slug}`,
+            id: `${kind}/${stableId}`,
             kind,
             file,
-            slug,
-            legacySlug,
+            // Phase 2: `slug` remains the stable ID for backward-compatible callers/hrefs.
+            slug: stableId,
+            stableId,
+            publicSlug,
+            legacySlug: publicSlug,
             legacyAliases,
-            title: metadata.title || slug,
+            title: metadata.title || stableId,
             date: metadata.date || '',
             summary: metadata.summary || metadata.excerpt || this.excerptFromBody(body),
             cover,
@@ -527,7 +530,7 @@ class BlogParser {
     for (const item of loaded) {
       if (this.hasCover(item) || this.isExternal(item)) continue;
       const loc = lang === 'tr' ? 'tr' : 'en';
-      const key = `${item.kind}/${item.slug}`;
+      const key = `${item.kind}/${item.stableId || item.slug}`;
       item.ogVersion = (this.ogVersions[key] && this.ogVersions[key][loc]) || '';
     }
 
@@ -652,9 +655,13 @@ class BlogParser {
 
     const isExternal = this.isExternal(item);
     const loc = this.contentLang();
+    const stableId = item.stableId || item.slug;
+    // Phase 2: card hrefs remain stable-ID public paths.
     const href = isExternal
       ? this.escapeHtml(item.externalUrl)
-      : `/writings/${loc}/${encodeURIComponent(item.kind)}/${encodeURIComponent(item.slug)}/`;
+      : (window.KolTiginRouter && typeof window.KolTiginRouter.writingLegacyPublicPath === 'function'
+        ? window.KolTiginRouter.writingLegacyPublicPath(loc, item.kind, stableId)
+        : `/writings/${loc}/${encodeURIComponent(item.kind)}/${encodeURIComponent(stableId)}/`);
     const extra = isExternal
       ? ' target="_blank" rel="noopener noreferrer"'
       : '';

@@ -232,12 +232,22 @@ function bindLangSwitch() {
     const writing = window.KolTiginRouter && window.KolTiginRouter.parseWritingPath(window.location.pathname);
     if (writing) {
       const loc = button.getAttribute('data-set-lang') === 'tr' ? 'tr' : 'en';
-      const next = window.KolTiginRouter.writingPublicPath(loc, writing.kind, writing.id);
+      // Phase 2: keep live language switch on stable-ID URLs.
+      // Resolve routeKey -> stable ID when the map is ready so a future slug path
+      // would still land on the current ID counterpart (not the localized slug URL).
+      const stableId = window.KolTiginRouter.writingStableIdFromRoute
+        ? window.KolTiginRouter.writingStableIdFromRoute(writing)
+        : writing.id;
+      const next = window.KolTiginRouter.writingPublicPath(loc, writing.kind, stableId || writing.id);
       if (window.KolTiginRouter.normalizePath(window.location.pathname) !== window.KolTiginRouter.normalizePath(next)) {
         window.location.assign(next);
       }
     }
   });
+}
+
+if (window.KolTiginUrlMap && typeof window.KolTiginUrlMap.load === 'function') {
+  window.KolTiginUrlMap.load().catch(() => {});
 }
 
 function refreshChrome() {

@@ -393,7 +393,6 @@ class ProjectsParser {
   }
 
   shouldRenderGroup(data, group) {
-    if (this.isAccordionGroup(group.key)) return true;
     return this.jsonGroupLength(data, group.key) > 0;
   }
 

@@ -1,6 +1,7 @@
 ---
 title: "Three rules I follow when writing node guides"
 date: 2025-06-01
+slug: three-rules-i-follow-when-writing-node-guides
 ---
 
 A node installation guide should do more than list a series of terminal commands. Someone who has never installed the project before should be able to follow the guide and end up with a working node that they can understand and manage.

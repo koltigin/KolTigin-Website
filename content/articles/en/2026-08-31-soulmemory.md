@@ -2,7 +2,7 @@
 title: "Building SoulMemory: An On-chain Mood Diary on Base"
 date: "2026-08-31"
 summary: "Why I built a Mini App on Base for recording a daily mood as an NFT."
-slug: "soulmemory-on-chain-mood-diary"
+slug: soulmemory-on-chain-mood-diary
 cover: "soulmemory.png"
 ---
 

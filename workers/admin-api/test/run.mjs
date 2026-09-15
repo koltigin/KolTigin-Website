@@ -528,8 +528,12 @@ links:
       projectId: "optimai"
     }, env));
     assert(res.status === 200, "save guide linked to OptimAI");
-    assert(/^---\ndate: \d{4}-\d{2}-\d{2}\n---/.test(String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/EN.md`) || "")), "new Guide automatically stores a publication date");
-    const published = String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/EN.md`)).match(/^---\ndate: (\d{4}-\d{2}-\d{2})\n---/)[1];
+    {
+      const enGuide = String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/EN.md`) || "");
+      assert(/^---\n[\s\S]*?date: \d{4}-\d{2}-\d{2}\n[\s\S]*?---/.test(enGuide), "new Guide automatically stores a publication date");
+      assert(/^---\n[\s\S]*?slug: optimai-cli-node-setup-guide-ubuntu-24-04-vps\n[\s\S]*?---/.test(enGuide), "new Guide persists locale slug frontmatter");
+    }
+    const published = String(github.files.get(`content/guides/${OPTIMAI_GUIDE}/EN.md`)).match(/^---\n[\s\S]*?date: (\d{4}-\d{2}-\d{2})\n/)[1];
     assert(projectMarkdownReads(github).length === 1, "new Guide None→OptimAI fetches one project Markdown file");
     assert(projectMarkdownReads(github).every((path) => path.endsWith("/optimai.md")), "new Guide only reads the selected project Markdown");
     assert(estimateWorkerSubrequests(github) < 40, "new Guide save stays under the Cloudflare subrequest budget");

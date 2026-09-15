@@ -1,6 +1,7 @@
 ---
 title: "Node rehberi yazarken dikkat ettiğim üç temel kural"
 date: 2025-06-01
+slug: node-rehberi-yazarken-dikkat-ettigim-uc-temel-kural
 ---
 
 Bir node kurulum rehberinin amacı yalnızca birkaç terminal komutunu sıralamak değildir. Rehberi kullanan kişinin, projeyi daha önce hiç kurmamış olsa bile, adımları takip ederek çalışan ve gerektiğinde yönetebileceği bir node'a ulaşabilmesi gerekir.

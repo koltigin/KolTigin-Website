@@ -1,5 +1,6 @@
 ---
 date: 2026-09-13
+slug: how-to-get-an-arns-domain
 ---
 
 # How to Get an ArNS Domain

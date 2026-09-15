@@ -12,6 +12,7 @@ from urllib.parse import quote
 
 import admin_scripts
 from content_order import sort_by_publication_date
+from koltigin_slug import slugify
 
 ROOT = Path(__file__).resolve().parents[1]
 ABOUT_ROOT = ROOT / "content" / "about"
@@ -54,12 +55,6 @@ def safe_under(root: Path, *parts: str) -> Path:
     candidate = root.joinpath(*parts).resolve()
     candidate.relative_to(base)
     return candidate
-
-
-def slugify(value: str) -> str:
-    text = str(value or "").strip().lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    return text.strip("-")[:72]
 
 
 def load_project_categories() -> list[dict]:

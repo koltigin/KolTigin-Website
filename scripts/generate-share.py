@@ -18,6 +18,8 @@ from urllib.parse import quote
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from url_map import UrlMapError, write_url_map  # noqa: E402
 CANONICAL_ORIGIN = "https://koltigin.xyz"
 ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 RESERVED_GUIDE_DIRS = {"en", "tr", "index.json"}
@@ -1489,6 +1491,11 @@ def generate(root: Path) -> dict:
         versions_path,
         json.dumps({"writings": og_versions}, indent=2, ensure_ascii=False) + "\n",
     )
+    try:
+        url_map_path = write_url_map(root)
+    except UrlMapError as exc:
+        raise RuntimeError(f"url-map validation failed: {exc}") from exc
+    keep.add(url_map_path.resolve())
     sitemap_path = root / "sitemap.xml"
     write_text(sitemap_path, sitemap_xml(base, sitemap_entries))
     keep.add(sitemap_path.resolve())
@@ -1510,6 +1517,7 @@ def generate(root: Path) -> dict:
         "created": created + section_pages,
         "removed": removed,
         "sitemap": str(sitemap_path.relative_to(root)),
+        "url_map": str(url_map_path.relative_to(root)),
     }
 
 

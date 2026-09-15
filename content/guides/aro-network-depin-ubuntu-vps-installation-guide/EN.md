@@ -1,5 +1,6 @@
 ---
 date: 2026-09-09
+slug: aro-network-depin-ubuntu-vps-installation-guide
 ---
 
 # ARO Network DePIN — Ubuntu / VPS Installation Guide

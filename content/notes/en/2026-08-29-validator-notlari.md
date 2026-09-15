@@ -2,7 +2,8 @@
 title: "Being a validator is more than running a binary"
 date: 2026-08-29
 summary: "Uptime, key security, snapshots, and community — field notes."
-slug: validator-olmak-neden-sadece-bir-binary-calistirmak-degildir
+slug: being-a-validator-is-more-than-running-a-binary
+aliases: validator-olmak-neden-sadece-bir-binary-calistirmak-degildir
 ---
 
 Installing a validator and starting the service is the visible part of the job, and often the easiest one. The node synchronizes, starts following blocks, and at first everything may look finished.

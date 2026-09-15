@@ -1,3 +1,5 @@
+export { slugify, isValidSlug, resolvePersistedSlug, newWritingId, newGuideId, SLUG_RE } from "./slugify.js";
+import { slugify } from "./slugify.js";
 export const ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const JSON_LIMIT = 1_000_000;
 export const UPLOAD_LIMIT = 2_000_000;
@@ -41,15 +43,6 @@ export function jsonErr(status, message) {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
   });
-}
-
-export function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 72);
 }
 
 export function yamlQuote(value) {

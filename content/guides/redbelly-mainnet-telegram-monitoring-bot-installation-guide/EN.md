@@ -1,5 +1,6 @@
 ---
 date: 2026-09-11
+slug: redbelly-mainnet-telegram-monitoring-bot-installation-guide
 ---
 
 # Redbelly Mainnet Telegram Monitoring Bot Installation Guide

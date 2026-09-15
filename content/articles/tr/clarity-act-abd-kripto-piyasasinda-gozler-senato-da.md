@@ -1,6 +1,7 @@
 ---
 title: "CLARITY Act: ABD Kripto Piyasasında Gözler Senato'da"
 date: 2026-09-12
+slug: clarity-act-abd-kripto-piyasasinda-gozler-senato-da
 ---
 
 # CLARITY Act: ABD Kripto Piyasasında Gözler Senato'da

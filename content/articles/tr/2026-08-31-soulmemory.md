@@ -2,7 +2,8 @@
 title: "SoulMemory'yi Geliştirmek: Base Üzerinde On-chain Duygu Günlüğü"
 date: "2026-08-31"
 summary: "Günlük ruh hâlini NFT olarak kaydetmek için Base üzerinde bir Mini App'i neden geliştirdiğim."
-slug: "soulmemory-on-chain-mood-diary"
+slug: soulmemory-on-chain-duygu-gunlugu
+aliases: soulmemory-on-chain-mood-diary
 cover: "soulmemory.png"
 ---
 

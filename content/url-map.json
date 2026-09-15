@@ -1,0 +1,73 @@
+{
+  "writings": {
+    "articles/2026-08-31-soulmemory": {
+      "en": "soulmemory-on-chain-mood-diary",
+      "tr": "soulmemory-on-chain-duygu-gunlugu"
+    },
+    "articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da": {
+      "en": "clarity-act-all-eyes-on-the-us-senate",
+      "tr": "clarity-act-abd-kripto-piyasasinda-gozler-senato-da"
+    },
+    "notes/2025-06-01-turkce-node-rehberi": {
+      "en": "three-rules-i-follow-when-writing-node-guides",
+      "tr": "node-rehberi-yazarken-dikkat-ettigim-uc-temel-kural"
+    },
+    "notes/2026-08-29-validator-notlari": {
+      "en": "being-a-validator-is-more-than-running-a-binary",
+      "tr": "validator-olmak-neden-sadece-bir-binary-calistirmak-degildir"
+    }
+  },
+  "guides": {
+    "ar-io-gateway-installation": {
+      "en": "ar-io-gateway-installation",
+      "tr": "ar-io-gateway-kurulumu"
+    },
+    "ar-io-gateway-troubleshooting": {
+      "en": "ar-io-gateway-troubleshooting",
+      "tr": "ar-io-gateway-sorun-giderme"
+    },
+    "ar-io-gateway-update": {
+      "en": "ar-io-gateway-update",
+      "tr": "ar-io-gateway-guncelleme"
+    },
+    "aro-network-depin-ubuntu-vps-installation-guide": {
+      "en": "aro-network-depin-ubuntu-vps-installation-guide",
+      "tr": "aro-network-depin-ubuntu-vps-kurulum-rehberi"
+    },
+    "how-to-get-an-arns-domain": {
+      "en": "how-to-get-an-arns-domain",
+      "tr": "arns-domain-nasil-alinir"
+    },
+    "optimai-cli-node-setup-guide-ubuntu-24-04-vps": {
+      "en": "optimai-cli-node-setup-guide-ubuntu-24-04-vps",
+      "tr": "optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps"
+    },
+    "redbelly-mainnet-node-installation-guide": {
+      "en": "redbelly-mainnet-node-installation-guide",
+      "tr": "redbelly-mainnet-node-kurulum-rehberi"
+    },
+    "redbelly-mainnet-node-update-guide": {
+      "en": "redbelly-mainnet-node-update-guide",
+      "tr": "redbelly-mainnet-node-guncelleme-rehberi"
+    },
+    "redbelly-mainnet-telegram-monitoring-bot-installation-guide": {
+      "en": "redbelly-mainnet-telegram-monitoring-bot-installation-guide",
+      "tr": "redbelly-mainnet-telegram-monitoring-bot-kurulum-rehberi"
+    },
+    "redbelly-node-troubleshooting": {
+      "en": "redbelly-node-troubleshooting",
+      "tr": "redbelly-node-sorunlar-ve-cozumler"
+    }
+  },
+  "legacy": {
+    "writingHashes": {
+      "articles/soulmemory-on-chain-duygu-gunlugu": "articles/2026-08-31-soulmemory",
+      "articles/soulmemory-on-chain-mood-diary": "articles/2026-08-31-soulmemory",
+      "articles/clarity-act-all-eyes-on-the-us-senate": "articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da",
+      "notes/node-rehberi-yazarken-dikkat-ettigim-uc-temel-kural": "notes/2025-06-01-turkce-node-rehberi",
+      "notes/three-rules-i-follow-when-writing-node-guides": "notes/2025-06-01-turkce-node-rehberi",
+      "notes/being-a-validator-is-more-than-running-a-binary": "notes/2026-08-29-validator-notlari",
+      "notes/validator-olmak-neden-sadece-bir-binary-calistirmak-degildir": "notes/2026-08-29-validator-notlari"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 ---
 date: 2026-09-09
+slug: optimai-cli-node-setup-guide-ubuntu-24-04-vps
 ---
 
 # OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS

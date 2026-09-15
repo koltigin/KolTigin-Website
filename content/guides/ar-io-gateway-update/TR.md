@@ -1,5 +1,6 @@
 ---
 date: 2026-09-13
+slug: ar-io-gateway-guncelleme
 ---
 
 # AR.IO Gateway Güncelleme 

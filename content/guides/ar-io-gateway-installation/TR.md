@@ -1,5 +1,6 @@
 ---
 date: 2026-09-13
+slug: ar-io-gateway-kurulumu
 ---
 
 # AR.IO Gateway Kurulumu

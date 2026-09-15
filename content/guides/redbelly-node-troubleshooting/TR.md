@@ -1,5 +1,6 @@
 ---
 date: 2026-09-11
+slug: redbelly-node-sorunlar-ve-cozumler
 ---
 
 # Redbelly Node Sorunlar ve Çözümler

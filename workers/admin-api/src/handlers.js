@@ -1,6 +1,6 @@
-import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
+import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, resolvePersistedSlug, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
-import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate } from "./markdown.js";
+import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate, applyGuideSlug } from "./markdown.js";
 import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, guideOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts, localeUpper, writingOgVersion, writingOgAbsoluteUrl, writingOgAssetUrl, applyOgVersions } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
@@ -162,6 +162,7 @@ function rewriteWritingText(text, destKind, types, externalUrl) {
     external: isExternalKind(types, destKind),
     summary: meta.summary || "",
     slug: meta.slug || "",
+    aliases: meta.aliases || "",
     body
   });
 }
@@ -225,6 +226,12 @@ async function upsertWritingLocale(github, upserts, {
   const mdPath = writingPath(kind, item.lang, id);
   const existingMd = await optionalText(github, extraPath || mdPath);
   const extra = existingMd ? parseFrontMatter(existingMd).meta : {};
+  let slug;
+  try {
+    slug = resolvePersistedSlug(item.slug, extra.slug, item.title);
+  } catch (error) {
+    throw new HttpError(400, error instanceof Error ? error.message : "Invalid slug");
+  }
   const text = mdText(buildWritingMarkdown({
     title: item.title,
     date,
@@ -234,7 +241,8 @@ async function upsertWritingLocale(github, upserts, {
     body: item.body || "",
     external: destExternal,
     summary: extra.summary || "",
-    slug: extra.slug || ""
+    slug,
+    aliases: extra.aliases || ""
   }));
   upserts.push({ path: mdPath, text });
   const wrotePlaceholder = await upsertWritingOgPlaceholder(github, upserts, {
@@ -306,7 +314,13 @@ function writingLocaleSaves(body) {
     if (cover && (cover.includes("/") || cover.includes("\\") || cover.includes(".."))) {
       throw new HttpError(400, "Cover must be a file name, not a path");
     }
-    out.push({ lang, title, cover, body: (item && item.body) || "" });
+    out.push({
+      lang,
+      title,
+      cover,
+      body: (item && item.body) || "",
+      slug: String((item && item.slug) || "").trim()
+    });
   }
   return out;
 }
@@ -564,7 +578,11 @@ function cmsLocaleSaves(body) {
     const markdown = item && item.markdown != null ? String(item.markdown) : "";
     if (!markdownHasContent(markdown)) continue;
     seen.add(lang);
-    out.push({ lang, markdown });
+    out.push({
+      lang,
+      markdown,
+      slug: String((item && item.slug) || "").trim()
+    });
   }
   return out;
 }
@@ -742,6 +760,17 @@ export async function handleGuideSave(body, github) {
   for (const item of locales) {
     let markdown = coverInBody ? applyGuideCover(item.markdown, body.cover) : item.markdown;
     if (published) markdown = applyGuideDate(markdown, published);
+    const existingMd = await optionalText(github, guidePath(id, item.lang));
+    const existingMeta = existingMd ? parseFrontMatter(existingMd).meta : {};
+    const headingMatch = String(markdown || "").match(/^#\s+(.+)$/m);
+    const title = headingMatch ? String(headingMatch[1] || "").trim() : "";
+    let slug;
+    try {
+      slug = resolvePersistedSlug(item.slug, existingMeta.slug, title);
+    } catch (error) {
+      throw new HttpError(400, error instanceof Error ? error.message : "Invalid slug");
+    }
+    markdown = applyGuideSlug(markdown, slug);
     upserts.push({ path: guidePath(id, item.lang), text: mdText(markdown) });
     await upsertGuideOgPlaceholder(github, upserts, {
       lang: item.lang,

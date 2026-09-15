@@ -14,6 +14,8 @@ const ALLOWED_PREFIXES = [
   "content/guides/",
   "content/index.json",
   "content/og-versions.json",
+  "content/url-map.json",
+  "config/redirects.json",
   "projects/projects.json",
   "guides/",
   "guide/",

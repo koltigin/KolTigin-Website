@@ -64,7 +64,7 @@ def setup_root(tmp: Path) -> Path:
     )
     write(
         tmp / "content" / "notes" / "en" / "no-cover.md",
-        '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\n'
+        '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\nslug: validator-notes\n---\n\n'
         "Body.\n\n"
         "## Ops\n\n"
         "- alerts\n"
@@ -77,11 +77,11 @@ def setup_root(tmp: Path) -> Path:
     )
     write(
         tmp / "content" / "notes" / "tr" / "no-cover.md",
-        '---\ntitle: "Doğrulayıcı notları"\ndate: "2026-08-29"\nsummary: "Uptime ve anahtarlar."\n---\n\nGövde.\n',
+        '---\ntitle: "Doğrulayıcı notları"\ndate: "2026-08-29"\nsummary: "Uptime ve anahtarlar."\nslug: dogrulayici-notlari\n---\n\nGövde.\n',
     )
     write(
         tmp / "content" / "articles" / "en" / "with-cover.md",
-        '---\ntitle: "SoulMemory"\ndate: "2026-08-31"\nsummary: "On-chain mood diary."\ncover: "soul.png"\n---\n\nHello.\n',
+        '---\ntitle: "SoulMemory"\ndate: "2026-08-31"\nsummary: "On-chain mood diary."\ncover: "soul.png"\nslug: soulmemory\n---\n\nHello.\n',
     )
     write(
         tmp / "content" / "social" / "en" / "tweet.md",
@@ -90,17 +90,23 @@ def setup_root(tmp: Path) -> Path:
     tiny_png(tmp / "assets" / "images" / "blog" / "soul.png")
     write(
         tmp / "content" / "notes" / "en" / "undated.md",
-        '---\ntitle: "Undated note"\nsummary: "No calendar date."\n---\n\nBody.\n',
+        '---\ntitle: "Undated note"\nsummary: "No calendar date."\nslug: undated-note\n---\n\nBody.\n',
     )
     write(
         tmp / "content" / "notes" / "en" / "revised.md",
-        '---\ntitle: "Revised note"\ndate: "2026-01-01"\nupdated: "2026-08-01"\nsummary: "Has a real updated date."\n---\n\nBody.\n',
+        '---\ntitle: "Revised note"\ndate: "2026-01-01"\nupdated: "2026-08-01"\nsummary: "Has a real updated date."\nslug: revised-note\n---\n\nBody.\n',
     )
-    write(tmp / "content" / "guides" / "demo-guide" / "EN.md", "# Demo Guide\n\nInstall the node.\n")
-    write(tmp / "content" / "guides" / "demo-guide" / "TR.md", "# Demo Rehber\n\nDüğümü kurun.\n")
+    write(
+        tmp / "content" / "guides" / "demo-guide" / "EN.md",
+        "---\nslug: demo-guide\n---\n\n# Demo Guide\n\nInstall the node.\n",
+    )
+    write(
+        tmp / "content" / "guides" / "demo-guide" / "TR.md",
+        "---\nslug: demo-rehber\n---\n\n# Demo Rehber\n\nDüğümü kurun.\n",
+    )
     write(
         tmp / "content" / "guides" / "covered-guide" / "EN.md",
-        "---\ncover: hero.png\n---\n\n# Covered Guide\n\nWith art.\n",
+        "---\ncover: hero.png\nslug: covered-guide\n---\n\n# Covered Guide\n\nWith art.\n",
     )
     tiny_png(tmp / "assets" / "images" / "guides" / "covered-guide" / "hero.png", (180, 60, 40))
     write(tmp / "sitemap.xml", "old")
@@ -682,7 +688,7 @@ def main() -> None:
 
         write(
             tmp / "content" / "notes" / "en" / "no-cover.md",
-            '---\ntitle: "Updated title"\ndate: "2026-08-29"\nsummary: "Changed."\n---\n\nChanged body that crawlers must see.\n',
+            '---\ntitle: "Updated title"\ndate: "2026-08-29"\nsummary: "Changed."\nslug: validator-notes\n---\n\nChanged body that crawlers must see.\n',
         )
         generate_share.generate(tmp)
         if "Updated title" not in read(tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"):
@@ -717,7 +723,7 @@ def main() -> None:
         published_tr = published_versions["writings"]["notes/no-cover"]["tr"]
         write(
             worker_md,
-            '---\ntitle: "Worker-only title"\ndate: "2026-08-29"\nsummary: "Changed."\n---\n\nChanged body that crawlers must see.\n',
+            '---\ntitle: "Worker-only title"\ndate: "2026-08-29"\nsummary: "Changed."\nslug: validator-notes\n---\n\nChanged body that crawlers must see.\n',
         )
         if published_en != updated_v:
             fail("fixture should still hold the last generate-share titled version before the worker-only edit")
@@ -808,7 +814,7 @@ def main() -> None:
         # Recreate the deleted note so identity raster tests have a fallback PNG.
         write(
             tmp / "content" / "notes" / "en" / "no-cover.md",
-            '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\n---\n\n'
+            '---\ntitle: "Validator notes"\ndate: "2026-08-29"\nsummary: "Uptime and keys."\nslug: validator-notes\n---\n\n'
             "Body.\n\n"
             "## Ops\n\n"
             "- alerts\n"
@@ -821,7 +827,7 @@ def main() -> None:
         )
         write(
             tmp / "content" / "notes" / "tr" / "no-cover.md",
-            '---\ntitle: "Doğrulayıcı notları"\ndate: "2026-08-29"\nsummary: "Uptime ve anahtarlar."\n---\n\nGövde.\n',
+            '---\ntitle: "Doğrulayıcı notları"\ndate: "2026-08-29"\nsummary: "Uptime ve anahtarlar."\nslug: dogrulayici-notlari\n---\n\nGövde.\n',
         )
         generate_share.generate(tmp)
         if Image.open(fallback_png).size != (1200, 630):

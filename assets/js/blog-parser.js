@@ -497,6 +497,10 @@ class BlogParser {
           const { metadata, body } = this.parseFrontMatter(raw);
           const slug = String(file.replace(/\.md$/i, '')).trim();
           const legacySlug = String(metadata.slug || '').trim();
+          const legacyAliases = String(metadata.aliases || '')
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean);
           const cover = String(metadata.cover || metadata.image || '').trim();
           loaded.push({
             id: `${kind}/${slug}`,
@@ -504,6 +508,7 @@ class BlogParser {
             file,
             slug,
             legacySlug,
+            legacyAliases,
             title: metadata.title || slug,
             date: metadata.date || '',
             summary: metadata.summary || metadata.excerpt || this.excerptFromBody(body),
@@ -706,11 +711,16 @@ class BlogParser {
       || `${entry.kind}/${entry.slug}` === id
       || (entry.legacySlug && `${entry.kind}/${entry.legacySlug}` === id)
       || (entry.legacySlug && entry.legacySlug === id)
+      || (Array.isArray(entry.legacyAliases) && entry.legacyAliases.some((alias) => (
+        `${entry.kind}/${alias}` === id || alias === id
+      )))
       || entry.slug === id
     )) || this.items.find((entry) => {
       const parts = String(id || '').split('/');
       const slug = parts.length > 1 ? parts.slice(1).join('/') : parts[0];
-      return entry.slug === slug || (entry.legacySlug && entry.legacySlug === slug);
+      return entry.slug === slug
+        || (entry.legacySlug && entry.legacySlug === slug)
+        || (Array.isArray(entry.legacyAliases) && entry.legacyAliases.includes(slug));
     });
     if (!item) {
       this.showList();

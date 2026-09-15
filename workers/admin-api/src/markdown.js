@@ -34,11 +34,12 @@ export function dumpYaml(data) {
   }).join("\n") + "\n";
 }
 
-export function buildWritingMarkdown({ title, date, cover, externalUrl, kind, body, external, summary, slug }) {
+export function buildWritingMarkdown({ title, date, cover, externalUrl, kind, body, external, summary, slug, aliases }) {
   const lines = ["---", `title: ${yamlQuote(title)}`, `date: ${date}`];
   if (cover) lines.push(`cover: ${yamlQuote(cover)}`);
   if (summary) lines.push(`summary: ${yamlQuote(summary)}`);
   if (slug) lines.push(`slug: ${yamlQuote(slug)}`);
+  if (aliases) lines.push(`aliases: ${yamlQuote(aliases)}`);
   if (external || kind === "social") lines.push(`externalUrl: ${yamlQuote(externalUrl || "")}`);
   lines.push("---");
   const text = String(body || "").replace(/\s+$/, "");
@@ -94,6 +95,17 @@ export function applyGuideCover(text, cover) {
     return raw.replace(/^\s*cover:\s*.*$/m, "").replace(/\n{3,}/g, "\n\n");
   }
   return setYamlScalar(raw, "cover", yamlQuote(value));
+}
+
+export function applyGuideSlug(text, slug) {
+  const value = String(slug || "").trim();
+  if (!value) return String(text || "");
+  const raw = String(text || "").replace(/\r\n/g, "\n");
+  if (!raw.startsWith("---")) {
+    const body = raw.replace(/^\n+/, "");
+    return `---\nslug: ${yamlQuote(value)}\n---\n\n${body}`;
+  }
+  return setYamlScalar(raw, "slug", yamlQuote(value));
 }
 
 export function stripFrontMatter(text) {

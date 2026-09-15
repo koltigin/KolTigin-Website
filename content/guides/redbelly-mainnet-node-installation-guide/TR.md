@@ -1,5 +1,6 @@
 ---
 date: 2026-09-11
+slug: redbelly-mainnet-node-kurulum-rehberi
 ---
 
 # Redbelly Mainnet Node Kurulum Rehberi

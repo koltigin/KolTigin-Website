@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "enabled": false,
+  "comment": "Phase 1 data only. Do not apply these redirects in Cloudflare or the static generator.",
+  "redirects": [
+    {
+      "from": "/writings/en/articles/2026-08-31-soulmemory/",
+      "to": "/writings/en/articles/soulmemory-on-chain-mood-diary/"
+    },
+    {
+      "from": "/writings/tr/articles/2026-08-31-soulmemory/",
+      "to": "/writings/tr/articles/soulmemory-on-chain-duygu-gunlugu/"
+    },
+    {
+      "from": "/writings/en/articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da/",
+      "to": "/writings/en/articles/clarity-act-all-eyes-on-the-us-senate/"
+    },
+    {
+      "from": "/writings/en/notes/2025-06-01-turkce-node-rehberi/",
+      "to": "/writings/en/notes/three-rules-i-follow-when-writing-node-guides/"
+    },
+    {
+      "from": "/writings/tr/notes/2025-06-01-turkce-node-rehberi/",
+      "to": "/writings/tr/notes/node-rehberi-yazarken-dikkat-ettigim-uc-temel-kural/"
+    },
+    {
+      "from": "/writings/en/notes/2026-08-29-validator-notlari/",
+      "to": "/writings/en/notes/being-a-validator-is-more-than-running-a-binary/"
+    },
+    {
+      "from": "/writings/tr/notes/2026-08-29-validator-notlari/",
+      "to": "/writings/tr/notes/validator-olmak-neden-sadece-bir-binary-calistirmak-degildir/"
+    },
+    {
+      "from": "/guides/how-to-get-an-arns-domain/TR/",
+      "to": "/guides/arns-domain-nasil-alinir/TR/"
+    },
+    {
+      "from": "/guides/ar-io-gateway-installation/TR/",
+      "to": "/guides/ar-io-gateway-kurulumu/TR/"
+    },
+    {
+      "from": "/guides/ar-io-gateway-update/TR/",
+      "to": "/guides/ar-io-gateway-guncelleme/TR/"
+    },
+    {
+      "from": "/guides/ar-io-gateway-troubleshooting/TR/",
+      "to": "/guides/ar-io-gateway-sorun-giderme/TR/"
+    },
+    {
+      "from": "/guides/aro-network-depin-ubuntu-vps-installation-guide/TR/",
+      "to": "/guides/aro-network-depin-ubuntu-vps-kurulum-rehberi/TR/"
+    },
+    {
+      "from": "/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/TR/",
+      "to": "/guides/optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps/TR/"
+    },
+    {
+      "from": "/guides/redbelly-mainnet-node-installation-guide/TR/",
+      "to": "/guides/redbelly-mainnet-node-kurulum-rehberi/TR/"
+    },
+    {
+      "from": "/guides/redbelly-mainnet-node-update-guide/TR/",
+      "to": "/guides/redbelly-mainnet-node-guncelleme-rehberi/TR/"
+    },
+    {
+      "from": "/guides/redbelly-mainnet-telegram-monitoring-bot-installation-guide/TR/",
+      "to": "/guides/redbelly-mainnet-telegram-monitoring-bot-kurulum-rehberi/TR/"
+    },
+    {
+      "from": "/guides/redbelly-node-troubleshooting/TR/",
+      "to": "/guides/redbelly-node-sorunlar-ve-cozumler/TR/"
+    }
+  ]
+}

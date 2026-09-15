@@ -146,9 +146,23 @@
   }
 
   function slugify(value) {
-    const map = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', Ç: 'c', Ğ: 'g', İ: 'i', Ö: 'o', Ş: 's', Ü: 'u' };
-    const text = String(value || '').replace(/[çğıöşüÇĞİÖŞÜ]/g, (ch) => map[ch] || ch).toLowerCase();
-    return text.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 72);
+    if (globalThis.KolTiginSlugify && typeof globalThis.KolTiginSlugify.slugify === 'function') {
+      return globalThis.KolTiginSlugify.slugify(value);
+    }
+    const map = { ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', Ç: 'c', Ğ: 'g', İ: 'i', Ö: 'o', Ş: 's', Ü: 'u', ß: 'ss', ẞ: 'ss' };
+    const text = String(value || '').replace(/[çğıöşüÇĞİÖŞÜßẞ]/g, (ch) => map[ch] || ch).toLowerCase();
+    return text.replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 72);
+  }
+
+  function resolvePersistedSlug(explicit, existing, title) {
+    if (globalThis.KolTiginSlugify && typeof globalThis.KolTiginSlugify.resolvePersistedSlug === 'function') {
+      return globalThis.KolTiginSlugify.resolvePersistedSlug(explicit, existing, title);
+    }
+    const requested = String(explicit || '').trim();
+    if (requested) return requested;
+    const current = String(existing || '').trim();
+    if (current) return current;
+    return slugify(title);
   }
 
   function writingTypes() {
@@ -2334,6 +2348,7 @@
     isProductionAdmin,
     publicAssetUrl,
     slugify,
+    resolvePersistedSlug,
     toolbar,
     headingButtons,
     wrapSelection,

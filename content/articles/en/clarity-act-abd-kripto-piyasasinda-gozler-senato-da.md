@@ -1,6 +1,7 @@
 ---
 title: "CLARITY Act: All Eyes on the U.S. Senate"
 date: 2026-09-12
+slug: clarity-act-all-eyes-on-the-us-senate
 ---
 
 # CLARITY Act: All Eyes on the U.S. Senate

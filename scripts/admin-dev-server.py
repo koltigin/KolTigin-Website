@@ -26,6 +26,7 @@ from urllib.parse import parse_qs, urlparse, quote
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import admin_cms
 import admin_scripts
+from koltigin_slug import slugify
 
 ROOT = Path(__file__).resolve().parents[1]
 CODE_FILE = ROOT / ".admin-dev-code"
@@ -92,32 +93,10 @@ YOUTUBE_PATTERNS = (
     re.compile(r"[?&]v=([A-Za-z0-9_-]{6,20})", re.I),
     re.compile(r"youtube\.com/embed/([A-Za-z0-9_-]{6,20})", re.I),
 )
-TR_MAP = str.maketrans(
-    {
-        "ç": "c",
-        "Ç": "c",
-        "ğ": "g",
-        "Ğ": "g",
-        "ı": "i",
-        "İ": "i",
-        "ö": "o",
-        "Ö": "o",
-        "ş": "s",
-        "Ş": "s",
-        "ü": "u",
-        "Ü": "u",
-    }
-)
 
 LOGIN_CODE = secrets.token_urlsafe(6).replace("-", "").replace("_", "")[:8].lower()
 SESSION_SECRET = secrets.token_hex(32)
 SESSIONS: dict[str, float] = {}
-
-
-def slugify(value: str) -> str:
-    text = (value or "").translate(TR_MAP).strip().lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    return text.strip("-")[:72]
 
 
 def writing_kind_ids() -> list[str]:

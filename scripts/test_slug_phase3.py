@@ -147,6 +147,35 @@ def test_destination_registry_collisions() -> None:
     ok("destination collision protection")
 
 
+def current_id_tree() -> Path:
+    """Build an isolated CURRENT_ID generate tree from live content (Phase 3 freeze)."""
+    import shutil
+
+    tmp = Path(tempfile.mkdtemp(prefix="phase3-current-id-"))
+    for rel in (
+        "content",
+        "config",
+        "i18n",
+        "index.html",
+        "assets/fonts",
+        "assets/images/profile",
+        "assets/images/og/backgrounds",
+        "assets/images/blog",
+        "assets/images/guides",
+    ):
+        src = ROOT / rel
+        dest = tmp / rel
+        if not src.exists():
+            continue
+        if src.is_dir():
+            shutil.copytree(src, dest)
+        else:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+    generate_share.generate(tmp, public_url_mode="CURRENT_ID")
+    return tmp
+
+
 def test_live_dual_publish_existence_and_seo() -> None:
     old_en = ROOT / "writings" / "en" / "articles" / SOUL_ID / "index.html"
     new_en = ROOT / "writings" / "en" / "articles" / SOUL_EN / "index.html"
@@ -164,62 +193,93 @@ def test_live_dual_publish_existence_and_seo() -> None:
         if not path.is_file():
             fail(f"missing dual-publish page: {path.relative_to(ROOT)}")
 
-    # slug == ID for Clarity TR: only one destination, no noindex.
-    if robots(read(clarity_tr)) and "noindex" in (robots(read(clarity_tr)) or ""):
-        fail("Clarity TR slug==ID page must not get Phase 3 noindex")
+    import shutil
 
-    pairs = [
-        (old_en, new_en, f"https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"),
-        (old_tr, new_tr, f"https://koltigin.xyz/writings/tr/articles/{SOUL_ID}/"),
-        (note_old, note_new, f"https://koltigin.xyz/writings/en/notes/{NOTE_ID}/"),
-        (guide_old, guide_new, f"https://koltigin.xyz/guides/{GUIDE_ID}/TR/"),
-        (clarity_en_old, clarity_en_new, f"https://koltigin.xyz/writings/en/articles/{CLARITY_ID}/"),
-    ]
-    for old_path, new_path, id_url in pairs:
-        old_html = read(old_path)
-        new_html = read(new_path)
-        if robots(old_html) and "noindex" in (robots(old_html) or ""):
-            fail(f"ID page must not be noindex: {old_path.relative_to(ROOT)}")
-        if robots(new_html) != "noindex,follow":
-            fail(f"localized copy must be noindex,follow: {new_path.relative_to(ROOT)}")
-        if canonical(old_html) != id_url or canonical(new_html) != id_url:
-            fail(f"canonical must stay ID-based for {old_path.name}")
-        if og_url(old_html) != id_url or og_url(new_html) != id_url:
-            fail(f"og:url must stay ID-based for {old_path.name}")
-        old_alt = hreflangs(old_html)
-        new_alt = hreflangs(new_html)
-        if old_alt != new_alt:
-            fail(f"hreflang mismatch between old/new for {old_path.relative_to(ROOT)}")
-        if any(SOUL_EN in url or SOUL_TR in url or GUIDE_TR in url or NOTE_EN in url for url in old_alt.values()):
-            fail("hreflang must remain ID-based")
-        for url in jsonld_urls(old_html) + jsonld_urls(new_html):
-            if url != id_url and "koltigin.xyz" in url and ("/writings/" in url or "/guides/" in url):
-                # allow only the ID canonical among page URLs
-                if "/assets/" not in url and url != id_url:
-                    fail(f"JSON-LD must stay ID-based, got {url}")
-        if attr(old_html, "data-content-id") != attr(new_html, "data-content-id"):
-            fail("data-content-id must match across dual pair")
-        if attr(old_html, "data-en-slug") != attr(new_html, "data-en-slug"):
-            fail("data-en-slug must match across dual pair")
-        if old_path.parts[-4] != "guides":
-            if article_body(old_html) != article_body(new_html):
-                fail(f"article body mismatch for {old_path.relative_to(ROOT)}")
-            if f"<title>" not in old_html:
-                fail("missing title")
+    tmp = current_id_tree()
+    try:
+        clarity_tr_html = read(tmp / "writings" / "tr" / "articles" / CLARITY_ID / "index.html")
+        if robots(clarity_tr_html) and "noindex" in (robots(clarity_tr_html) or ""):
+            fail("Clarity TR slug==ID page must not get Phase 3 noindex")
+
+        pairs = [
+            (
+                tmp / "writings" / "en" / "articles" / SOUL_ID / "index.html",
+                tmp / "writings" / "en" / "articles" / SOUL_EN / "index.html",
+                f"https://koltigin.xyz/writings/en/articles/{SOUL_ID}/",
+            ),
+            (
+                tmp / "writings" / "tr" / "articles" / SOUL_ID / "index.html",
+                tmp / "writings" / "tr" / "articles" / SOUL_TR / "index.html",
+                f"https://koltigin.xyz/writings/tr/articles/{SOUL_ID}/",
+            ),
+            (
+                tmp / "writings" / "en" / "notes" / NOTE_ID / "index.html",
+                tmp / "writings" / "en" / "notes" / NOTE_EN / "index.html",
+                f"https://koltigin.xyz/writings/en/notes/{NOTE_ID}/",
+            ),
+            (
+                tmp / "guides" / GUIDE_ID / "TR" / "index.html",
+                tmp / "guides" / GUIDE_TR / "TR" / "index.html",
+                f"https://koltigin.xyz/guides/{GUIDE_ID}/TR/",
+            ),
+            (
+                tmp / "writings" / "en" / "articles" / CLARITY_ID / "index.html",
+                tmp / "writings" / "en" / "articles" / CLARITY_EN / "index.html",
+                f"https://koltigin.xyz/writings/en/articles/{CLARITY_ID}/",
+            ),
+        ]
+        for old_path, new_path, id_url in pairs:
+            old_html = read(old_path)
+            new_html = read(new_path)
+            if robots(old_html) and "noindex" in (robots(old_html) or ""):
+                fail(f"ID page must not be noindex: {old_path.relative_to(tmp)}")
+            if robots(new_html) != "noindex,follow":
+                fail(f"localized copy must be noindex,follow: {new_path.relative_to(tmp)}")
+            if canonical(old_html) != id_url or canonical(new_html) != id_url:
+                fail(f"canonical must stay ID-based for {old_path.name}")
+            if og_url(old_html) != id_url or og_url(new_html) != id_url:
+                fail(f"og:url must stay ID-based for {old_path.name}")
+            old_alt = hreflangs(old_html)
+            new_alt = hreflangs(new_html)
+            if old_alt != new_alt:
+                fail(f"hreflang mismatch between old/new for {old_path.relative_to(tmp)}")
+            if any(SOUL_EN in url or SOUL_TR in url or GUIDE_TR in url or NOTE_EN in url for url in old_alt.values()):
+                fail("hreflang must remain ID-based")
+            for url in jsonld_urls(old_html) + jsonld_urls(new_html):
+                if url != id_url and "koltigin.xyz" in url and ("/writings/" in url or "/guides/" in url):
+                    if "/assets/" not in url and url != id_url:
+                        fail(f"JSON-LD must stay ID-based, got {url}")
+            if attr(old_html, "data-content-id") != attr(new_html, "data-content-id"):
+                fail("data-content-id must match across dual pair")
+            if attr(old_html, "data-en-slug") != attr(new_html, "data-en-slug"):
+                fail("data-en-slug must match across dual pair")
+            if "guides" not in old_path.parts:
+                if article_body(old_html) != article_body(new_html):
+                    fail(f"article body mismatch for {old_path.relative_to(tmp)}")
+                if f"<title>" not in old_html:
+                    fail("missing title")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     ok("live dual-publish existence + SEO safety")
 
 
 def test_sitemap_and_redirects() -> None:
-    sitemap = read(ROOT / "sitemap.xml")
-    if f"/writings/en/articles/{SOUL_ID}/" not in sitemap:
-        fail("sitemap missing SoulMemory ID URL")
-    if f"/guides/{GUIDE_ID}/TR/" not in sitemap:
-        fail("sitemap missing ArNS TR ID URL")
-    for needle in (SOUL_EN, SOUL_TR, NOTE_EN, NOTE_TR, GUIDE_TR, CLARITY_EN):
-        if needle in sitemap:
-            fail(f"sitemap must not list localized path segment {needle}")
-    if "xmlns:xhtml" in sitemap or "xhtml:link" in sitemap:
-        fail("sitemap must not add xhtml alternates")
+    import shutil
+
+    tmp = current_id_tree()
+    try:
+        sitemap = read(tmp / "sitemap.xml")
+        if f"/writings/en/articles/{SOUL_ID}/" not in sitemap:
+            fail("sitemap missing SoulMemory ID URL")
+        if f"/guides/{GUIDE_ID}/TR/" not in sitemap:
+            fail("sitemap missing ArNS TR ID URL")
+        for needle in (SOUL_EN, SOUL_TR, NOTE_EN, NOTE_TR, GUIDE_TR, CLARITY_EN):
+            if needle in sitemap:
+                fail(f"sitemap must not list localized path segment {needle}")
+        if "xmlns:xhtml" in sitemap or "xhtml:link" in sitemap:
+            fail("sitemap must not add xhtml alternates")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     redirects = json.loads(read(ROOT / "config" / "redirects.json"))
     if redirects.get("enabled") is not False:
         fail("redirects.json must remain enabled:false")
@@ -227,6 +287,8 @@ def test_sitemap_and_redirects() -> None:
 
 
 def test_links_share_language_switch_still_id() -> None:
+    import shutil
+
     site_js = read(ROOT / "assets" / "js" / "site.js")
     blog = read(ROOT / "assets" / "js" / "blog-parser.js")
     guides = read(ROOT / "assets" / "js" / "guides-parser.js")
@@ -244,19 +306,22 @@ def test_links_share_language_switch_still_id() -> None:
     if "writingPublicPath" not in blog:
         fail("writing cards must use mode-aware writingPublicPath")
     router = read(ROOT / "assets" / "js" / "router.js")
-    if "let publicUrlMode = MODE_CURRENT_ID" not in router and 'publicUrlMode = MODE_CURRENT_ID' not in router:
-        fail("router default public URL mode must remain CURRENT_ID")
+    if "MODE_CURRENT_ID" not in router or "setPublicUrlMode" not in router:
+        fail("router must still support CURRENT_ID mode")
     if "writingLocalizedShareUrl" in share and "function writingShareUrl" not in share:
         fail("live share helper writingShareUrl must remain")
     if "`/guides/${encodeURIComponent(guideId)}/${code}/`" not in projects and "guideShareHref" not in projects:
-        fail("project guide links must stay ID-based")
-    # Generated HTML share bars must use ID canonical even on localized copies.
-    localized = read(ROOT / "writings" / "en" / "articles" / SOUL_EN / "index.html")
-    if f'data-share-url="https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"' not in localized:
-        if f"/writings/en/articles/{SOUL_ID}/" not in localized:
-            fail("localized writing HTML must embed ID-based share/canonical URL")
-        if SOUL_EN in localized and f'data-share-url="https://koltigin.xyz/writings/en/articles/{SOUL_EN}/"' in localized:
-            fail("localized copy must not share its own localized URL")
+        fail("project guide links helper must remain")
+    tmp = current_id_tree()
+    try:
+        localized = read(tmp / "writings" / "en" / "articles" / SOUL_EN / "index.html")
+        if f'data-share-url="https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"' not in localized:
+            if f"/writings/en/articles/{SOUL_ID}/" not in localized:
+                fail("CURRENT_ID localized writing HTML must embed ID-based share/canonical URL")
+            if SOUL_EN in localized and f'data-share-url="https://koltigin.xyz/writings/en/articles/{SOUL_EN}/"' in localized:
+                fail("CURRENT_ID localized copy must not share its own localized URL")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     ok("cards/index/share/language-switch remain ID-based")
 
 
@@ -284,7 +349,7 @@ def test_temp_dual_publish_and_slug_eq_id() -> None:
         from test_generate_share import setup_root  # type: ignore
 
         setup_root(tmp)
-        result = generate_share.generate(tmp)
+        result = generate_share.generate(tmp, public_url_mode="CURRENT_ID")
         legacy = tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"
         localized = tmp / "writings" / "en" / "notes" / "validator-notes" / "index.html"
         if not legacy.is_file() or not localized.is_file():
@@ -322,7 +387,7 @@ def test_temp_dual_publish_and_slug_eq_id() -> None:
             encoding="utf-8",
         )
         try:
-            generate_share.generate(tmp)
+            generate_share.generate(tmp, public_url_mode="CURRENT_ID")
             fail("localized slug colliding with another stable ID must fail")
         except Exception as exc:  # noqa: BLE001
             if "collision" not in str(exc).lower() and "output collision" not in str(exc):
@@ -344,6 +409,9 @@ def test_no_redirect_stubs() -> None:
 
 
 def test_exact_counts_and_all_robots() -> None:
+    import shutil
+
+    # Dual-publish path inventory remains on the live tree.
     manifest = json.loads(read(ROOT / "content" / "localized-dual-publish.json"))
     paths = manifest.get("paths") or []
     if len(paths) != 17:
@@ -353,38 +421,42 @@ def test_exact_counts_and_all_robots() -> None:
     if len(writing_loc) != 7 or len(guide_loc) != 10:
         fail(f"expected 7 writing + 10 guide localized, got {len(writing_loc)}+{len(guide_loc)}")
 
-    id_writing = 0
-    for path in (ROOT / "writings").rglob("index.html"):
-        rel = str(path.relative_to(ROOT)).replace("\\", "/")
-        if rel in paths:
-            continue
-        parts = path.relative_to(ROOT / "writings").parts
-        if len(parts) == 4:
-            id_writing += 1
-            html = read(path)
-            if robots(html) and "noindex" in (robots(html) or ""):
-                fail(f"stable-ID writing must not have Phase 3 noindex: {rel}")
-    id_guide = 0
-    for path in (ROOT / "guides").rglob("index.html"):
-        rel = str(path.relative_to(ROOT)).replace("\\", "/")
-        if rel in paths:
-            continue
-        parts = path.relative_to(ROOT / "guides").parts
-        if len(parts) == 3 and parts[1] in ("EN", "TR"):
-            id_guide += 1
-            html = read(path)
-            if robots(html) and "noindex" in (robots(html) or ""):
-                fail(f"stable-ID guide must not have Phase 3 noindex: {rel}")
-    if id_writing != 8 or id_guide != 20:
-        fail(f"expected 8/20 ID destinations, got {id_writing}/{id_guide}")
+    tmp = current_id_tree()
+    try:
+        id_writing = 0
+        for path in (tmp / "writings").rglob("index.html"):
+            rel = str(path.relative_to(tmp)).replace("\\", "/")
+            if rel in paths:
+                continue
+            parts = path.relative_to(tmp / "writings").parts
+            if len(parts) == 4:
+                id_writing += 1
+                html = read(path)
+                if robots(html) and "noindex" in (robots(html) or ""):
+                    fail(f"stable-ID writing must not have Phase 3 noindex: {rel}")
+        id_guide = 0
+        for path in (tmp / "guides").rglob("index.html"):
+            rel = str(path.relative_to(tmp)).replace("\\", "/")
+            if rel in paths:
+                continue
+            parts = path.relative_to(tmp / "guides").parts
+            if len(parts) == 3 and parts[1] in ("EN", "TR"):
+                id_guide += 1
+                html = read(path)
+                if robots(html) and "noindex" in (robots(html) or ""):
+                    fail(f"stable-ID guide must not have Phase 3 noindex: {rel}")
+        if id_writing != 8 or id_guide != 20:
+            fail(f"expected 8/20 ID destinations, got {id_writing}/{id_guide}")
 
-    for rel in paths:
-        html = read(ROOT / rel)
-        tags = re.findall(r'<meta\s+name="robots"\s+content="([^"]+)"', html, re.I)
-        if tags != ["noindex,follow"]:
-            fail(f"localized {rel} must have exactly one noindex,follow robots meta, got {tags}")
-        if "G-CD89YCN426" not in html:
-            fail(f"localized {rel} missing GA4")
+        for rel in paths:
+            html = read(tmp / rel)
+            tags = re.findall(r'<meta\s+name="robots"\s+content="([^"]+)"', html, re.I)
+            if tags != ["noindex,follow"]:
+                fail(f"CURRENT_ID localized {rel} must have exactly one noindex,follow robots meta, got {tags}")
+            if "G-CD89YCN426" not in html:
+                fail(f"localized {rel} missing GA4")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
     # slug == ID: Clarity TR and EN guides must not appear in manifest / noindex.
     if any(CLARITY_ID in p and "/tr/" in p for p in paths):

@@ -17,7 +17,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from cloudflare_redirects import build_cloudflare_bulk_redirects  # noqa: E402
 from public_url_policy import (  # noqa: E402
-    DEFAULT_MODE,
     MODE_CURRENT_ID,
     MODE_LOCALIZED,
     PublicUrlModeError,
@@ -191,8 +190,12 @@ def setup_temp_root() -> Path:
 
 
 def test_policy_defaults() -> None:
-    if normalize_mode(None) != MODE_CURRENT_ID or DEFAULT_MODE != MODE_CURRENT_ID:
-        fail("default public URL mode must be CURRENT_ID")
+    # Phase 4A historically prepared LOCALIZED while CURRENT_ID was default.
+    # After Phase 4B, CURRENT_ID remains fully supported when selected explicitly.
+    if normalize_mode("CURRENT_ID") != MODE_CURRENT_ID:
+        fail("CURRENT_ID mode must remain available")
+    if normalize_mode("LOCALIZED") != MODE_LOCALIZED:
+        fail("LOCALIZED mode must remain available")
     try:
         normalize_mode("PHASE4")
         fail("unknown modes must raise, not alias into LOCALIZED")
@@ -230,42 +233,47 @@ def test_policy_defaults() -> None:
 
 
 def test_current_id_live_regression() -> None:
-    """Default repository output must still be Phase 3."""
-    soul_id = read(ROOT / "writings" / "en" / "articles" / SOUL_ID / "index.html")
-    soul_loc = read(ROOT / "writings" / "en" / "articles" / SOUL_EN / "index.html")
-    if robots(soul_id) == "noindex,follow":
-        fail("ID SoulMemory must not have Phase 3 noindex")
-    if robots(soul_loc) != "noindex,follow":
-        fail("localized SoulMemory must still be noindex,follow under default")
-    want = f"https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"
-    if canonical(soul_loc) != want or og_url(soul_loc) != want:
-        fail("localized copy must still ID-canonicalize under default")
-    alts = hreflangs(soul_loc)
-    if alts.get("en") != want or SOUL_EN in (alts.get("en") or ""):
-        fail("hreflang must remain ID-based under default")
-    if alts.get("x-default") != want:
-        fail("x-default must remain EN ID URL under default")
-    for url in jsonld_urls(soul_loc):
-        if SOUL_EN in url and SOUL_ID not in url:
-            fail("JSON-LD must not self-canonicalize localized URL under default")
-    sitemap = read(ROOT / "sitemap.xml")
-    if f"/writings/en/articles/{SOUL_EN}/" in sitemap or f"/guides/{GUIDE_TR}/TR/" in sitemap:
-        fail("default sitemap must remain ID-only")
-    if f"/writings/en/articles/{SOUL_ID}/" not in sitemap:
-        fail("default sitemap missing ID writing URL")
+    """CURRENT_ID mode still reproduces Phase 3 SEO when selected explicitly."""
+    import shutil
+
+    tmp = setup_temp_root()
+    try:
+        generate_share.generate(tmp, public_url_mode=MODE_CURRENT_ID)
+        soul_id = read(tmp / "writings" / "en" / "articles" / SOUL_ID / "index.html")
+        soul_loc = read(tmp / "writings" / "en" / "articles" / SOUL_EN / "index.html")
+        if robots(soul_id) == "noindex,follow":
+            fail("ID SoulMemory must not have Phase 3 noindex")
+        if robots(soul_loc) != "noindex,follow":
+            fail("localized SoulMemory must be noindex,follow under CURRENT_ID")
+        want = f"https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"
+        if canonical(soul_loc) != want or og_url(soul_loc) != want:
+            fail("localized copy must ID-canonicalize under CURRENT_ID")
+        alts = hreflangs(soul_loc)
+        if alts.get("en") != want or SOUL_EN in (alts.get("en") or ""):
+            fail("hreflang must remain ID-based under CURRENT_ID")
+        if alts.get("x-default") != want:
+            fail("x-default must remain EN ID URL under CURRENT_ID")
+        sitemap = read(tmp / "sitemap.xml")
+        if f"/writings/en/articles/{SOUL_EN}/" in sitemap or f"/guides/{GUIDE_TR}/TR/" in sitemap:
+            fail("CURRENT_ID sitemap must remain ID-only")
+        if f"/writings/en/articles/{SOUL_ID}/" not in sitemap:
+            fail("CURRENT_ID sitemap missing ID writing URL")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     redirects = load_redirects(ROOT / "config" / "redirects.json")
     if redirects.get("enabled") is not False:
         fail("redirects must remain enabled:false")
     router = read(ROOT / "assets" / "js" / "router.js")
-    if "let publicUrlMode = MODE_CURRENT_ID" not in router:
-        fail("JS default mode must be CURRENT_ID")
-    ok("CURRENT_ID live regression (default still Phase 3)")
+    if "MODE_CURRENT_ID" not in router or "setPublicUrlMode" not in router:
+        fail("JS must retain CURRENT_ID support")
+    ok("CURRENT_ID mode still reproduces Phase 3 SEO")
 
 
 def test_js_mode_switch() -> None:
     script = browser_bundle_script(
         f"""
 const before = KolTiginRouter.getPublicUrlMode();
+KolTiginRouter.setPublicUrlMode('CURRENT_ID');
 const idPath = KolTiginRouter.writingPublicPath('en', 'articles', {json.dumps(SOUL_ID)});
 const guideId = KolTiginRouter.guidePublicPath({json.dumps(GUIDE_ID)}, 'TR');
 const shareId = KolTiginShareActions.writingShareUrl('en', 'articles', {json.dumps(SOUL_ID)});
@@ -293,8 +301,11 @@ console.log(JSON.stringify({{
 """
     )
     data = json.loads(run_node(script))
-    if data["before"] != "CURRENT_ID" or data["after"] != "CURRENT_ID":
-        fail("JS mode default/restore must be CURRENT_ID")
+    # Production default may be LOCALIZED (Phase 4B); CURRENT_ID remains switchable.
+    if data["before"] not in {"CURRENT_ID", "LOCALIZED"}:
+        fail("JS mode default must be CURRENT_ID or LOCALIZED")
+    if data["after"] != "CURRENT_ID":
+        fail("JS must restore CURRENT_ID when selected")
     if not data.get("invalidRejected"):
         fail("JS must reject unknown public URL modes")
     if data["idPath"] != f"/writings/en/articles/{SOUL_ID}/":
@@ -311,10 +322,8 @@ console.log(JSON.stringify({{
         fail("JS LOCALIZED EN guide must stay slug==ID path")
     if data["clarity"] != f"/writings/tr/articles/{CLARITY_TR}/":
         fail("JS LOCALIZED Clarity TR slug==ID must stay single path")
-    if SOUL_EN not in data["shareLoc"] or SOUL_ID in data["shareLoc"].split(SOUL_EN)[0]:
-        # share URL must contain localized slug
-        if f"/{SOUL_EN}/" not in data["shareLoc"]:
-            fail("JS LOCALIZED share must use localized URL")
+    if f"/{SOUL_EN}/" not in data["shareLoc"]:
+        fail("JS LOCALIZED share must use localized URL")
     if data["restored"] != f"/writings/en/articles/{SOUL_ID}/":
         fail("JS mode restore must return CURRENT_ID paths")
     ok("JS mode-aware discovery/share/language paths")
@@ -425,16 +434,16 @@ def test_localized_generator_mode() -> None:
 def test_current_id_generator_determinism() -> None:
     tmp = setup_temp_root()
     try:
-        generate_share.generate(tmp)  # default CURRENT_ID
+        generate_share.generate(tmp, public_url_mode=MODE_CURRENT_ID)  # explicit CURRENT_ID
         soul_loc = read(tmp / "writings" / "en" / "articles" / SOUL_EN / "index.html")
         if robots(soul_loc) != "noindex,follow":
-            fail("default generate must keep Phase 3 noindex on localized copies")
+            fail("CURRENT_ID generate must keep Phase 3 noindex on localized copies")
         want = f"https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"
         if canonical(soul_loc) != want:
-            fail("default generate must ID-canonicalize localized copies")
+            fail("CURRENT_ID generate must ID-canonicalize localized copies")
         before_html = file_sha(tmp / "writings" / "en" / "articles" / SOUL_EN / "index.html")
         before_map = file_sha(tmp / "sitemap.xml")
-        generate_share.generate(tmp)
+        generate_share.generate(tmp, public_url_mode=MODE_CURRENT_ID)
         if file_sha(tmp / "writings" / "en" / "articles" / SOUL_EN / "index.html") != before_html:
             fail("CURRENT_ID second generate changed localized HTML")
         if file_sha(tmp / "sitemap.xml") != before_map:

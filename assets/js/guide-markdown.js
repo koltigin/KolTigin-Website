@@ -48,7 +48,7 @@ window.KolTiginGuideMarkdown = {
       const trimmed = href.trim();
       if (/^(TR|EN)\.md$/i.test(trimmed)) {
         const lang = trimmed.slice(0, 2).toUpperCase();
-        // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+        // Mode-aware: LOCALIZED (default) uses locale slugs; CURRENT_ID keeps ID hrefs.
         const path = window.KolTiginRouter && typeof window.KolTiginRouter.guidePublicPath === 'function'
           ? window.KolTiginRouter.guidePublicPath(guideId, lang)
           : `/guides/${this.escapeHtml(guideId)}/${lang}/`;

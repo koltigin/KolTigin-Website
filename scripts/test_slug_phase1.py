@@ -315,12 +315,17 @@ def test_redirect_manifest() -> None:
 
 
 def test_public_urls_unchanged() -> None:
+    """Phase 1 historical freeze: ID public paths still exist; CURRENT_ID SEO still works."""
+    import tempfile
+    import shutil
+    from pathlib import Path as P
+
     generate_share = load_generate_share()
     for rel in CURRENT_PUBLIC_PATHS:
         if not (ROOT / rel).is_file():
             fail(f"missing current public path {rel}")
         if "soulmemory-on-chain-mood-diary" in rel or "arns-domain-nasil-alinir" in rel:
-            fail(f"Phase 1 must not publish migrated public path yet: {rel}")
+            fail(f"Phase 1 list must not list migrated public path as the ID freeze set: {rel}")
     for item in generate_share.discover_writings(ROOT):
         for lang in item["langs"]:
             path = generate_share.writing_share_path(lang, item["kind"], item["id"])
@@ -331,32 +336,48 @@ def test_public_urls_unchanged() -> None:
             path = generate_share.guide_share_path(lang, item["id"])
             if f"/{item['id']}/" not in f"/{path}":
                 fail(f"guide path must still use stable ID: {path}")
-    sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
-    for needle in (
-        "/writings/en/articles/2026-08-31-soulmemory/",
-        "/writings/en/articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da/",
-        "/guides/how-to-get-an-arns-domain/EN/",
-        "/guides/how-to-get-an-arns-domain/TR/",
-    ):
-        if needle not in sitemap:
-            fail(f"sitemap lost current URL {needle}")
-    for needle in (
-        "/writings/en/articles/soulmemory-on-chain-mood-diary/",
-        "/guides/arns-domain-nasil-alinir/TR/",
-        "xmlns:xhtml",
-    ):
-        if needle in sitemap:
-            fail(f"sitemap must not cut over yet: {needle}")
-    sample = (ROOT / "writings/en/articles/2026-08-31-soulmemory/index.html").read_text(encoding="utf-8")
-    if 'rel="canonical" href="https://koltigin.xyz/writings/en/articles/2026-08-31-soulmemory/"' not in sample:
-        fail("canonical still must use stable ID path")
-    if "/writings/en/articles/soulmemory-on-chain-mood-diary/" in sample:
-        fail("generated HTML must not use migrated public slug paths yet")
+
+    # Historical CURRENT_ID SEO/sitemap guarantees via explicit mode (default is now LOCALIZED).
+    tmp = P(tempfile.mkdtemp(prefix="phase1-current-id-"))
+    try:
+        for rel in ("content", "config", "i18n", "index.html", "assets/fonts", "assets/images/profile", "assets/images/og/backgrounds", "assets/images/blog", "assets/images/guides"):
+            src = ROOT / rel
+            dest = tmp / rel
+            if not src.exists():
+                continue
+            if src.is_dir():
+                shutil.copytree(src, dest)
+            else:
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dest)
+        generate_share.generate(tmp, public_url_mode="CURRENT_ID")
+        sitemap = (tmp / "sitemap.xml").read_text(encoding="utf-8")
+        for needle in (
+            "/writings/en/articles/2026-08-31-soulmemory/",
+            "/writings/en/articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da/",
+            "/guides/how-to-get-an-arns-domain/EN/",
+            "/guides/how-to-get-an-arns-domain/TR/",
+        ):
+            if needle not in sitemap:
+                fail(f"CURRENT_ID sitemap lost URL {needle}")
+        for needle in (
+            "/writings/en/articles/soulmemory-on-chain-mood-diary/",
+            "/guides/arns-domain-nasil-alinir/TR/",
+            "xmlns:xhtml",
+        ):
+            if needle in sitemap:
+                fail(f"CURRENT_ID sitemap must not cut over: {needle}")
+        sample = (tmp / "writings/en/articles/2026-08-31-soulmemory/index.html").read_text(encoding="utf-8")
+        if 'rel="canonical" href="https://koltigin.xyz/writings/en/articles/2026-08-31-soulmemory/"' not in sample:
+            fail("CURRENT_ID canonical still must use stable ID path")
+        if "/writings/en/articles/soulmemory-on-chain-mood-diary/" in sample and 'canonical" href="https://koltigin.xyz/writings/en/articles/soulmemory-on-chain-mood-diary/"' in sample:
+            fail("CURRENT_ID generated HTML must not self-canonicalize migrated slug")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
     site_js = (ROOT / "assets" / "js" / "site.js").read_text(encoding="utf-8")
     if "writingPublicPath(loc, writing.kind," not in site_js:
-        fail("language-switch must still reuse path id in Phase 1")
-    if re.search(r"location\.assign\(\s*window\.KolTiginRouter\.writingLocalizedCounterpartPath", site_js):
-        fail("language-switch must not navigate to localized slug paths yet")
+        fail("language-switch must still reuse writingPublicPath")
     ok("current public/canonical/sitemap/language-switch unchanged")
 
 

@@ -1,8 +1,8 @@
-"""Central public-URL / SEO migration policy for Phase 4A.
+"""Central public-URL / SEO migration policy.
 
 Modes:
-  CURRENT_ID  — Phase 3 production behavior (default).
-  LOCALIZED   — future primary URLs use locale slugs; prepared but not default.
+  CURRENT_ID  — Phase 3 behavior (stable-ID primaries; available for regression).
+  LOCALIZED   — Phase 4B+ production default (locale-slug primaries).
 
 Stable IDs remain the pairing / storage / fetch identity in both modes.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 MODE_CURRENT_ID = "CURRENT_ID"
 MODE_LOCALIZED = "LOCALIZED"
-DEFAULT_MODE = MODE_CURRENT_ID
+DEFAULT_MODE = MODE_LOCALIZED
 
 ROBOTS_NOINDEX_FOLLOW = "noindex,follow"
 

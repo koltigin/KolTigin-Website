@@ -366,11 +366,18 @@ def main() -> None:
         leftover.write_text("<html>stale</html>", encoding="utf-8")
         generate_share.generate(tmp)
 
+        # LOCALIZED default: SEO primaries use persisted slugs; stable-ID HTML remains alias.
+        en_primary = "https://koltigin.xyz/writings/en/notes/validator-notes/"
+        tr_primary = "https://koltigin.xyz/writings/tr/notes/dogrulayici-notlari/"
         note_html = tmp / "writings" / "en" / "notes" / "no-cover" / "index.html"
+        note_primary_html = tmp / "writings" / "en" / "notes" / "validator-notes" / "index.html"
         note_og = tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png"
         if not note_html.is_file():
             fail("no-cover writing share html")
+        if not note_primary_html.is_file():
+            fail("localized writing primary html")
         html = read(note_html)
+        primary_html = read(note_primary_html)
         for needle in (
             "Validator notes",
             "Uptime and keys.",
@@ -378,7 +385,7 @@ def main() -> None:
             'og:image:width" content="1200"',
             'twitter:card" content="summary_large_image"',
             "https://koltigin.xyz/assets/images/og/writings/en/notes/no-cover.png",
-            "https://koltigin.xyz/writings/en/notes/no-cover/",
+            en_primary,
             "<p>Body.</p>",
             "<h2>Ops</h2>",
             "<ul><li>alerts</li><li>peers</li></ul>",
@@ -390,21 +397,25 @@ def main() -> None:
             "<pre><code>",
             "systemctl status",
             'href="https://example.com"',
-            'rel="canonical" href="https://koltigin.xyz/writings/en/notes/no-cover/"',
+            f'rel="canonical" href="{en_primary}"',
             'hreflang="en"',
             'hreflang="tr"',
             'hreflang="x-default"',
         ):
             if needle not in html:
                 fail(f"writing html missing {needle}")
+        if f'rel="canonical" href="{en_primary}"' not in primary_html:
+            fail("localized writing primary must be self-canonical")
+        if 'name="robots" content="noindex' in primary_html.lower():
+            fail("localized writing primary must not carry Phase 3 noindex")
         if 'http-equiv="refresh"' in html.lower() or "http-equiv='refresh'" in html.lower():
             fail("writing html must not meta-refresh")
         if "location.replace" in html and "#/yazilar" in html:
             fail("writing html must not location.replace to hash writings")
         if "#/yazilar/" in html:
             fail("writing html must not use hash writings urls")
-        if 'hreflang="x-default" href="https://koltigin.xyz/writings/en/notes/no-cover/"' not in html:
-            fail("x-default must point at the English writing url")
+        if f'hreflang="x-default" href="{en_primary}"' not in html:
+            fail("x-default must point at the English localized writing url")
         ok("writing without cover share html")
         if Image.open(note_og).size != (1200, 630):
             fail("fallback og size")
@@ -413,14 +424,17 @@ def main() -> None:
         ok("writing without cover 1200x630 png")
 
         tr_html = read(tmp / "writings" / "tr" / "notes" / "no-cover" / "index.html")
+        tr_primary_html = read(tmp / "writings" / "tr" / "notes" / "dogrulayici-notlari" / "index.html")
         if "Doğrulayıcı notları" not in tr_html or 'lang="tr"' not in tr_html:
             fail("tr metadata")
         if "<p>Gövde.</p>" not in tr_html:
             fail("tr writing html must contain article body")
-        if 'rel="canonical" href="https://koltigin.xyz/writings/tr/notes/no-cover/"' not in tr_html:
-            fail("tr writing must be self-canonical")
-        if 'hreflang="x-default" href="https://koltigin.xyz/writings/en/notes/no-cover/"' not in tr_html:
-            fail("tr writing x-default must be English")
+        if f'rel="canonical" href="{tr_primary}"' not in tr_html:
+            fail("tr writing alias must canonicalize to localized primary")
+        if f'rel="canonical" href="{tr_primary}"' not in tr_primary_html:
+            fail("tr localized writing primary must be self-canonical")
+        if f'hreflang="x-default" href="{en_primary}"' not in tr_html:
+            fail("tr writing x-default must be English localized")
         if 'http-equiv="refresh"' in tr_html.lower() or "location.replace" in tr_html:
             fail("tr writing html must not redirect")
         ok("bilingual writing metadata")
@@ -465,7 +479,7 @@ def main() -> None:
             fail("writing json-ld description")
         if note_ld.get("inLanguage") != "en":
             fail("writing json-ld language")
-        if note_ld.get("url") != "https://koltigin.xyz/writings/en/notes/no-cover/":
+        if note_ld.get("url") != en_primary:
             fail("writing json-ld url")
         if note_ld.get("mainEntityOfPage") != note_ld.get("url"):
             fail("writing json-ld mainEntityOfPage")
@@ -480,7 +494,7 @@ def main() -> None:
         if "#" in str(note_ld.get("url")):
             fail("json-ld url must not be a hash")
         tr_ld = json_ld(tr_html)
-        if tr_ld.get("inLanguage") != "tr" or tr_ld.get("url") != "https://koltigin.xyz/writings/tr/notes/no-cover/":
+        if tr_ld.get("inLanguage") != "tr" or tr_ld.get("url") != tr_primary:
             fail("tr writing json-ld locale url")
         if tr_ld.get("headline") != "Doğrulayıcı notları":
             fail("tr writing json-ld headline")
@@ -488,6 +502,8 @@ def main() -> None:
             fail("en/tr json-ld urls must differ")
         undated_html = read(tmp / "writings" / "en" / "notes" / "undated" / "index.html")
         undated_ld = json_ld(undated_html)
+        if undated_ld.get("url") != "https://koltigin.xyz/writings/en/notes/undated-note/":
+            fail("undated writing json-ld must use localized primary")
         if "datePublished" in undated_ld:
             fail("undated writing must omit datePublished")
         if undated_ld.get("@type") != "BlogPosting":
@@ -495,6 +511,8 @@ def main() -> None:
         if "dateModified" in note_ld:
             fail("writing must not copy datePublished onto dateModified")
         revised_ld = json_ld(read(tmp / "writings" / "en" / "notes" / "revised" / "index.html"))
+        if revised_ld.get("url") != "https://koltigin.xyz/writings/en/notes/revised-note/":
+            fail("revised writing json-ld must use localized primary")
         if revised_ld.get("datePublished") != "2026-01-01":
             fail("revised writing datePublished")
         if revised_ld.get("dateModified") != "2026-08-01":
@@ -511,12 +529,17 @@ def main() -> None:
             fail("custom cover raster should come from uploaded blue png")
         ok("writing with custom cover raster")
         cover_html = read(tmp / "writings" / "en" / "articles" / "with-cover" / "index.html")
+        cover_primary = read(tmp / "writings" / "en" / "articles" / "soulmemory" / "index.html")
         if "SoulMemory" not in cover_html or "with-cover.png" not in cover_html:
             fail("custom cover html")
         if "/assets/images/blog/soul.png" not in cover_html:
             fail("custom cover article must use the uploaded cover file")
         if "<p>Hello.</p>" not in cover_html:
             fail("custom cover writing must contain article body")
+        if 'rel="canonical" href="https://koltigin.xyz/writings/en/articles/soulmemory/"' not in cover_html:
+            fail("custom cover alias must canonicalize to localized primary")
+        if 'rel="canonical" href="https://koltigin.xyz/writings/en/articles/soulmemory/"' not in cover_primary:
+            fail("custom cover localized primary must be self-canonical")
         ok("writing with custom cover html")
 
         if (tmp / "writings" / "en" / "social" / "tweet" / "index.html").exists():
@@ -578,11 +601,19 @@ def main() -> None:
             fail("guide json-ld image")
         if "datePublished" in guide_ld or "dateModified" in guide_ld:
             fail("guide json-ld must omit dates without source metadata")
-        guide_tr = json_ld(read(tmp / "guides" / "demo-guide" / "TR" / "index.html"))
-        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guides/demo-guide/TR/":
+        guide_tr_alias = tmp / "guides" / "demo-guide" / "TR" / "index.html"
+        guide_tr_primary = tmp / "guides" / "demo-rehber" / "TR" / "index.html"
+        if not guide_tr_primary.is_file():
+            fail("localized TR guide primary html")
+        guide_tr = json_ld(read(guide_tr_alias))
+        if guide_tr.get("inLanguage") != "tr" or guide_tr.get("url") != "https://koltigin.xyz/guides/demo-rehber/TR/":
             fail("tr guide json-ld locale url")
         if guide_tr.get("headline") != "Demo Rehber":
             fail("tr guide json-ld headline")
+        if 'rel="canonical" href="https://koltigin.xyz/guides/demo-rehber/TR/"' not in read(guide_tr_alias):
+            fail("tr guide alias must canonicalize to localized primary")
+        if 'rel="canonical" href="https://koltigin.xyz/guides/demo-rehber/TR/"' not in read(guide_tr_primary):
+            fail("tr guide localized primary must be self-canonical")
         ok("guide json-ld")
 
         covered_og = tmp / "assets" / "images" / "og" / "guides" / "en" / "covered-guide.png"
@@ -611,15 +642,19 @@ def main() -> None:
             fail("homepage sitemap")
         if any("#/" in (loc or "") for loc in locs):
             fail("hash url in sitemap")
-        if not any(loc.endswith("/writings/en/notes/no-cover/") for loc in locs):
+        if not any(loc.endswith("/writings/en/notes/validator-notes/") for loc in locs):
             fail("writing url sitemap")
-        if not any(loc.endswith("/writings/tr/notes/no-cover/") for loc in locs):
+        if not any(loc.endswith("/writings/tr/notes/dogrulayici-notlari/") for loc in locs):
             fail("writing tr url sitemap")
+        if any(loc.endswith("/writings/en/notes/no-cover/") or loc.endswith("/writings/tr/notes/no-cover/") for loc in locs):
+            fail("legacy writing aliases must not appear in LOCALIZED sitemap")
         if not any(loc.endswith("/guides/demo-guide/EN/") for loc in locs):
             fail("guide url sitemap")
-        if not any(loc.endswith("/guides/demo-guide/TR/") for loc in locs):
+        if not any(loc.endswith("/guides/demo-rehber/TR/") for loc in locs):
             fail("guide tr url sitemap")
-        if any(loc.endswith("/guides/demo-guide/EN") or loc.endswith("/guides/demo-guide/TR") for loc in locs):
+        if any(loc.endswith("/guides/demo-guide/TR/") for loc in locs):
+            fail("legacy TR guide alias must not appear in LOCALIZED sitemap")
+        if any(loc.endswith("/guides/demo-guide/EN") or loc.endswith("/guides/demo-rehber/TR") for loc in locs):
             fail("guide sitemap urls must keep trailing slash")
         if any("tweet" in (loc or "") or "/admin" in (loc or "") for loc in locs):
             fail("external or admin url in sitemap")
@@ -644,11 +679,11 @@ def main() -> None:
             loc = url_el.find(f"{ns}loc").text
             lm = url_el.find(f"{ns}lastmod")
             lastmods[loc] = lm.text if lm is not None else None
-        if lastmods.get("https://koltigin.xyz/writings/en/notes/no-cover/") != "2026-08-29":
+        if lastmods.get(en_primary) != "2026-08-29":
             fail("dated writing lastmod must come from front matter date")
-        if lastmods.get("https://koltigin.xyz/writings/en/notes/revised/") != "2026-08-01":
+        if lastmods.get("https://koltigin.xyz/writings/en/notes/revised-note/") != "2026-08-01":
             fail("updated writing lastmod must come from updated metadata")
-        if lastmods.get("https://koltigin.xyz/writings/en/notes/undated/") is not None:
+        if lastmods.get("https://koltigin.xyz/writings/en/notes/undated-note/") is not None:
             fail("undated writing must omit lastmod")
         if lastmods.get("https://koltigin.xyz/") is not None:
             fail("homepage must omit lastmod")
@@ -773,12 +808,21 @@ def main() -> None:
         generate_share.generate(tmp)
         if (tmp / "writings" / "en" / "notes" / "no-cover" / "index.html").exists():
             fail("deleted writing share html remains")
+        if (tmp / "writings" / "en" / "notes" / "validator-notes" / "index.html").exists():
+            fail("deleted localized writing primary remains")
         if (tmp / "assets" / "images" / "og" / "writings" / "en" / "notes" / "no-cover.png").exists():
             fail("deleted writing og remains")
         if (tmp / "guides" / "demo-guide" / "EN" / "index.html").exists():
             fail("deleted guide spa html remains")
+        if (tmp / "guides" / "demo-rehber" / "TR" / "index.html").exists():
+            fail("deleted localized TR guide primary remains")
         sitemap2 = read(tmp / "sitemap.xml")
-        if "/writings/en/notes/no-cover/" in sitemap2 or "/guides/demo-guide/EN" in sitemap2:
+        if (
+            "/writings/en/notes/no-cover/" in sitemap2
+            or "/writings/en/notes/validator-notes/" in sitemap2
+            or "/guides/demo-guide/EN" in sitemap2
+            or "/guides/demo-rehber/TR" in sitemap2
+        ):
             fail("deleted urls remain in sitemap")
         if (tmp / "writings" / "en" / "articles" / "with-cover" / "index.html").exists() is False:
             fail("unrelated writing share should remain")

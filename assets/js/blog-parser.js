@@ -656,7 +656,7 @@ class BlogParser {
     const isExternal = this.isExternal(item);
     const loc = this.contentLang();
     const stableId = item.stableId || item.slug;
-    // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+    // Mode-aware: LOCALIZED (default) uses locale slugs; CURRENT_ID keeps ID hrefs.
     const href = isExternal
       ? this.escapeHtml(item.externalUrl)
       : (window.KolTiginRouter && typeof window.KolTiginRouter.writingPublicPath === 'function'

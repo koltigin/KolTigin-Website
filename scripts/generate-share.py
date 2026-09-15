@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html
+import io
 import json
 import re
 import sys
@@ -774,6 +775,17 @@ def identity_row_geometry(draw: ImageDraw.ImageDraw, root: Path, og_w: int, og_h
     }
 
 
+def save_png_if_changed(img: Image.Image, dest: Path) -> None:
+    """Write PNG only when encoded bytes differ (keeps regenerate deterministic)."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    payload = buf.getvalue()
+    if dest.is_file() and dest.read_bytes() == payload:
+        return
+    dest.write_bytes(payload)
+
+
 def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str, lang: str = "en") -> None:
     og_w, og_h = OG_SIZE
     img = load_og_background(root, kind)
@@ -823,8 +835,7 @@ def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind
         WHITE,
         "lm",
     )
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    img.save(dest, format="PNG", optimize=True)
+    save_png_if_changed(img, dest)
 
 
 def render_cover_png(src: Path, dest: Path) -> bool:
@@ -837,8 +848,7 @@ def render_cover_png(src: Path, dest: Path) -> bool:
     except OSError:
         return False
     fitted = ImageOps.fit(image.convert("RGB"), OG_SIZE, method=Image.Resampling.LANCZOS)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    fitted.save(dest, format="PNG", optimize=True)
+    save_png_if_changed(fitted, dest)
     return True
 
 
@@ -1522,8 +1532,8 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
         kind = item["kind"]
         item_id = item["id"]
         langs = item["langs"]
+        # LOCALIZED (default): primary URLs use persisted locale slugs (slug==ID stays identical).
         # CURRENT_ID: SEO/sitemap stay on stable-ID URLs.
-        # LOCALIZED: primary URLs use persisted locale slugs (slug==ID stays identical).
         alternates = writing_alternates(mode, base, kind, item_id, langs)
         en_slug = str((langs.get("en") or {}).get("slug") or "").strip()
         tr_slug = str((langs.get("tr") or {}).get("slug") or "").strip()
@@ -1739,7 +1749,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
         "comment": (
             "Generator-owned dual-publish localized destinations. "
             "Stable-ID pages are not listed. Stale entries are pruned via keep-set. "
-            f"SEO/discovery mode={mode} (default remains CURRENT_ID until Phase 4B)."
+            f"SEO/discovery mode={mode} (Phase 4B default LOCALIZED; redirects remain off)."
         ),
         "paths": sorted(localized_created),
     }
@@ -1784,8 +1794,8 @@ def main() -> int:
     parser.add_argument(
         "--public-url-mode",
         default=DEFAULT_MODE,
-        choices=[DEFAULT_MODE, "LOCALIZED"],
-        help="SEO/public URL mode. Default CURRENT_ID keeps Phase 3 production behavior.",
+        choices=["CURRENT_ID", "LOCALIZED"],
+        help="SEO/public URL mode. Default LOCALIZED is Phase 4B production behavior.",
     )
     args = parser.parse_args()
     root = Path(args.root).resolve()

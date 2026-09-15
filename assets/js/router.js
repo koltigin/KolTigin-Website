@@ -4,8 +4,8 @@
   const ORIGIN = 'https://koltigin.xyz';
   const MODE_CURRENT_ID = 'CURRENT_ID';
   const MODE_LOCALIZED = 'LOCALIZED';
-  // Phase 4A: default stays CURRENT_ID (Phase 3 production behavior).
-  let publicUrlMode = MODE_CURRENT_ID;
+  // Phase 4B: production default is LOCALIZED (locale-slug public URLs).
+  let publicUrlMode = MODE_LOCALIZED;
 
   const SECTIONS = [
     { id: 'home', path: '/', page: 'about', nav: 'about' },
@@ -82,7 +82,7 @@
     return String(resolved.slugs[loc] || '').trim();
   }
 
-  // Mode-aware primary public path. Default CURRENT_ID keeps stable-ID live paths.
+  // Mode-aware primary public path. Default LOCALIZED uses locale slugs via url-map.
   function writingPublicPath(lang, kind, id) {
     if (getPublicUrlMode() === MODE_LOCALIZED) {
       const slug = writingLocaleSlug(lang, kind, id) || id;
@@ -110,7 +110,7 @@
     return String(resolved.slugs[loc] || '').trim();
   }
 
-  // Mode-aware primary public path. Default CURRENT_ID keeps stable-ID live paths.
+  // Mode-aware primary public path. Default LOCALIZED uses locale slugs via url-map.
   function guidePublicPath(id, lang) {
     if (getPublicUrlMode() === MODE_LOCALIZED) {
       const slug = guideLocaleSlug(id, lang) || id;

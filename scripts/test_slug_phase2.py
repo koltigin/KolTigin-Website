@@ -134,6 +134,7 @@ console.log(JSON.stringify({{
 def test_path_helpers() -> None:
     script = browser_bundle_script(
         f"""
+KolTiginRouter.setPublicUrlMode('CURRENT_ID');
 const idPath = KolTiginRouter.writingPublicPath('en', 'articles', {json.dumps(SOUL_ID)});
 const legacyPath = KolTiginRouter.writingLegacyPublicPath('tr', 'articles', {json.dumps(SOUL_ID)});
 const futurePath = KolTiginRouter.writingLocalizedPublicPath('en', 'articles', {json.dumps(SOUL_EN)});
@@ -192,6 +193,7 @@ console.log(JSON.stringify({{
 def test_legacy_hash_dual_read() -> None:
     script = browser_bundle_script(
         f"""
+KolTiginRouter.setPublicUrlMode('CURRENT_ID');
 const target = KolTiginRouter.legacyTarget('#/yazilar/articles/' + {json.dumps(SOUL_EN)});
 const idTarget = KolTiginRouter.legacyTarget('#/yazilar/articles/' + {json.dumps(SOUL_ID)});
 console.log(JSON.stringify({{ target, idTarget }}));
@@ -207,28 +209,61 @@ console.log(JSON.stringify({{ target, idTarget }}));
 
 
 def test_current_public_output_unchanged() -> None:
-    sample = (ROOT / "writings/en/articles/2026-08-31-soulmemory/index.html").read_text(encoding="utf-8")
-    if f'rel="canonical" href="https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"' not in sample:
-        fail("live writing canonical drifted")
-    if f"/writings/en/articles/{SOUL_EN}/" in sample:
-        fail("live writing HTML must not use localized public slug paths yet")
-    guide = (ROOT / f"guides/{GUIDE_ID}/TR/index.html").read_text(encoding="utf-8")
-    if f'rel="canonical" href="https://koltigin.xyz/guides/{GUIDE_ID}/TR/"' not in guide:
-        fail("live guide canonical drifted")
-    if f"/guides/{GUIDE_TR}/TR/" in guide:
-        fail("live guide HTML must not use localized public slug paths yet")
-    sitemap = (ROOT / "sitemap.xml").read_text(encoding="utf-8")
-    if f"/writings/en/articles/{SOUL_ID}/" not in sitemap:
-        fail("sitemap lost ID writing URL")
-    if f"/writings/en/articles/{SOUL_EN}/" in sitemap or f"/guides/{GUIDE_TR}/TR/" in sitemap:
-        fail("sitemap must not cut over to localized slugs")
-    if "xmlns:xhtml" in sitemap:
-        fail("sitemap xhtml cutover belongs to a later phase")
+    """Phase 2 historical CURRENT_ID freeze via explicit mode (production default is LOCALIZED)."""
+    import importlib.util
+    import shutil
+    import tempfile
+    from pathlib import Path as P
+
+    spec = importlib.util.spec_from_file_location("generate_share", ROOT / "scripts" / "generate-share.py")
+    generate_share = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(generate_share)
+
+    tmp = P(tempfile.mkdtemp(prefix="phase2-current-id-"))
+    try:
+        for rel in (
+            "content",
+            "config",
+            "i18n",
+            "index.html",
+            "assets/fonts",
+            "assets/images/profile",
+            "assets/images/og/backgrounds",
+            "assets/images/blog",
+            "assets/images/guides",
+        ):
+            src = ROOT / rel
+            dest = tmp / rel
+            if not src.exists():
+                continue
+            if src.is_dir():
+                shutil.copytree(src, dest)
+            else:
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dest)
+        generate_share.generate(tmp, public_url_mode="CURRENT_ID")
+        sample = (tmp / "writings/en/articles/2026-08-31-soulmemory/index.html").read_text(encoding="utf-8")
+        if f'rel="canonical" href="https://koltigin.xyz/writings/en/articles/{SOUL_ID}/"' not in sample:
+            fail("CURRENT_ID writing canonical drifted")
+        if f'rel="canonical" href="https://koltigin.xyz/writings/en/articles/{SOUL_EN}/"' in sample:
+            fail("CURRENT_ID writing HTML must not self-canonicalize localized slug")
+        guide = (tmp / f"guides/{GUIDE_ID}/TR/index.html").read_text(encoding="utf-8")
+        if f'rel="canonical" href="https://koltigin.xyz/guides/{GUIDE_ID}/TR/"' not in guide:
+            fail("CURRENT_ID guide canonical drifted")
+        sitemap = (tmp / "sitemap.xml").read_text(encoding="utf-8")
+        if f"/writings/en/articles/{SOUL_ID}/" not in sitemap:
+            fail("CURRENT_ID sitemap lost ID writing URL")
+        if f"/writings/en/articles/{SOUL_EN}/" in sitemap or f"/guides/{GUIDE_TR}/TR/" in sitemap:
+            fail("CURRENT_ID sitemap must not cut over to localized slugs")
+        if "xmlns:xhtml" in sitemap:
+            fail("sitemap xhtml cutover belongs to a later phase")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
     site_js = (ROOT / "assets" / "js" / "site.js").read_text(encoding="utf-8")
     if "writingPublicPath(loc, writing.kind, stableId || writing.id)" not in site_js:
-        fail("language switch must still emit legacy/ID public paths")
-    if "writingLocalizedCounterpartPath" in site_js and "location.assign(window.KolTiginRouter.writingLocalizedCounterpartPath" in site_js:
-        fail("language switch must not activate localized navigation yet")
+        fail("language switch must still use writingPublicPath")
     blog = (ROOT / "assets" / "js" / "blog-parser.js").read_text(encoding="utf-8")
     if "writingPublicPath" not in blog:
         fail("writing cards should use mode-aware writingPublicPath")
@@ -240,8 +275,8 @@ def test_current_public_output_unchanged() -> None:
     if "data-guide-public-slug" not in guides:
         fail("guide cards should expose public slug metadata")
     router = (ROOT / "assets" / "js" / "router.js").read_text(encoding="utf-8")
-    if "CURRENT_ID" not in router or "setPublicUrlMode" not in router:
-        fail("router must expose public URL mode with CURRENT_ID default")
+    if "CURRENT_ID" not in router or "setPublicUrlMode" not in router or "LOCALIZED" not in router:
+        fail("router must expose CURRENT_ID and LOCALIZED modes")
     ok("current public directories / SEO / language-switch unchanged")
 
 

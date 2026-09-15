@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "phase": 3,
-  "comment": "Generator-owned dual-publish localized destinations. Stable-ID pages are not listed. Stale entries are pruned via keep-set.",
+  "phase": 4,
+  "public_url_mode": "LOCALIZED",
+  "comment": "Generator-owned dual-publish localized destinations. Stable-ID pages are not listed. Stale entries are pruned via keep-set. SEO/discovery mode=LOCALIZED (Phase 4B default LOCALIZED; redirects remain off).",
   "paths": [
     "guides/ar-io-gateway-guncelleme/TR/index.html",
     "guides/ar-io-gateway-kurulumu/TR/index.html",

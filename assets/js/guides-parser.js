@@ -352,7 +352,7 @@ class GuidesParser {
   }
 
   createIndexCard(item) {
-    // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+    // Mode-aware: LOCALIZED (default) uses locale slugs; CURRENT_ID keeps ID hrefs.
     const href = window.KolTiginRouter && typeof window.KolTiginRouter.guidePublicPath === 'function'
       ? window.KolTiginRouter.guidePublicPath(item.id, item.lang)
       : `/guides/${this.escapeHtml(item.id)}/${item.lang}/`;

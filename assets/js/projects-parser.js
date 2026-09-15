@@ -142,7 +142,7 @@ class ProjectsParser {
 
   guideShareHref(guideId) {
     const code = this.currentLang() === 'tr' ? 'TR' : 'EN';
-    // Mode-aware: CURRENT_ID (default) keeps ID hrefs; LOCALIZED uses locale slugs.
+    // Mode-aware: LOCALIZED (default) uses locale slugs; CURRENT_ID keeps ID hrefs.
     if (window.KolTiginRouter && typeof window.KolTiginRouter.guidePublicPath === 'function') {
       return window.KolTiginRouter.guidePublicPath(guideId, code);
     }

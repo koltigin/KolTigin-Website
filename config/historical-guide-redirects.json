@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "enabled": true,
+  "comment": "Live and production verified. Exact historical singular-guide aliases, separate from the 17 live localized-slug redirects. enabled=true records deployment state only.",
+  "redirects": [
+    {
+      "from": "/guide/en/optimai-cli-node-setup-guide-ubuntu-24-04-vps/",
+      "to": "/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/EN/"
+    },
+    {
+      "from": "/guide/en/optimai-cli-node-setup-guide-ubuntu-24-04-vps",
+      "to": "/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/EN/"
+    },
+    {
+      "from": "/guide/tr/optimai-cli-node-setup-guide-ubuntu-24-04-vps/",
+      "to": "/guides/optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps/TR/"
+    },
+    {
+      "from": "/guide/tr/optimai-cli-node-setup-guide-ubuntu-24-04-vps",
+      "to": "/guides/optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps/TR/"
+    },
+    {
+      "from": "/guide/en/aro-network-depin-ubuntu-vps-installation-guide/",
+      "to": "/guides/aro-network-depin-ubuntu-vps-installation-guide/EN/"
+    },
+    {
+      "from": "/guide/en/aro-network-depin-ubuntu-vps-installation-guide",
+      "to": "/guides/aro-network-depin-ubuntu-vps-installation-guide/EN/"
+    },
+    {
+      "from": "/guide/tr/aro-network-depin-ubuntu-vps-installation-guide/",
+      "to": "/guides/aro-network-depin-ubuntu-vps-kurulum-rehberi/TR/"
+    },
+    {
+      "from": "/guide/tr/aro-network-depin-ubuntu-vps-installation-guide",
+      "to": "/guides/aro-network-depin-ubuntu-vps-kurulum-rehberi/TR/"
+    }
+  ]
+}

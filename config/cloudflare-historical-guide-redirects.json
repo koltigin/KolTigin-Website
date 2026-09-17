@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "activated": true,
+  "source_manifest": "config/historical-guide-redirects.json",
+  "recommended_product": "bulk_redirects",
+  "list_name": "koltigin_historical_guides",
+  "rule_name": "koltigin_historical_guides",
+  "comment": "Declarative only. Generation does not install or activate Cloudflare configuration.",
+  "items": [
+    {
+      "source_url": "https://koltigin.xyz/guide/en/optimai-cli-node-setup-guide-ubuntu-24-04-vps/",
+      "target_url": "https://koltigin.xyz/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/EN/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/en/optimai-cli-node-setup-guide-ubuntu-24-04-vps",
+      "target_url": "https://koltigin.xyz/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/EN/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/tr/optimai-cli-node-setup-guide-ubuntu-24-04-vps/",
+      "target_url": "https://koltigin.xyz/guides/optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps/TR/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/tr/optimai-cli-node-setup-guide-ubuntu-24-04-vps",
+      "target_url": "https://koltigin.xyz/guides/optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps/TR/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/en/aro-network-depin-ubuntu-vps-installation-guide/",
+      "target_url": "https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-installation-guide/EN/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/en/aro-network-depin-ubuntu-vps-installation-guide",
+      "target_url": "https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-installation-guide/EN/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/tr/aro-network-depin-ubuntu-vps-installation-guide/",
+      "target_url": "https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-kurulum-rehberi/TR/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    },
+    {
+      "source_url": "https://koltigin.xyz/guide/tr/aro-network-depin-ubuntu-vps-installation-guide",
+      "target_url": "https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-kurulum-rehberi/TR/",
+      "status_code": 301,
+      "preserve_query_string": true,
+      "include_subdomains": false,
+      "subpath_matching": false,
+      "preserve_path_suffix": false
+    }
+  ]
+}

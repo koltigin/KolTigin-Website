@@ -13,6 +13,10 @@ Zooloji alanında doktora derecesine sahip biyolog; Web3 altyapıları, node ope
 
 ## Deneyim
 
+### PHP-Fusion Türkiye 
+**Topluluk Moderatörü & Geliştirici** | *2013–2015*
+PHP-Fusion Türkiye topluluğunda moderatörlük yaptım ve CMS ekosistemine tema ve eklentiler geliştirerek katkıda bulundum.
+
 ### Anatolian Team
 **Kurucu Ortak & Node Operatörü** | *2022 — 2026*
 

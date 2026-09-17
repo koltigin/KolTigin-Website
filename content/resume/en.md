@@ -13,6 +13,10 @@ Since 2022 I have been running node operations, writing technical documentation,
 
 ## Experience
 
+### PHP Fusion Türkiye
+**Community Moderator & Developer** | *2013 — 2015*
+Moderated the Turkish PHP-Fusion community and contributed to the CMS ecosystem by developing themes and add-ons.
+
 ### Anatolian Team
 **Co-founder & Node Operator** | *2022 — 2026*
 

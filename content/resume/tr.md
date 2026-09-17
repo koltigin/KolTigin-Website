@@ -43,15 +43,15 @@ Gann Analizi eğitimi; W.D. Gann'ın fiyat ve zaman prensiplerine dayalı teknik
 ## Eğitim
 
 ### Zooloji Doktorası
-**2020**
+*2020*
 **Araştırma Alanı** İç Sular Biyolojisi
 
 ### Zooloji Yüksek Lisansı
-**2009**
+*2009*
 **Araştırma Alanı** İç Sular Biyolojisi
 
 ### Biyoloji Lisansı
-**2005**
+*2005*
 
 ## Odak Alanları
 

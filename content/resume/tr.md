@@ -54,6 +54,9 @@ Gann Analizi eğitimi; W.D. Gann'ın fiyat ve zaman prensiplerine dayalı teknik
 **Araştırma Alanı**  
 İç Sular Biyolojisi
 
+### Biyoloji Lisansı
+**2005**
+
 ## Odak Alanları
 
 - Node Operasyonları

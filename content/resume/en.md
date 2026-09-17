@@ -59,6 +59,9 @@ Inland Waters Biology
 
 **Research Area:** Inland Waters Biology
 
+### B.Sc. in Biology
+**2005**
+
 ## Focus Areas
 
 - Node Operations

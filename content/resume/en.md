@@ -13,6 +13,10 @@ Since 2022 I have been running node operations, writing technical documentation,
 
 ## Experience
 
+### Webmaster & Digital Content Manager
+**Freelance** | *2012–2016*
+Designed, developed, and delivered websites for various clients. Created logos, web graphics, and social media visuals using Adobe Photoshop and Illustrator, while also managing content and social media accounts across platforms including Facebook and Instagram.
+
 ### PHP Fusion Türkiye
 **Community Moderator & Developer** | *2013 — 2015*
 Moderated the Turkish PHP-Fusion community and contributed to the CMS ecosystem by developing themes and add-ons.

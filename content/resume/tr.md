@@ -13,6 +13,10 @@ Zooloji alanında doktora derecesine sahip biyolog; Web3 altyapıları, node ope
 
 ## Deneyim
 
+### Webmaster & Dijital İçerik Yöneticisi
+**Freelance** | *2012–2016*
+Farklı müşteriler için web siteleri tasarladım, geliştirdim ve teslim ettim. Adobe Photoshop ve Illustrator kullanarak logo, web grafikleri ve sosyal medya görselleri hazırladım; Facebook ve Instagram başta olmak üzere sosyal medya hesaplarının içerik ve yönetim süreçlerini yürüttüm.
+
 ### PHP-Fusion Türkiye 
 **Topluluk Moderatörü & Geliştirici** | *2013–2015*
 PHP-Fusion Türkiye topluluğunda moderatörlük yaptım ve CMS ekosistemine tema ve eklentiler geliştirerek katkıda bulundum.

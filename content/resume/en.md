@@ -54,11 +54,6 @@ Inland Waters Biology
 **Research Area**  
 Inland Waters Biology
 
-### Master’s — Zoology
-*2009*
-
-**Research Area:** Inland Waters Biology
-
 ### B.Sc. in Biology
 **2005**
 

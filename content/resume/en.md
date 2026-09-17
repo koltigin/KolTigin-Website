@@ -44,17 +44,11 @@ Gann Analysis training; study of W.D. Gann’s price and time principles, with a
 
 ### Ph.D. in Zoology
 **2020**
-**Research Area**  
-Inland Waters Biology
+**Research Area** Inland Waters Biology
 
 ### M.Sc. in Zoology
 **2009**
-**Research Area**  
-Inland Waters Biology
-
-### Master’s — Zoology
-*2009*
-**Research Area:** Inland Waters Biology
+**Research Area** Inland Waters Biology
 
 ### B.Sc. in Biology
 **2005**

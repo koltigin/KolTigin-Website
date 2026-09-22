@@ -10,7 +10,9 @@ summary:
 links:
 - label: Website
   url: https://aro.network
-- label: Setup Guide
+- label:
+    en: "Setup Guide"
+    tr: "Kurulum Rehberi"
   guide: aro-network-depin-ubuntu-vps-installation-guide
 referral_url: https://dashboard.aro.network/signup?referral=9KAG
 referral_code: 9KAG

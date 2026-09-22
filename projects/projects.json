@@ -141,7 +141,10 @@
           "url": "https://aro.network"
         },
         {
-          "label": "Setup Guide",
+          "label": {
+            "en": "Setup Guide",
+            "tr": "Kurulum Rehberi"
+          },
           "guide": "aro-network-depin-ubuntu-vps-installation-guide"
         }
       ],

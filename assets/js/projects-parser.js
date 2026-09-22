@@ -323,7 +323,7 @@ class ProjectsParser {
         event.preventDefault();
         if (window.guidesParser && typeof window.guidesParser.open === 'function') {
           const parts = href.split('/').filter(Boolean);
-          window.guidesParser.open(parts[1], { lang: parts[2].toUpperCase() });
+          window.guidesParser.open(link.dataset.guide, { lang: parts[2].toUpperCase() });
         }
         return;
       }

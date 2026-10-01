@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,355 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway Troubleshooting</h1>
+<p>This guide covers common AR.IO Gateway problems and practical steps for diagnosing them.</p>
+<p>Before changing configuration, first identify whether the problem is related to:</p>
+<ul><li>Docker</li><li>the AR.IO core service</li><li>the Observer</li><li>DNS</li><li>SSL</li><li>Nginx</li><li>ArNS resolution</li><li>Solana wallet configuration</li><li>disk space</li><li>the currently running release</li></ul>
+<h2>First Checks</h2>
+<p>Start with the basic service status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~/ar-io-node
+sudo docker compose ps</code></pre></div>
+<p>Check core logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -n 100</code></pre></div>
+<p>Check Observer logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs observer -n 100</code></pre></div>
+<p>Check both continuously:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Check the public gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Check AR.IO information:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Test Arweave data retrieval:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Expected response:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1984</code></pre></div>
+<h2>Release Number Is Wrong or Contains <code>-pre</code></h2>
+<p>Check the current release:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Then check your Git branch:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~/ar-io-node
+git branch --show-current</code></pre></div>
+<p>For a normal production gateway, you should generally be on:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>main</code></pre></div>
+<p>Update repository information:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git fetch
+git status</code></pre></div>
+<p>If necessary:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git pull</code></pre></div>
+<p>Then restart the gateway according to the current AR.IO update procedure.</p>
+<p>A release containing:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>-pre</code></pre></div>
+<p>can indicate that the gateway is running a pre-release/development version rather than the intended stable release.</p>
+<h2>Gateway Appears Offline on Network Tools</h2>
+<p>A gateway may sometimes appear offline on a network dashboard even while the server itself is running.</p>
+<p>Verify independently.</p>
+<p>Check containers:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Test the public gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Test data retrieval:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Check DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short YOUR_DOMAIN</code></pre></div>
+<p>Check logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -n 200</code></pre></div>
+<p>If these tests succeed, the gateway itself may still be healthy even if an external dashboard temporarily reports otherwise.</p>
+<h2>Observer Report Says <code>report pending</code></h2>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>https://YOUR_DOMAIN/ar-io/observer/reports/current</code></pre></div>
+<p>If the response indicates:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>report pending</code></pre></div>
+<p>this can be normal while the Observer is still generating its report.</p>
+<p>Do not restart or rebuild the gateway only because a report is temporarily pending.</p>
+<p>Wait for the observation cycle to complete and check again.</p>
+<h2>Observer Shows <code>Cannot read properties of undefined</code></h2>
+<p>Some Observer checks may produce errors such as:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Cannot read properties of undefined</code></pre></div>
+<p>According to the current AR.IO troubleshooting documentation, this can occur when the Observer checks data or functionality that is not yet available.</p>
+<p>Do not immediately assume the gateway is broken because of this message alone.</p>
+<p>Check whether:</p>
+<ul><li>the gateway serves data</li><li><code>/ar-io/info</code> responds</li><li>Docker services are running</li><li>normal Observer reports are being produced</li></ul>
+<h2>Gateway Fails Observation</h2>
+<p>If other observers report failures for your gateway, first verify that the gateway is publicly reachable.</p>
+<p>Test:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Then:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Check these <code>.env</code> values carefully:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>AR_IO_WALLET=
+ARNS_ROOT_HOST=</code></pre></div>
+<p><code>AR_IO_WALLET</code> must identify the correct gateway operator.</p>
+<p><code>ARNS_ROOT_HOST</code> must match the public root hostname used by your gateway.</p>
+<p>Also verify:</p>
+<ul><li>DNS</li><li>SSL certificate</li><li>wildcard DNS</li><li>wildcard SSL</li><li>Nginx</li><li>current AR.IO release</li><li>Observer configuration</li></ul>
+<h2>Failed Epochs</h2>
+<p>If your gateway fails an epoch, use the Observer report to identify why.</p>
+<p>Start by checking whether the gateway is reachable:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Check the test transaction:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Check Observer reports:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>https://YOUR_DOMAIN/ar-io/observer/reports/current</code></pre></div>
+<p>You can also use the AR.IO Network Portal to run manual observations when available.</p>
+<p>Common reasons for failed observations include:</p>
+<ul><li>gateway unavailable</li><li>expired SSL certificate</li><li>DNS problems</li><li>incorrect ArNS configuration</li><li>slow ArNS resolution</li><li>incorrect gateway configuration</li><li>outdated node release</li></ul>
+<p>If the gateway fails checks from enough prescribed observers, it can fail the epoch and lose rewards for that epoch.</p>
+<h2><code>.env</code> Changes Are Not Reflected</h2>
+<p>If you edit:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>.env</code></pre></div>
+<p>but the gateway still uses the old values, recreate the services so the updated environment is loaded.</p>
+<p>First confirm your changes:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nano .env</code></pre></div>
+<p>Then restart using the appropriate Docker Compose procedure for the current release.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose down
+sudo docker compose up -d</code></pre></div>
+<p>If the current AR.IO release documentation specifically requires recreating or rebuilding services, follow that release&#x27;s instructions.</p>
+<p>Afterward verify:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Do not assume that editing <code>.env</code> automatically changes environment variables inside already running containers.</p>
+<h2>Gateway Does Not Start</h2>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Then:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -n 200</code></pre></div>
+<p>Look for:</p>
+<ul><li>missing environment variables</li><li>invalid wallet configuration</li><li>port conflicts</li><li>database errors</li><li>permission errors</li><li>insufficient disk space</li><li>Docker image problems</li></ul>
+<p>Try starting the services again:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Then immediately inspect the logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<h2>Nginx Returns 502 Bad Gateway</h2>
+<p>A <code>502 Bad Gateway</code> usually means Nginx is running but cannot successfully reach the AR.IO service behind it.</p>
+<p>Check Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<p>Check AR.IO containers:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~/ar-io-node
+sudo docker compose ps</code></pre></div>
+<p>Check core logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -n 200</code></pre></div>
+<p>Check whether the gateway service is listening locally:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ss -lntp | grep 3000</code></pre></div>
+<p>Check your Nginx proxy:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>proxy_pass http://localhost:3000;</code></pre></div>
+<p>Then test the Nginx configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>If valid:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl reload nginx</code></pre></div>
+<p>Do not repeatedly restart Nginx if the actual problem is that the AR.IO core container is not running.</p>
+<h2>404 or Nginx Error on the Domain</h2>
+<p>First test Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<p>Review the active configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -T</code></pre></div>
+<p>Confirm that:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>server_name YOUR_DOMAIN *.YOUR_DOMAIN;</code></pre></div>
+<p>matches the gateway domain.</p>
+<p>Also verify:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ARNS_ROOT_HOST=YOUR_DOMAIN</code></pre></div>
+<p>Check DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short YOUR_DOMAIN</code></pre></div>
+<p>and wildcard DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short test.YOUR_DOMAIN</code></pre></div>
+<h2>Domain Does Not Resolve</h2>
+<p>Check the root gateway hostname:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short YOUR_DOMAIN</code></pre></div>
+<p>It should return your server IP.</p>
+<p>Then check the wildcard:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short test.YOUR_DOMAIN</code></pre></div>
+<p>Both should resolve to the gateway server.</p>
+<p>Typical DNS configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>YOUR_DOMAIN        -&gt; SERVER_IP
+*.YOUR_DOMAIN      -&gt; SERVER_IP</code></pre></div>
+<p>If you recently changed DNS, allow time for propagation.</p>
+<p>Also check for conflicting A, AAAA or CNAME records.</p>
+<h2>Main Domain Works but ArNS Subdomains Fail</h2>
+<p>This usually points to wildcard routing rather than the gateway itself.</p>
+<p>Check wildcard DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short test.YOUR_DOMAIN</code></pre></div>
+<p>Check a known ArNS-style hostname:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://ardrive.YOUR_DOMAIN</code></pre></div>
+<p>Verify Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>server_name YOUR_DOMAIN *.YOUR_DOMAIN;</code></pre></div>
+<p>Verify:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ARNS_ROOT_HOST=YOUR_DOMAIN</code></pre></div>
+<p>Also make sure the SSL certificate covers both:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>YOUR_DOMAIN
+*.YOUR_DOMAIN</code></pre></div>
+<p>If the root gateway works but wildcard hosts do not, focus on:</p>
+<ul><li>wildcard DNS</li><li>wildcard certificate</li><li>Nginx <code>server_name</code></li><li><code>ARNS_ROOT_HOST</code></li></ul>
+<h2>Browser Shows <code>Your Connection Is Not Private</code></h2>
+<p>Check installed certificates:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Check the expiration date and the domain names included in the certificate.</p>
+<p>The certificate must cover both the gateway root host and wildcard host if you serve ArNS subdomains.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>gateway.example.com
+*.gateway.example.com</code></pre></div>
+<p>If the certificate expired, renew or obtain a new certificate and make sure Nginx points to the correct certificate files.</p>
+<p>Then:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre></div>
+<h2>Wildcard SSL Certificate Fails</h2>
+<p>Wildcard certificates normally require a DNS challenge.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certonly \
+  --manual \
+  --preferred-challenges dns \
+  -d YOUR_DOMAIN \
+  -d &#x27;*.YOUR_DOMAIN&#x27;</code></pre></div>
+<p>Certbot will request a TXT record such as:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>_acme-challenge.YOUR_DOMAIN</code></pre></div>
+<p>Check whether it has propagated:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig TXT _acme-challenge.YOUR_DOMAIN</code></pre></div>
+<p>Do not continue the Certbot challenge until the expected TXT value is publicly visible.</p>
+<p>Common causes of failure:</p>
+<ul><li>TXT record created at the wrong DNS zone</li><li>old TXT record still present</li><li>DNS propagation delay</li><li>wrong domain</li><li>wildcard hostname not included in the request</li></ul>
+<h2>Certificate Renewed but Nginx Still Uses the Old One</h2>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Then inspect the certificate paths used by Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -T | grep -E &#x27;ssl_certificate|ssl_certificate_key&#x27;</code></pre></div>
+<p>After confirming the paths:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre></div>
+<p>Then verify externally:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -Iv https://YOUR_DOMAIN</code></pre></div>
+<p>A successful certificate renewal is not enough if Nginx has not reloaded the certificate.</p>
+<h2>Nginx Configuration Changed but Nothing Happened</h2>
+<p>Always validate first:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>Then reload:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl reload nginx</code></pre></div>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<p>Reload is generally sufficient for configuration and certificate changes.</p>
+<p>A full server reboot should not normally be required.</p>
+<h2>AR.IO Header Problems</h2>
+<p>The AR.IO reverse proxy configuration should forward AR.IO-specific headers.</p>
+<p>Inside the Nginx <code>location /</code> block, verify:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>proxy_set_header X-AR-IO-Origin $http_x_ar_io_origin;
+proxy_set_header X-AR-IO-Origin-Node-Release $http_x_ar_io_origin_node_release;
+proxy_set_header X-AR-IO-Hops $http_x_ar_io_hops;</code></pre></div>
+<p>Also keep standard proxy headers such as:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</code></pre></div>
+<p>After editing:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre></div>
+<h2>Observer Does Not Start</h2>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Then:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs observer -n 200</code></pre></div>
+<p>Verify your <code>.env</code> configuration.</p>
+<p>Pay particular attention to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>RUN_OBSERVER=true
+OBSERVER_WALLET=</code></pre></div>
+<p>and the configured private key or keypair path.</p>
+<p>Depending on your configuration, verify either:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>OBSERVER_PRIVATE_KEY=</code></pre></div>
+<p>or:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>OBSERVER_KEYPAIR_PATH=</code></pre></div>
+<p>Also check the upload signer configuration if used.</p>
+<p>Never paste private keys into public support channels or screenshots.</p>
+<h2>Solana Wallet or Signing Errors</h2>
+<p>Check the Observer and core logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -n 200</code></pre></div>
+<p>Verify:</p>
+<ul><li>operator public key</li><li>observer public key</li><li>observer private key/keypair</li><li>upload signing key/keypair</li><li>Solana RPC connectivity</li><li>sufficient SOL for required transactions</li></ul>
+<p>Do not expose private keys while debugging.</p>
+<h2>ArNS Names Are Slow</h2>
+<p>If normal gateway requests work but ArNS names resolve very slowly, verify:</p>
+<ul><li>gateway is on the current release</li><li><code>ARNS_ROOT_HOST</code> is correct</li><li>wildcard DNS works</li><li>DNS resolver is healthy</li><li>gateway resources are not exhausted</li><li>disk is not saturated</li></ul>
+<p>Check load:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>uptime</code></pre></div>
+<p>Memory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>free -h</code></pre></div>
+<p>Disk:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -h</code></pre></div>
+<p>Container usage:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker stats</code></pre></div>
+<p>AR.IO&#x27;s troubleshooting guidance notes that consistently high ArNS resolution times can indicate gateway configuration problems.</p>
+<h2>Out of Disk Space</h2>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -h</code></pre></div>
+<p>Also check inode usage:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -i</code></pre></div>
+<p>A filesystem may have free storage space but still fail to create new files if all inodes are exhausted.</p>
+<p>Check Docker usage:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>Find large directories:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo du -xh /var/lib/docker 2&gt;/dev/null | sort -h | tail -30</code></pre></div>
+<p>And:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo du -xh ~/ar-io-node 2&gt;/dev/null | sort -h | tail -30</code></pre></div>
+<p>Do not delete gateway databases or indexed data blindly.</p>
+<p>Before removing anything, determine exactly what is consuming the disk.</p>
+<h2>Docker Uses Too Much Space</h2>
+<p>Check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>You may remove unused Docker resources with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system prune</code></pre></div>
+<p>Read the list and warning before confirming.</p>
+<p>If the server hosts other Docker applications, make sure their unused resources are not needed.</p>
+<p>Do not use aggressive cleanup options blindly on a production gateway.</p>
+<h2>Check Server Resources</h2>
+<p>CPU/load:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>uptime</code></pre></div>
+<p>Memory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>free -h</code></pre></div>
+<p>Disk:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -h</code></pre></div>
+<p>Inodes:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -i</code></pre></div>
+<p>Docker:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker stats</code></pre></div>
+<p>These checks can quickly distinguish a configuration problem from a resource exhaustion problem.</p>
+<h2>Check Firewall</h2>
+<p>Check UFW:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ufw status</code></pre></div>
+<p>Typical public ports:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>22/tcp
+80/tcp
+443/tcp</code></pre></div>
+<p>The AR.IO service behind Nginx does not normally need to expose its internal port directly to the public internet.</p>
+<h2>Check Whether Port 80 or 443 Is Already in Use</h2>
+<p>Run:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ss -lntp | grep -E &#x27;:80|:443&#x27;</code></pre></div>
+<p>Normally Nginx should own the public HTTP/HTTPS ports.</p>
+<p>A port conflict can also affect Certbot when using standalone mode.</p>
+<p>If Certbot reports that port 80 is already in use, either:</p>
+<ul><li>use the appropriate webroot/Nginx/DNS challenge method</li><li>or intentionally stop the conflicting service for the challenge and restart it afterward</li></ul>
+<p>Do not kill processes blindly.</p>
+<h2>Useful Recovery Sequence</h2>
+<p>When the gateway suddenly stops responding, a practical diagnostic order is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~/ar-io-node
+
+sudo docker compose ps
+sudo docker compose logs core -n 100
+sudo docker compose logs observer -n 100
+
+df -h
+df -i
+
+sudo nginx -t
+sudo systemctl status nginx
+
+dig +short YOUR_DOMAIN
+dig +short test.YOUR_DOMAIN
+
+curl -I https://YOUR_DOMAIN
+curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>This sequence checks the application, storage, reverse proxy, DNS and public endpoint before you start changing configuration.</p>
+<h2>Troubleshooting Checklist</h2>
+<p>When diagnosing an AR.IO Gateway, check:</p>
+<ul><li>correct release is running</li><li><code>main</code> branch is active when appropriate</li><li>Docker containers are healthy</li><li>core service is responding</li><li>Observer is running</li><li>domain resolves correctly</li><li>wildcard DNS resolves correctly</li><li>SSL certificate is valid</li><li>wildcard certificate is valid</li><li>Nginx configuration passes</li><li>Nginx points to the correct backend</li><li>AR.IO headers are forwarded</li><li><code>ARNS_ROOT_HOST</code> is correct</li><li><code>AR_IO_WALLET</code> is correct</li><li>Solana signing configuration is correct</li><li>server has sufficient SOL where required</li><li>disk space is available</li><li>inodes are available</li><li>server resources are healthy</li><li>gateway returns the <code>1984</code> test transaction</li><li>Observer reports do not show persistent failures</li></ul>
+<p>Change one thing at a time while troubleshooting. If you make several configuration changes simultaneously, it becomes much harder to determine which change actually fixed or caused the problem.</p>
+        </div>
       </article>
 
     </div>

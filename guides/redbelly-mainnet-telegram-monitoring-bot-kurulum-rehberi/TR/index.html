@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,171 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Mainnet Telegram Monitoring Bot Kurulum Rehberi</h1>
+<p>Bu rehber, Redbelly Mainnet node&#x27;unuzu Telegram üzerinden otomatik olarak takip etmek için KolTigin Redbelly Monitor scriptinin kurulumunu açıklar.</p>
+<p>Monitor belirlediğiniz aralıklarla node durumunu kontrol eder ve Telegram&#x27;a otomatik rapor gönderir.</p>
+<p>Raporda şu bilgiler bulunur:</p>
+<ul><li>Node senkronizasyon durumu</li><li><code>redbelly.service</code> durumu</li><li>Mevcut rol: Governor / Candidate</li><li>Sonraki turdaki rol</li><li>Node block yüksekliği</li><li>Redbelly Mainnet network block yüksekliği</li><li>Block farkı</li><li>Superblock</li><li>Recovery durumu</li><li>Redbelly node sürümü</li><li>SSL sertifika durumu ve kalan süre</li><li>CPU load</li><li>RAM kullanımı</li><li>Disk kullanımı</li></ul>
+<p>Kurulum systemd service ve timer kullanır. Cron yapılandırması gerekmez.</p>
+<hr>
+<h2>1. Telegram Bot Oluşturma</h2>
+<p>Telegram&#x27;da <strong>@BotFather</strong> hesabını açın.</p>
+<p>Yeni bot oluşturmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/newbot</code></pre></div>
+<p>komutunu gönderin.</p>
+<p>BotFather sizden:</p>
+<ol><li>Bot adı</li><li>Bot kullanıcı adı</li></ol>
+<p>isteyecektir.</p>
+<p>Kullanıcı adı <code>bot</code> ile bitmelidir.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>My Redbelly Monitor
+my_redbelly_monitor_bot</code></pre></div>
+<p>Bot oluşturulduktan sonra BotFather size bir <strong>Bot Token</strong> verecektir.</p>
+<p>Örnek biçim:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre></div>
+<p>Bu token gizlidir. Başkalarıyla paylaşmayın.</p>
+<hr>
+<h2>2. Chat ID Alma</h2>
+<p>Yeni oluşturduğunuz Telegram botunu açın ve:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/start</code></pre></div>
+<p>gönderin.</p>
+<p>Ardından sunucunuzda aşağıdaki komutu çalıştırın.</p>
+<p><code>YOUR_BOT_TOKEN</code> bölümünü BotFather&#x27;ın verdiği token ile değiştirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s &quot;https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates&quot; | jq</code></pre></div>
+<p>Çıktıda aşağıdakine benzer bölümü bulun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>json</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>&quot;chat&quot;: {
+  &quot;id&quot;: 123456789,
+  &quot;type&quot;: &quot;private&quot;
+}</code></pre></div>
+<p>Buradaki:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>123456789</code></pre></div>
+<p>değeri sizin <strong>Chat ID</strong> değerinizdir.</p>
+<blockquote><p><code>result</code> boş görünüyorsa Telegram&#x27;da botunuza tekrar bir mesaj gönderin ve komutu yeniden çalıştırın.</p></blockquote>
+<hr>
+<h2>3. Redbelly Monitor&#x27;ü İndirme ve Kurma</h2>
+<p>Root kullanıcısına geçin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo -i</code></pre></div>
+<p>Aşağıdaki komutu tek parça halinde çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd /root &amp;&amp; \
+curl -fsSL https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh -o redbelly-monitor.sh &amp;&amp; \
+chmod +x redbelly-monitor.sh &amp;&amp; \
+./redbelly-monitor.sh</code></pre></div>
+<p>Installer açıldığında önce dil seçimi görüntülenir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1) Türkçe
+2) English
+
+Dil / Language [1]:</code></pre></div>
+<p>Türkçe için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1</code></pre></div>
+<p>seçin.</p>
+<p>Ardından installer aşağıdaki bilgileri isteyecektir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>🤖 Telegram Bot Token:
+💬 Telegram Chat ID:
+🌐 Redbelly node alan adı (örn. node.example.com):
+⏱ Kaç dakikada bir Telegram mesajı gönderilsin? [30]:</code></pre></div>
+<h3>Bot Token</h3>
+<p>BotFather&#x27;dan aldığınız token&#x27;ı girin.</p>
+<h3>Chat ID</h3>
+<p>Önceki adımda öğrendiğiniz Chat ID değerini girin.</p>
+<h3>Node alan adı</h3>
+<p>Redbelly node&#x27;unuz için kayıtlı alan adını girin.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>node.example.com</code></pre></div>
+<h3>Mesaj aralığı</h3>
+<p>Telegram durum raporunun kaç dakikada bir gönderileceğini belirleyin.</p>
+<p>Varsayılan:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>30</code></pre></div>
+<p>dakikadır.</p>
+<p>Değeri değiştirmek istemiyorsanız Enter tuşuna basabilirsiniz.</p>
+<hr>
+<h2>4. Telegram Bağlantı Testi</h2>
+<p>Installer önce Telegram Bot Token ve Chat ID bilgilerini test eder.</p>
+<p>Başarılı olduğunda Telegram&#x27;a şu mesaj gelir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>✅ Redbelly Telegram Monitor bağlantı testi başarılı.</code></pre></div>
+<p>Ardından installer monitor dosyasını, yapılandırmayı ve systemd timer&#x27;ı oluşturur.</p>
+<p>Kurulum tamamlandığında ilk node raporu otomatik olarak gönderilir.</p>
+<hr>
+<h2>5. Telegram Node Raporu</h2>
+<p>Başarılı kurulumdan sonra Telegram&#x27;da buna benzer bir rapor görürsünüz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>🧾 Redbelly Mainnet Node
+
+📊 Durum: ✅ Senkronize
+⚙️ Servis: ✅ Active
+🏛 Rol: ⚪ Candidate
+🔄 Sonraki Tur: ⚪ Candidate
+📦 Node Bloğu: ...
+🌐 Network Bloğu: ...
+📉 Fark: ...
+🔷 Superblock: ...
+♻️ Recovery: ✅ Complete
+🧩 Version: ...
+🔐 Sertifika: ✅ Geçerli
+🕒 Zaman: ...
+
+💻 Sunucu
+🧠 CPU Load: ...
+🗂 RAM: ...
+💽 Disk: ...</code></pre></div>
+<h3>Governor / Candidate</h3>
+<p><code>Rol</code>, node&#x27;un mevcut Redbelly reconfiguration turundaki durumunu gösterir.</p>
+<p><code>Sonraki Tur</code>, loglarda bildirilen bir sonraki turdaki durumunu gösterir.</p>
+<hr>
+<h2>6. Timer Durumunu Kontrol Etme</h2>
+<p>Monitor systemd timer ile otomatik çalışır.</p>
+<p>Timer durumunu görmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status redbelly-telegram-monitor.timer</code></pre></div>
+<p>Bir sonraki çalışma zamanını görmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl list-timers redbelly-telegram-monitor.timer</code></pre></div>
+<p>Timer&#x27;ın <code>active</code> olması gerekir.</p>
+<hr>
+<h2>7. Manuel Rapor Gönderme</h2>
+<p>Planlanan zamanı beklemeden Telegram&#x27;a yeni bir rapor göndermek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start redbelly-telegram-monitor.service</code></pre></div>
+<p>Logları kontrol etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u redbelly-telegram-monitor.service -n 50 --no-pager</code></pre></div>
+<hr>
+<h2>8. Monitor Dosyaları</h2>
+<p>Kurulum aşağıdaki dosyaları oluşturur:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/usr/local/bin/redbelly-telegram-monitor
+/etc/redbelly-telegram-monitor.conf
+/etc/systemd/system/redbelly-telegram-monitor.service
+/etc/systemd/system/redbelly-telegram-monitor.timer</code></pre></div>
+<p>Telegram Bot Token yapılandırma dosyasında saklandığı için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/etc/redbelly-telegram-monitor.conf</code></pre></div>
+<p>dosyasını paylaşmayın.</p>
+<hr>
+<h2>9. Monitor&#x27;ü Kaldırma</h2>
+<p>Monitor&#x27;ü kaldırmak için installer dosyasının bulunduğu dizinde:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ./redbelly-monitor.sh --uninstall</code></pre></div>
+<p>komutunu çalıştırın.</p>
+<p>Installer:</p>
+<ul><li>systemd timer&#x27;ı durdurur</li><li>monitor service&#x27;ini kaldırır</li><li>monitor dosyasını kaldırır</li><li>yapılandırma dosyasını kaldırır</li></ul>
+<p>Redbelly node veya blockchain verileri silinmez.</p>
+<hr>
+<h2>10. Script&#x27;i Güncelleme</h2>
+<p>KolTigin üzerinde yeni bir <code>redbelly-monitor.sh</code> sürümü yayınlandığında installer&#x27;ı yeniden indirmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd /root
+curl -fsSL https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh -o redbelly-monitor.sh
+chmod +x redbelly-monitor.sh</code></pre></div>
+<p>Ardından installer yeniden çalıştırılabilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ./redbelly-monitor.sh</code></pre></div>
+<hr>
+<h2>Hızlı Komutlar</h2>
+<p>Timer durumu:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status redbelly-telegram-monitor.timer</code></pre></div>
+<p>Bir sonraki çalışma:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl list-timers redbelly-telegram-monitor.timer</code></pre></div>
+<p>Manuel rapor:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start redbelly-telegram-monitor.service</code></pre></div>
+<p>Monitor logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u redbelly-telegram-monitor.service -n 50 --no-pager</code></pre></div>
+<p>Kaldırma:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ./redbelly-monitor.sh --uninstall</code></pre></div>
+<hr>
+<p><strong>Download</strong></p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh</code></pre></div>
+        </div>
       </article>
 
     </div>

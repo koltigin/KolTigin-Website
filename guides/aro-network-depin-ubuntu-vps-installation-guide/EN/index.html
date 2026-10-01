@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,236 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>ARO Network DePIN — Ubuntu / VPS Installation Guide</h1>
+<blockquote><p>Community installation guide for Ubuntu-based computers and VPS servers.</p></blockquote>
+<p>ARO Network is a DePIN project designed around contributing available network and computing resources to decentralized infrastructure.</p>
+<p>This guide covers installing an ARO Server Node on an Ubuntu-based computer or VPS, enabling the required services, obtaining the Device SN from the Web Console, and adding the node to the ARO Dashboard.</p>
+<h2>Registration and Community</h2>
+<p>You can register for ARO Network using the referral link below:</p>
+<ul><li>Sign up: <a href="https://dashboard.aro.network/signup?referral=9KAG" target="_blank" rel="noopener noreferrer">https://dashboard.aro.network/signup?referral=9KAG</a></li><li>Referral Code: <code>9KAG</code></li><li>Discord: <a href="https://discord.gg/aronetwork" target="_blank" rel="noopener noreferrer">https://discord.gg/aronetwork</a></li></ul>
+<h2>Platform Notes</h2>
+<ul><li>ARO can be installed on Android devices.</li><li>It is not recommended for Solana Seeker.</li><li>The macOS version is still in testing, so I do not currently recommend running it on a Mac.</li><li>It can be run on Ubuntu-based physical computers.</li><li>It can also be run as a Server Node on an Ubuntu-based VPS.</li></ul>
+<blockquote><p><strong>Important:</strong> Run the installation commands one by one. Each line is a separate command.</p></blockquote>
+<hr>
+<h2>1. Download the ARO Installation Package</h2>
+<p>First, switch to the <code>/root</code> directory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd /root</code></pre></div>
+<p>Download the ARO Network Debian installation package from the official download URL:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>wget https://download.aro.network/files/packages/linux/ARO_Desktop_latest_debian.deb</code></pre></div>
+<p>Verify that the package was downloaded:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ls -lh /root/ARO_Desktop_latest_debian.deb</code></pre></div>
+<p>Set the appropriate read permissions on the file:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod 644 /root/ARO_Desktop_latest_debian.deb</code></pre></div>
+<hr>
+<h2>2. Install the ARO Package</h2>
+<p>Install the ARO package:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dpkg -i /root/ARO_Desktop_latest_debian.deb</code></pre></div>
+<p>If the installation reports missing dependencies, install them with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>apt -f install -y</code></pre></div>
+<hr>
+<h2>3. Verify the Installation</h2>
+<p>Verify that the ARO package was successfully installed:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dpkg -l | grep -i &#x27;^ii  aro&#x27;</code></pre></div>
+<p>A successful installation should show output similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ii  aro  1.0.0  all  ARO Agent</code></pre></div>
+<blockquote><p>The package version may change over time, so the version number may be different from the example above.</p></blockquote>
+<hr>
+<h2>4. Set Executable Permissions</h2>
+<p>Set the required executable permissions for the ARO binaries and scripts.</p>
+<p>Run the commands one by one:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/agent/agent</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/agent/updater</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/agent/agent_before.sh</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/rpc/frpc</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/rpc/rpc_start.sh</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/wx-data/.lotso/start.sh</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x /opt/src/wx-data/.lotso/lotso</code></pre></div>
+<hr>
+<h2>5. Copy the Service Files to the systemd Directory</h2>
+<p>Copy the ARO service files to the systemd service directory.</p>
+<p>Run the commands one by one:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cp /opt/src/agent/agent.service /etc/systemd/system/</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cp /opt/src/agent/updater.service /etc/systemd/system/</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cp /opt/src/rpc/rpc.service /etc/systemd/system/</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cp /opt/src/wx-data/lotso.service /etc/systemd/system/</code></pre></div>
+<hr>
+<h2>6. Reload the systemd Configuration</h2>
+<p>Reload systemd so that it detects the newly copied service files:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl daemon-reload</code></pre></div>
+<hr>
+<h2>7. Enable the Services at Boot</h2>
+<p>Enable the ARO services so that they start automatically after the server or computer reboots.</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl enable lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl enable updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl enable rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl enable agent.service</code></pre></div>
+<hr>
+<h2>8. Start the ARO Services</h2>
+<p>Start each service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start agent.service</code></pre></div>
+<hr>
+<h2>9. Check the Service Status</h2>
+<p>Verify that all four ARO services are running:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status lotso.service --no-pager</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status rpc.service --no-pager</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status updater.service --no-pager</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status agent.service --no-pager</code></pre></div>
+<p>A running service should show a status similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Active: active (running)</code></pre></div>
+<hr>
+<h2>10. Check the RPC Connection</h2>
+<p>View the latest RPC service logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u rpc.service -n 30 --no-pager -l</code></pre></div>
+<p>A healthy connection may show entries similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>login to server success
+proxy added
+start proxy success</code></pre></div>
+<p>These messages indicate that the RPC connection and proxy have been successfully started.</p>
+<hr>
+<h2>11. Open the Web Console Port</h2>
+<p>The ARO Web Console is accessible through TCP port <code>40001</code>.</p>
+<p>If UFW is enabled and this port is not already open:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ufw allow 40001/tcp</code></pre></div>
+<p>Check the firewall status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ufw status</code></pre></div>
+<p>Verify that access to <code>40001/tcp</code> is allowed.</p>
+<blockquote><p>If your VPS provider also uses an external firewall or security group, you may also need to allow <code>40001/tcp</code> from the provider&#x27;s control panel.</p></blockquote>
+<hr>
+<h2>12. Open the ARO Web Console</h2>
+<p>From a web browser on your computer, open:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>http://VPS_IP:40001</code></pre></div>
+<p>Replace <code>VPS_IP</code> with the actual public IP address of the server running the ARO node.</p>
+<p>Example format:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>http://203.0.113.10:40001</code></pre></div>
+<p>The Web Console should display information about the device and node.</p>
+<hr>
+<h2>13. Obtain the Device SN</h2>
+<p>On the Web Console home page, locate:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Device SN</code></pre></div>
+<p>Copy this value.</p>
+<p>Example Device SN:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>OLKN4Y76W578V19W</code></pre></div>
+<p>This value will be used in the next step to add the server to the ARO Dashboard.</p>
+<hr>
+<h2>14. Make Sure You Use the Correct Serial Number</h2>
+<p>This step is important.</p>
+<p>The serial number that must be entered in the ARO Dashboard is the <strong><code>Device SN</code> displayed in the Web Console</strong>.</p>
+<p>The system may also contain the following file:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/enreach/x86_sn</code></pre></div>
+<p>The value stored in this file may begin with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>STWL...</code></pre></div>
+<p>This value must <strong>not</strong> be used for ARO Dashboard node registration.</p>
+<p>Always use the:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Device SN</code></pre></div>
+<p>displayed in the Web Console.</p>
+<hr>
+<h2>15. Add the Node to the ARO Dashboard</h2>
+<p>Sign in to the ARO Dashboard.</p>
+<p>Then:</p>
+<ol><li>Click <code>Add New Node</code>.</li><li>Select <code>Server</code> as the node type.</li><li>Enter the <code>Device SN</code> copied from the Web Console.</li><li>Click <code>Continue</code>.</li><li>If <code>Location</code> is automatically detected correctly on the final screen, leave it unchanged.</li><li>Click <code>Add</code> to add the node to your account.</li></ol>
+<p>After the node has been successfully added, it should appear in your ARO Dashboard.</p>
+<hr>
+<h2>16. Check the General Logs</h2>
+<p>You can inspect the latest logs for each ARO service separately.</p>
+<p>Agent:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u agent.service -n 50 --no-pager -l</code></pre></div>
+<p>RPC:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u rpc.service -n 50 --no-pager -l</code></pre></div>
+<p>Updater:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u updater.service -n 50 --no-pager -l</code></pre></div>
+<p>Lotso:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u lotso.service -n 50 --no-pager -l</code></pre></div>
+<p>If you experience a problem with one of the services, its journal is one of the first places to check.</p>
+<hr>
+<h2>17. Follow the Live Logs</h2>
+<p>To follow the Agent service logs in real time:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u agent.service -f</code></pre></div>
+<p>Exit the live log view with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Ctrl+C</code></pre></div>
+<p><code>Ctrl+C</code> only stops the live log display. It does not stop the ARO service.</p>
+<hr>
+<h2>18. Perform a Quick Health Check</h2>
+<p>Check whether all ARO services are active:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active agent.service</code></pre></div>
+<p>The expected result from all four commands is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>active</code></pre></div>
+<hr>
+<h2>19. Check the Auto-Sleep Warning</h2>
+<p>ARO may display the following warning:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Warning: Host machine OS has inappropriate auto-sleep settings.</code></pre></div>
+<p>This warning is particularly relevant when running the node on a physical computer using Windows, macOS, or Ubuntu Desktop.</p>
+<p>If the computer enters sleep mode, the ARO node may stop running. Therefore, automatic sleep should be disabled when running the node on a physical computer.</p>
+<p>VPS servers normally do not use system sleep.</p>
+<p>If you see this warning on a VPS, first verify that all ARO services are running:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active agent.service</code></pre></div>
+<p>If all four commands return:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>active</code></pre></div>
+<p>the ARO services are running.</p>
+<hr>
+<h2>20. Restart the ARO Services</h2>
+<p>If you experience a problem with the node or one of its services, restart the ARO services:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl restart lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl restart updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl restart rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl restart agent.service</code></pre></div>
+<p>Then check their status again:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active agent.service</code></pre></div>
+<hr>
+<h2>21. Troubleshooting and Final Verification</h2>
+<p>Check the latest detailed Agent logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u agent.service -n 100 --no-pager -l</code></pre></div>
+<p>RPC logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u rpc.service -n 100 --no-pager -l</code></pre></div>
+<p>Updater logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u updater.service -n 100 --no-pager -l</code></pre></div>
+<p>Lotso logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u lotso.service -n 100 --no-pager -l</code></pre></div>
+<p>At the end of the installation, verify all four services:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-active lotso.service
+systemctl is-active rpc.service
+systemctl is-active updater.service
+systemctl is-active agent.service</code></pre></div>
+<p>Expected result:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>active
+active
+active
+active</code></pre></div>
+<p>Perform a final RPC check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u rpc.service -n 30 --no-pager -l</code></pre></div>
+<p>Verify that the Web Console is accessible:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>http://VPS_IP:40001</code></pre></div>
+<p>Finally, confirm that the node is registered and online in the ARO Dashboard.</p>
+<hr>
+<h2>Installation Summary</h2>
+<p>After the installation is complete, the following four services should be running:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>lotso.service
+rpc.service
+updater.service
+agent.service</code></pre></div>
+<p>Web Console:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>http://VPS_IP:40001</code></pre></div>
+<p>Serial number to use for Dashboard registration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Web Console → Device SN</code></pre></div>
+<p>Value that must <strong>not</strong> be used for Dashboard registration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/enreach/x86_sn → STWL...</code></pre></div>
+<hr>
+<h2>Community Guide Notice</h2>
+<p>This is a community-maintained guide and is not official ARO Network documentation.</p>
+<p>If ARO Network changes the package version, file paths, service names, or installation method, some commands in this guide may need to be updated.</p>
+        </div>
       </article>
 
     </div>

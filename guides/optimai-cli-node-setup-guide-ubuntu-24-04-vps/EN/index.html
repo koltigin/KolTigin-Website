@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,195 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS</h1>
+<p>There are several ways to participate in the OptimAI Network.</p>
+<ul><li><strong>Lite Node:</strong> Can run in supported Chromium-based browsers such as Chrome, Brave, and Opera.</li><li><strong>Telegram Node:</strong> Can run through the Telegram Mini App.</li><li><strong>Core Node Desktop:</strong> Available for Windows, macOS, and Ubuntu Linux.</li><li><strong>Core Node CLI:</strong> Available for Windows, macOS, Ubuntu Linux, and servers.</li><li><strong>Edge Node:</strong> Available for iOS and Android devices.</li></ul>
+<p>You can run nodes on multiple supported devices using the same OptimAI account.</p>
+<p>This guide is intended for users who want to run an <strong>OptimAI Core CLI Node on an Ubuntu 24.04 VPS or server</strong>.</p>
+<blockquote><p>[!IMPORTANT] <strong>OptimAI CLI authentication is designed to expire every 2 weeks (14 days).</strong>  When the authentication expires, the node will stop running. To keep the node running, you need to <strong>manually log in to your OptimAI account again and restart the node</strong>.  You can find the re-authentication and restart instructions in the <strong>Troubleshooting</strong> section of this guide.</p></blockquote>
+<hr>
+<h2>System Requirements</h2>
+<ul><li>Ubuntu 22.04 or later</li><li>At least 4 GB RAM</li><li>At least 2 CPU cores</li><li>At least 15 GB of free disk space</li><li>Active internet connection</li><li>Docker</li><li>OptimAI account</li></ul>
+<hr>
+<h2>1. Check Docker</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>docker --version</code></pre></div>
+<p>If the Docker version is displayed, continue to <strong>2. Install OptimAI CLI</strong>.</p>
+<h3>If Docker Is Not Installed</h3>
+<p>Install Docker:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -fsSL https://get.docker.com | sh</code></pre></div>
+<p>Start Docker and enable it to start automatically at boot:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl enable --now docker</code></pre></div>
+<p>Add your user to the Docker group:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo usermod -aG docker $USER</code></pre></div>
+<p>Activate the new group permissions:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>newgrp docker</code></pre></div>
+<p>Check Docker:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>docker ps</code></pre></div>
+<hr>
+<h2>2. Install OptimAI CLI</h2>
+<p>Download the OptimAI CLI:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -L https://cli-node.optimai.network/optimai_cli_ubuntu -o optimai-cli</code></pre></div>
+<p>Make it executable:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x optimai-cli</code></pre></div>
+<p>Move the CLI to <code>/usr/local/bin</code>:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo mv optimai-cli /usr/local/bin/optimai-cli</code></pre></div>
+<p>Verify the installation:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli --version</code></pre></div>
+<hr>
+<h2>3. Sign In to Your OptimAI Account</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli auth login</code></pre></div>
+<ul><li>Open the URL displayed in the terminal.</li><li>Sign in to your OptimAI account.</li><li>If the browser redirects to a localhost address, copy the <strong>complete URL</strong> from the address bar.</li><li>Paste the URL into the terminal.</li></ul>
+<p>Check your authentication status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli auth status</code></pre></div>
+<hr>
+<h2>4. Start the Node for the First Time</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli node start</code></pre></div>
+<p>A successful startup may show logs similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Docker daemon is available
+Container created and started
+Docker container is healthy
+Node is running normally. Connected to server, ready for tasks.</code></pre></div>
+<p>When a task is assigned, you may see logs similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Assignments fetched: total=1
+Successfully crawled ...
+assignment submitted successfully</code></pre></div>
+<p><code>Assignments fetched: total=0</code> is not an error. It means there is no task assigned to the node at that moment.</p>
+<hr>
+<h2>5. Run the Node in the Background — systemd</h2>
+<p>To make the OptimAI node start automatically after a VPS reboot, create a systemd service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nano /etc/systemd/system/optimai.service</code></pre></div>
+<p>Add:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>ini</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>[Unit]
+Description=OptimAI CLI Node
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Environment=HOME=/root
+ExecStart=/usr/local/bin/optimai-cli node start
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target</code></pre></div>
+<p>Save and exit.</p>
+<hr>
+<h2>6. Enable the Service</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl daemon-reload
+sudo systemctl enable optimai.service
+sudo systemctl start optimai.service</code></pre></div>
+<hr>
+<h2>7. Check Node Status</h2>
+<p>Check the service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status optimai.service --no-pager</code></pre></div>
+<p>View the latest logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u optimai.service -n 40 --no-pager -l</code></pre></div>
+<p>Check the Docker container:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>docker ps</code></pre></div>
+<p>Verify that the service will start automatically after reboot:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl is-enabled optimai.service</code></pre></div>
+<p>Expected output:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>enabled</code></pre></div>
+<hr>
+<h2>8. Follow Live Logs</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u optimai.service -f</code></pre></div>
+<p>Exit with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Ctrl+C</code></pre></div>
+<hr>
+<h2>9. Restart the Node</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl restart optimai.service</code></pre></div>
+<hr>
+<h2>10. Rename the Node</h2>
+<p>To give the node a recognizable name:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli node device rename NODE_NAME</code></pre></div>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli node device rename VPS-01</code></pre></div>
+<p>Using different names makes it easier to identify nodes when running OptimAI on multiple devices.</p>
+<hr>
+<h2>11. Check Reward Balance</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli rewards balance</code></pre></div>
+<hr>
+<h2>12. Update OptimAI CLI</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli update</code></pre></div>
+<hr>
+<h2>13. Running OptimAI on Multiple Devices</h2>
+<p>You can run nodes on multiple supported devices using the same OptimAI account.</p>
+<p>For example:</p>
+<ul><li>Core Node Desktop on macOS</li><li>Core Node Desktop on Ubuntu</li><li>Core Node Desktop on Windows</li><li>Core Node CLI on a VPS</li><li>Edge Node on a mobile device</li></ul>
+<p>Nodes can also run on different devices sharing the same public IP. Each device should comply with OptimAI&#x27;s current usage and reward rules.</p>
+<hr>
+<h2>14. Other OptimAI Node Options</h2>
+<p>A VPS is not required to participate in OptimAI.</p>
+<h3>Core Node Desktop</h3>
+<p>Available for:</p>
+<ul><li>Windows</li><li>macOS</li><li>Ubuntu Linux</li></ul>
+<h3>Lite Node</h3>
+<p>Can run through supported browsers such as:</p>
+<ul><li>Chrome</li><li>Brave</li><li>Opera</li></ul>
+<h3>Telegram Node</h3>
+<p>Can run through the Telegram Mini App:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>@OptimAI_Node_Bot</code></pre></div>
+<h3>Edge Node</h3>
+<p>Available for:</p>
+<ul><li>iOS — App Store</li><li>Android — Google Play</li></ul>
+<hr>
+<h2>15. Useful Commands</h2>
+<p>Start the node:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli node start</code></pre></div>
+<p>Check node status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli node status</code></pre></div>
+<p>Check reward balance:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli rewards balance</code></pre></div>
+<p>Update the CLI:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli update</code></pre></div>
+<p>Restart the service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl restart optimai.service</code></pre></div>
+<p>Check service status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status optimai.service --no-pager</code></pre></div>
+<p>Follow live logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u optimai.service -f</code></pre></div>
+<p>Check the Docker container:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>docker ps</code></pre></div>
+<hr>
+<h2>Referral Link</h2>
+<p>If you want to create an OptimAI account, you can use the referral link below:</p>
+<p><a href="https://node.optimai.network/register?ref=18ADBAE8" target="_blank" rel="noopener noreferrer">https://node.optimai.network/register?ref=18ADBAE8</a></p>
+<p><strong>Referral code:</strong> <code>18ADBAE8</code></p>
+<hr>
+<h2>Notes</h2>
+<ul><li><code>Assignments fetched: total=0</code> is not an error. It means there is no task available at that moment.</li><li>The node will process new tasks when they become available.</li><li>systemd allows the OptimAI node to start automatically after the VPS reboots.</li><li>Multiple supported devices can run under the same OptimAI account.</li></ul>
+<h1>Troubleshooting</h1>
+<h2>Node Goes Offline / <code>Not authenticated</code> Error</h2>
+<p>OptimAI CLI authentication is <strong>designed to expire every 2 weeks (14 days)</strong>.</p>
+<p>When the authentication expires, the node may stop running and you may see errors such as:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Not authenticated. Run `optimai-cli auth login` first.
+Authentication lost. Stopping node...</code></pre></div>
+<p>This is expected and intended behavior. To keep the node running, you need to manually authenticate with OptimAI again and restart the node.</p>
+<h3>1. Stop the OptimAI Service</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl stop optimai</code></pre></div>
+<h3>2. Start the Login Process Again</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>optimai-cli auth login --paste</code></pre></div>
+<h3>3. Sign In Using Your Browser</h3>
+<p>Open the OptimAI login URL displayed in the terminal using a browser on your local computer.</p>
+<p>After signing in to your OptimAI account, use <strong>Copy code</strong> to copy the authentication code.</p>
+<h3>4. Paste the Code Into the VPS Terminal</h3>
+<p>Paste the copied code at the following prompt:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Paste the redirected URL (or just the `code` parameter):</code></pre></div>
+<p>Press Enter.</p>
+<p>After successful authentication, you should see:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Signed in successfully.</code></pre></div>
+<h3>5. Start the OptimAI Service</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start optimai</code></pre></div>
+<h3>6. Verify the Service</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status optimai --no-pager -l</code></pre></div>
+<p>A healthy service should show:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Active: active (running)</code></pre></div>
+<blockquote><p><strong>Important:</strong> The OptimAI support team has confirmed that CLI authentication is <strong>designed to expire every 2 weeks</strong> and that you need to <strong>manually log in again and restart the node</strong> to keep it running. Therefore, you may need to repeat this process approximately every 14 days.</p></blockquote>
+        </div>
       </article>
 
     </div>

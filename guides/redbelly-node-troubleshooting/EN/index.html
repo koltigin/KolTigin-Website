@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,199 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Node Troubleshooting</h1>
+<p>This guide covers solutions to some common issues that may occur while operating a Redbelly Mainnet node.</p>
+<p>These procedures are intended for node maintenance and troubleshooting rather than the initial installation. Replace the example domain names in the commands with your own node information.</p>
+<hr>
+<h2>1. Changing the Redbelly Node Domain / Hostname</h2>
+<p>Changing the domain or hostname of a running Redbelly node requires more than simply updating the DNS record.</p>
+<p>A DNS record and TLS certificate must be prepared for the new hostname, the certificate paths used by the Redbelly service must be updated, and the hostname change should be reported to Redbelly Support.</p>
+<p>The following example will be used throughout this section:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Old domain: old.example.com
+New domain: redbelly.example.com</code></pre></div>
+<h3>1.1. Notify Redbelly Support</h3>
+<p>Before changing the hostname, notify Redbelly Support and provide your node information together with the new hostname.</p>
+<p>Have the following information ready:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Node ID
+Old hostname
+New hostname</code></pre></div>
+<p>Do not skip this step because the old hostname may still be registered in Redbelly&#x27;s node registration or monitoring systems.</p>
+<h3>1.2. Create the New DNS Record</h3>
+<p>Create an <strong>A record</strong> with your DNS provider that points the new hostname to the existing IP address of your node server.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Type: A
+Name: redbelly
+Value: YOUR_SERVER_IP</code></pre></div>
+<p>Verify the DNS record:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nslookup redbelly.example.com</code></pre></div>
+<p>Make sure the returned IP address matches your node server.</p>
+<h3>1.3. Generate a New TLS Certificate</h3>
+<p>Generate a Let&#x27;s Encrypt certificate for the new hostname:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certonly --standalone -d redbelly.example.com</code></pre></div>
+<p>After Certbot completes successfully, the certificates are normally available under:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/letsencrypt/live/redbelly.example.com/</code></pre></div>
+<p>Check the files:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ls -l /etc/letsencrypt/live/redbelly.example.com/</code></pre></div>
+<h3>1.4. Create the Redbelly Certificate Directory</h3>
+<p>Create a certificate directory for the new domain:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo mkdir -p /etc/redbelly/certs/redbelly.example.com</code></pre></div>
+<p>Copy the new certificates to the Redbelly certificate directory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo cp /etc/letsencrypt/live/redbelly.example.com/fullchain.pem \
+/etc/redbelly/certs/redbelly.example.com/fullchain.pem</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo cp /etc/letsencrypt/live/redbelly.example.com/privkey.pem \
+/etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<h3>1.5. Set Certificate Ownership and Permissions</h3>
+<p>The Redbelly service runs as <code>rbnuser</code>, so the certificate files must be readable by this user.</p>
+<p>Set the ownership:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<p>Set the permissions:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo chmod 644 /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chmod 600 /etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<p>Verify the result:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ls -l /etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Expected permissions:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>-rw-r--r-- rbnuser rbnuser ... fullchain.pem
+-rw------- rbnuser rbnuser ... privkey.pem</code></pre></div>
+<blockquote><p><strong>Important:</strong> If the certificate files remain owned by <code>root:root</code>, the Redbelly service may be unable to read the private key and may fail to start with a <code>permission denied</code> error.</p></blockquote>
+<h3>1.6. Update the Redbelly Service Configuration</h3>
+<p>First inspect the current service configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl cat redbelly.service</code></pre></div>
+<p>After identifying the service file location, open it with your preferred editor.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nano /etc/systemd/system/redbelly.service</code></pre></div>
+<p>Replace the old domain in the TLS certificate and private key paths.</p>
+<p>Old:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>--tls.cert=/etc/redbelly/certs/old.example.com/fullchain.pem
+--tls.key=/etc/redbelly/certs/old.example.com/privkey.pem</code></pre></div>
+<p>New:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>--tls.cert=/etc/redbelly/certs/redbelly.example.com/fullchain.pem
+--tls.key=/etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<p>If the old hostname appears elsewhere in the service configuration, replace it with the new hostname as required.</p>
+<p>Save the file.</p>
+<h3>1.7. Reload systemd and Restart Redbelly</h3>
+<p>Reload the systemd configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl daemon-reload</code></pre></div>
+<p>Restart the Redbelly service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl restart redbelly.service</code></pre></div>
+<p>Check the service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>The expected status is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Active: active (running)</code></pre></div>
+<h3>1.8. Verify the New Certificate Externally</h3>
+<p>Verify the certificate being served through the Redbelly Recovery port:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>echo | openssl s_client \
+-servername redbelly.example.com \
+-connect redbelly.example.com:1111 2&gt;/dev/null \
+| openssl x509 -noout -subject -issuer -dates</code></pre></div>
+<p>Check that the:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>subject=</code></pre></div>
+<p>field contains the new hostname and that the certificate validity dates are correct.</p>
+<p>This verifies not only that the certificate exists on the server, but also that the Redbelly service is actually presenting the new certificate externally.</p>
+<h3>1.9. Confirm the Change with Redbelly Support</h3>
+<p>After completing the hostname migration, notify Redbelly Support with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Node ID
+Old hostname
+New hostname</code></pre></div>
+<p>Ask them to confirm that the node is correctly recognized under the new hostname by Redbelly&#x27;s monitoring/network systems.</p>
+<hr>
+<h2>2. SSL Certificate Is Not Renewing Automatically</h2>
+<p>When a Redbelly node is configured with Let&#x27;s Encrypt / Certbot, certificate renewals can be handled automatically.</p>
+<p>However, if Certbot is configured to use the <code>standalone</code> authenticator, TCP port <code>80</code> must be available during certificate validation.</p>
+<p>If another service is already using port <code>80</code>, automatic certificate renewal may fail.</p>
+<h3>2.1. Check the Certbot Configuration</h3>
+<p>List the existing certificates:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Check the renewal configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo grep -R &quot;authenticator&quot; /etc/letsencrypt/renewal/</code></pre></div>
+<p>If you see:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>authenticator = standalone</code></pre></div>
+<p>Certbot needs to temporarily listen on port <code>80</code> during renewal.</p>
+<h3>2.2. Test Automatic Renewal</h3>
+<p>Test the renewal process without replacing the live certificate:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot renew --dry-run</code></pre></div>
+<p>If the test succeeds, the renewal configuration is working correctly.</p>
+<p>If it fails because port <code>80</code> is already in use, continue with the next step.</p>
+<h3>2.3. Check Which Service Is Using Port 80</h3>
+<p>Run:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ss -ltnp | grep &#x27;:80 &#x27;</code></pre></div>
+<p>For example, if the output shows:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nginx</code></pre></div>
+<p>then Nginx is currently using port <code>80</code>.</p>
+<blockquote><p>Before stopping Nginx or another service using port <code>80</code>, make sure it is not required by another website, reverse proxy, or application running on the server.</p></blockquote>
+<h3>2.4. If an Unnecessary Nginx Service Is Using Port 80</h3>
+<p>If Nginx is not required for another service on the server, temporarily stop it:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl stop nginx</code></pre></div>
+<p>Check port <code>80</code> again:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ss -ltnp | grep &#x27;:80 &#x27;</code></pre></div>
+<p>If no output is returned, port <code>80</code> is now available.</p>
+<p>Run the Certbot renewal test again:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot renew --dry-run</code></pre></div>
+<p>The test should now complete successfully.</p>
+<h3>2.5. Renew the Certificate Manually</h3>
+<p>If required, run the actual renewal process:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot renew</code></pre></div>
+<p>If you need to issue a certificate specifically for the node hostname:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certonly --standalone -d redbelly.example.com</code></pre></div>
+<h3>2.6. Check the Redbelly Certificate Files</h3>
+<p>Let&#x27;s Encrypt certificates are normally stored under:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/letsencrypt/live/redbelly.example.com/</code></pre></div>
+<p>The certificate files used by Redbelly may be stored under:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Check them:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ls -l /etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Make sure the ownership and permissions are:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>fullchain.pem → rbnuser:rbnuser → 644
+privkey.pem   → rbnuser:rbnuser → 600</code></pre></div>
+<p>If necessary:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/privkey.pem
+
+sudo chmod 644 /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chmod 600 /etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<h3>2.7. Check the Renewal Hook</h3>
+<p>Recent Redbelly installers may configure a renewal hook that copies renewed Let&#x27;s Encrypt certificates to the certificate directory used by Redbelly.</p>
+<p>Check the post-renewal hooks:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ls -l /etc/letsencrypt/renewal-hooks/post/</code></pre></div>
+<p>If the Redbelly hook exists, inspect it:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo cat /etc/letsencrypt/renewal-hooks/post/redbelly.sh</code></pre></div>
+<p>This mechanism runs after Certbot successfully renews the certificate.</p>
+<blockquote><p>If <code>certbot renew</code> fails before renewal because of a port <code>80</code> conflict, the renewal hook cannot run. The Certbot renewal problem must therefore be resolved first.</p></blockquote>
+<h3>2.8. Verify the Redbelly Service</h3>
+<p>After working on the certificates, restart the Redbelly service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl restart redbelly.service</code></pre></div>
+<p>Check its status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>The expected status is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>Finally, verify the certificate that the node is presenting externally:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>echo | openssl s_client \
+-servername redbelly.example.com \
+-connect redbelly.example.com:1111 2&gt;/dev/null \
+| openssl x509 -noout -subject -issuer -dates</code></pre></div>
+<p>If the hostname and validity dates correspond to the new certificate, the SSL configuration is working correctly.</p>
+<hr>
+<h2>Quick Troubleshooting Commands</h2>
+<p>Check the Redbelly service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>View detailed service logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u redbelly.service</code></pre></div>
+<p>Follow Redbelly error logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<p>Check certificate permissions:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ls -l /etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Check port <code>80</code>:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ss -ltnp | grep &#x27;:80 &#x27;</code></pre></div>
+<p>Test Certbot renewal:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot renew --dry-run</code></pre></div>
+<p>Verify the TLS certificate presented by the node:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>echo | openssl s_client \
+-servername redbelly.example.com \
+-connect redbelly.example.com:1111 2&gt;/dev/null \
+| openssl x509 -noout -subject -issuer -dates</code></pre></div>
+<p>New issues and verified solutions encountered while operating a Redbelly node can be added to this troubleshooting guide over time.</p>
+        </div>
       </article>
 
     </div>

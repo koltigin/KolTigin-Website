@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,302 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway Kurulumu</h1>
+<p>Bu rehber, Ubuntu sunucu üzerinde Docker, özel domain, SSL ve Nginx kullanarak bir AR.IO Gateway kurulumunu anlatır.</p>
+<p>AR.IO protokol katmanı Solana&#x27;ya taşındı. Gateway hâlâ Arweave verilerini sunar ve indeksler, ancak operator ve observer kimlikleri artık Solana adreslerini kullanır.</p>
+<p>Bu rehber gateway altyapısını çalışır hale getirmeye odaklanır. Gateway&#x27;i AR.IO ağına kaydetmek ve ARIO stake etmek ayrı işlemlerdir.</p>
+<h2>Sistem Gereksinimleri</h2>
+<h3>Minimum</h3>
+<ul><li>4 CPU çekirdeği</li><li>4 GB RAM</li><li>500 GB depolama</li><li>SSD önerilir</li><li>Stabil 50 Mbps internet bağlantısı</li></ul>
+<h3>Önerilen</h3>
+<ul><li>12 CPU çekirdeği</li><li>32 GB RAM</li><li>2 TB SSD</li><li>Stabil 1 Gbps internet bağlantısı</li></ul>
+<p>Uzun süre çalışacak production gateway için SSD ve yeterli boş disk alanı kullanılması önemlidir.</p>
+<h2>Sunucuyu Güncelleme</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo apt update -y &amp;&amp; sudo apt upgrade -y</code></pre></div>
+<h2>Gerekli Paketleri Kurma</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo apt install -y curl openssh-server git certbot nginx sqlite3 build-essential</code></pre></div>
+<p>SSH servisini etkinleştirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl enable ssh</code></pre></div>
+<h2>Firewall Ayarları</h2>
+<p>SSH, HTTP ve HTTPS portlarına izin verin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw enable</code></pre></div>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ufw status</code></pre></div>
+<p>UFW&#x27;yi etkinleştirirken SSH bağlantınızı engellemediğinizden emin olun.</p>
+<h2>Docker Kurulumu</h2>
+<p>Docker&#x27;ın resmi repository&#x27;sini ekleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  -o /etc/apt/keyrings/docker.asc
+
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+  &quot;deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release &amp;&amp; echo &quot;$VERSION_CODENAME&quot;) stable&quot; | \
+  sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+
+sudo apt-get update</code></pre></div>
+<p>Docker Engine ve Docker Compose&#x27;u kurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo apt-get install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin</code></pre></div>
+<p>Kurulumu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>docker --version
+docker compose version</code></pre></div>
+<h2>Node.js Kurulumu</h2>
+<p>NVM&#x27;yi kurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash</code></pre></div>
+<p>Shell&#x27;i yeniden yükleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>source ~/.bashrc</code></pre></div>
+<p>Güncel resmi AR.IO kurulum dokümanında kullanılan Node.js sürümünü kurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nvm install 20.11.1
+nvm use 20.11.1
+npm install -g yarn@1.22.22</code></pre></div>
+<p>Sürümleri kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>node -v
+npm -v
+yarn -v</code></pre></div>
+<h2>AR.IO Node Repository&#x27;sini Klonlama</h2>
+<p>Gateway&#x27;i tutacağınız dizine geçin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~</code></pre></div>
+<p>Resmi repository&#x27;yi klonlayın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git clone -b main https://github.com/ar-io/ar-io-node</code></pre></div>
+<p>Dizine girin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ar-io-node</code></pre></div>
+<p>Gateway veritabanları node verileriyle birlikte tutulur. Ayrı bir SSD veya disk kullanacaksanız gateway büyük bir index oluşturmaya başlamadan önce depolama konumunu planlayın.</p>
+<h2>Solana Cüzdanlarını Hazırlama</h2>
+<p>Güncel AR.IO protokolü Solana kimliklerini kullanır.</p>
+<p>Bir operator ve observer adresine ihtiyacınız vardır.</p>
+<p>Operator:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>AR_IO_WALLET</code></pre></div>
+<p>ile tanımlanır.</p>
+<p>Observer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>OBSERVER_WALLET</code></pre></div>
+<p>ile tanımlanır.</p>
+<p>Observer adresi gateway için benzersiz olmalıdır.</p>
+<p>Basit bir kurulumda aynı Solana keypair birden fazla gateway rolünde kullanılabilir. Daha güçlü anahtar ayrımı isteyen operatorler observer için ayrı bir keypair kullanabilir.</p>
+<p>Private key veya keypair JSON dosyalarını hiçbir zaman paylaşmayın.</p>
+<h2>Environment Dosyasını Oluşturma</h2>
+<p>AR.IO node dizininde:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nano .env</code></pre></div>
+<p>Temel yapılandırma:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>GRAPHQL_HOST=turbo-gateway.com
+GRAPHQL_PORT=443
+START_HEIGHT=1000000
+
+RUN_OBSERVER=true
+
+ARNS_ROOT_HOST=YOUR_DOMAIN
+
+AR_IO_WALLET=YOUR_SOLANA_OPERATOR_PUBLIC_KEY
+OBSERVER_WALLET=YOUR_SOLANA_OBSERVER_PUBLIC_KEY
+
+OBSERVER_PRIVATE_KEY=YOUR_OBSERVER_BASE58_PRIVATE_KEY
+SOLANA_UPLOAD_PRIVATE_KEY=YOUR_OBSERVER_BASE58_PRIVATE_KEY</code></pre></div>
+<p>Aşağıdaki alanları kendi bilgilerinizle değiştirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>YOUR_DOMAIN
+YOUR_SOLANA_OPERATOR_PUBLIC_KEY
+YOUR_SOLANA_OBSERVER_PUBLIC_KEY
+YOUR_OBSERVER_BASE58_PRIVATE_KEY</code></pre></div>
+<p>Gerçek değerleri yazarken <code>&lt; &gt;</code> işaretlerini kullanmayın.</p>
+<h3>Keypair Dosyası Kullanmak</h3>
+<p>Inline private key yerine JSON keypair kullanmak istiyorsanız gerekli dosyayı gateway&#x27;in <code>wallets</code> dizinine yerleştirin.</p>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>OBSERVER_PRIVATE_KEY=
+SOLANA_UPLOAD_PRIVATE_KEY=</code></pre></div>
+<p>satırlarını kullanmayın ve bunun yerine:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>OBSERVER_KEYPAIR_PATH=/app/wallets/YOUR_OBSERVER_KEYPAIR.json
+SOLANA_UPLOAD_KEYPAIR_PATH=/app/wallets/YOUR_OBSERVER_KEYPAIR.json</code></pre></div>
+<p>kullanın.</p>
+<p>Aynı rol için hem inline private key hem de keypair path tanımlamayın.</p>
+<h2>Cüzdan Dosyalarını Koruma</h2>
+<p>Private key içeren dosyalar dışarıdan erişilebilir olmamalıdır.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod 600 wallets/*.json</code></pre></div>
+<p>Aşağıdaki dosya ve bilgileri public Git repository&#x27;ye göndermeyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>.env
+wallets/
+private key
+seed phrase</code></pre></div>
+<h2>DNS Ayarları</h2>
+<p>Gateway için bir domaine ihtiyacınız vardır.</p>
+<p>Örnek gateway domaini:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>gateway.example.com</code></pre></div>
+<p>Gateway domainini sunucunun IP adresine yönlendiren A kaydı oluşturun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>gateway.example.com -&gt; SERVER_IP</code></pre></div>
+<p>AR.IO, ArNS isimlerinin çözümlenebilmesi için wildcard subdomain desteğine de ihtiyaç duyar.</p>
+<p>Ayrıca:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>*.gateway.example.com -&gt; SERVER_IP</code></pre></div>
+<p>kaydı oluşturun.</p>
+<p>Sonuçta:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>gateway.example.com
+*.gateway.example.com</code></pre></div>
+<p>aynı gateway sunucusuna yönlenmelidir.</p>
+<p>DNS yayılımının tamamlanmasını bekleyin.</p>
+<p>Ana domaini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short gateway.example.com</code></pre></div>
+<p>Wildcard kaydını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short test.gateway.example.com</code></pre></div>
+<p>Her ikisi de sunucunuzun IP adresini döndürmelidir.</p>
+<h2>Gateway&#x27;i Başlatma</h2>
+<p>AR.IO node dizininde:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Container&#x27;ları kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Core loglarını takip edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -f -n 100</code></pre></div>
+<p>Core ve observer loglarını birlikte takip edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Log ekranından çıkmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Ctrl+C</code></pre></div>
+<p>kullanın. Bu işlem container&#x27;ları durdurmaz.</p>
+<h2>Lokal Gateway Kontrolü</h2>
+<p>Servislerin durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Core loglarını inceleyebilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -n 100</code></pre></div>
+<p><code>ARNS_ROOT_HOST</code> tanımlandığında localhost üzerinden yapılan bazı testler, yapılandırılmış public hostname üzerinden yapılan isteklerle aynı şekilde davranmayabilir. Bu nedenle son doğrulama domain üzerinden yapılmalıdır.</p>
+<h2>SSL Sertifikası Alma</h2>
+<p>AR.IO gateway&#x27;in hem ana domain hem de wildcard ArNS subdomainleri için HTTPS desteğine ihtiyacı vardır.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>gateway.example.com
+*.gateway.example.com</code></pre></div>
+<p>için DNS challenge kullanarak wildcard sertifika alın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certonly \
+  --manual \
+  --preferred-challenges dns \
+  -d gateway.example.com \
+  -d &#x27;*.gateway.example.com&#x27;</code></pre></div>
+<p>Certbot sizden bir DNS TXT kaydı oluşturmanızı isteyecektir.</p>
+<p>DNS sağlayıcınızda istenen TXT kaydını oluşturun ve devam etmeden önce kaydın internette görünmesini bekleyin.</p>
+<p>Kontrol:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig TXT _acme-challenge.gateway.example.com</code></pre></div>
+<p>Beklenen TXT değeri görünmeden Certbot işlemine devam etmeyin.</p>
+<h3>Wildcard Sertifika Yenileme</h3>
+<p>Manual DNS yöntemiyle alınan wildcard sertifikalar genellikle otomatik olarak yenilenemez.</p>
+<p>Production gateway için DNS sağlayıcınızın API&#x27;sini kullanan desteklenen bir Certbot DNS plugin veya başka bir ACME otomasyonu tercih edilmelidir.</p>
+<p>Sertifikaları kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Gateway sertifikasının süresinin dolmasına izin vermeyin.</p>
+<h2>Nginx Yapılandırması</h2>
+<p>Nginx yapılandırmasını açın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nano /etc/nginx/sites-available/default</code></pre></div>
+<p>Aşağıdakine benzer bir yapılandırma kullanın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>server {
+    listen 80;
+    listen [::]:80;
+
+    server_name gateway.example.com *.gateway.example.com;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name gateway.example.com *.gateway.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/gateway.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gateway.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header X-AR-IO-Origin $http_x_ar_io_origin;
+        proxy_set_header X-AR-IO-Origin-Node-Release $http_x_ar_io_origin_node_release;
+        proxy_set_header X-AR-IO-Hops $http_x_ar_io_hops;
+    }
+}</code></pre></div>
+<p>Buradaki:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>gateway.example.com</code></pre></div>
+<p>değerini kendi gateway domaininizle değiştirin.</p>
+<p><code>X-AR-IO-*</code> header&#x27;ları AR.IO gateway iletişimi açısından önemlidir ve proxy yapılandırmasından çıkarılmamalıdır.</p>
+<h2>Nginx Yapılandırmasını Test Etme</h2>
+<p>Reload işleminden önce mutlaka test edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>Sonuç başarılıysa:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl reload nginx</code></pre></div>
+<p>Servisi kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<h2>HTTPS Kontrolü</h2>
+<p>Gateway&#x27;i kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://gateway.example.com</code></pre></div>
+<p>Ardından resmi AR.IO test transaction&#x27;ını deneyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://gateway.example.com/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Beklenen cevap:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1984</code></pre></div>
+<p><code>1984</code> cevabını alıyorsanız gateway domain üzerinden Arweave verisini başarıyla sunuyor demektir.</p>
+<h2>Gateway Bilgilerini Kontrol Etme</h2>
+<p>AR.IO bilgi endpoint&#x27;ini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://gateway.example.com/ar-io/info | jq</code></pre></div>
+<p>Özellikle wallet ve network bilgilerini kontrol edin.</p>
+<p>Solana geçişinden sonra gateway&#x27;in hedeflediğiniz network için doğru Solana yapılandırmasını göstermesi gerekir.</p>
+<h2>Wildcard / ArNS Kontrolü</h2>
+<p>Bilinen bir ArNS tarzı subdomain ile kontrol yapabilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://ardrive.gateway.example.com</code></pre></div>
+<p>İstek wildcard DNS kaydı ve wildcard SSL sertifikası üzerinden gateway&#x27;e ulaşmalıdır.</p>
+<p>Ana domain çalışıyor fakat subdomainler çalışmıyorsa şunları kontrol edin:</p>
+<ul><li>wildcard DNS</li><li>wildcard SSL sertifikası</li><li>Nginx <code>server_name</code></li><li><code>ARNS_ROOT_HOST</code></li><li>gateway logları</li></ul>
+<h2>Observer Kontrolü</h2>
+<p>Observer loglarını takip edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Core ve observer servislerini birlikte takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Observer sorunlarının yaygın nedenleri:</p>
+<ul><li>hatalı Solana wallet yapılandırması</li><li>eksik private key veya keypair</li><li>işlem ücretleri için yetersiz SOL</li><li>upload signer yapılandırması</li><li>Solana RPC bağlantı problemi</li><li>yanlış network yapılandırması</li></ul>
+<h2>Faydalı Komutlar</h2>
+<p>Çalışan container&#x27;ları kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Gateway&#x27;i başlatın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Gateway&#x27;i durdurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose down</code></pre></div>
+<p>Gateway&#x27;i yeniden başlatın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose restart</code></pre></div>
+<p>Core logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -f -n 100</code></pre></div>
+<p>Observer logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Nginx kontrolü:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t
+sudo systemctl status nginx</code></pre></div>
+<p>Sertifika kontrolü:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Disk kullanımı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -h</code></pre></div>
+<p>Docker disk kullanımı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system df</code></pre></div>
+<h2>Son Kontrol Listesi</h2>
+<p>Kurulumu tamamlamadan önce şunları doğrulayın:</p>
+<ul><li>Docker container&#x27;ları çalışıyor</li><li>Core servisi sağlıklı</li><li>Observer çalışıyor</li><li>Domain doğru sunucuya yönleniyor</li><li>Wildcard DNS çalışıyor</li><li>HTTPS çalışıyor</li><li>Wildcard HTTPS çalışıyor</li><li>Nginx yapılandırması geçerli</li><li>AR.IO header&#x27;ları proxy üzerinden aktarılıyor</li><li>Gateway testi <code>1984</code> döndürüyor</li><li><code>/ar-io/info</code> endpoint&#x27;i cevap veriyor</li><li>Solana wallet yapılandırması doğru</li><li>Observer için gerekli signing yapılandırması mevcut</li><li>Gerekli protokol işlemleri için cüzdanlarda yeterli SOL bulunuyor</li></ul>
+<h2>AR.IO Ağına Katılma</h2>
+<p>Bir gateway çalıştırmak ile gateway&#x27;i AR.IO Gateway Address Registry&#x27;ye kaydetmek farklı işlemlerdir.</p>
+<p>Production gateway öncelikle şu özelliklerle tamamen çalışır durumda olmalıdır:</p>
+<ul><li>özel domain</li><li>HTTPS</li><li>wildcard ArNS çözümleme</li><li>çalışan gateway istekleri</li><li>doğru Solana wallet yapılandırması</li></ul>
+<p>Network registration işlemi güncel sistemde ARIO operator stake ve Solana işlem ücretleri için SOL gerektirir.</p>
+<p>Gateway kurulumunu ve kontrollerini tamamladıktan sonra network registration işlemine geçin.</p>
+        </div>
       </article>
 
     </div>

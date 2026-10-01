@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,196 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>OptimAI CLI Node Kurulum Rehberi — Ubuntu 24.04 VPS</h1>
+<p>OptimAI Network&#x27;e farklı yöntemlerle katılabilirsiniz.</p>
+<ul><li><strong>Lite Node:</strong> Chrome, Brave ve Opera gibi desteklenen Chromium tabanlı tarayıcılarda çalıştırılabilir.</li><li><strong>Telegram Node:</strong> Telegram Mini App üzerinden kullanılabilir.</li><li><strong>Core Node Desktop:</strong> Windows, macOS ve Ubuntu Linux üzerinde çalıştırılabilir.</li><li><strong>Core Node CLI:</strong> Windows, macOS, Ubuntu Linux ve sunucularda çalıştırılabilir.</li><li><strong>Edge Node:</strong> iOS ve Android cihazlarda kullanılabilir.</li></ul>
+<p>Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabilirsiniz.</p>
+<p>Bu rehber, <strong>Ubuntu 24.04 kullanan bir VPS veya sunucuda OptimAI Core CLI Node çalıştırmak isteyenler</strong> için hazırlanmıştır.</p>
+<blockquote><p>[!IMPORTANT] <strong>OptimAI CLI authentication oturumu her 2 haftada (14 gün) bir sona erecek şekilde tasarlanmıştır.</strong>  Authentication süresi dolduğunda node çalışmayı durdurur. Node&#x27;un çalışmaya devam edebilmesi için OptimAI hesabınıza <strong>manuel olarak yeniden giriş yapmanız ve node&#x27;u yeniden başlatmanız gerekir</strong>.  Yeniden giriş ve başlatma adımlarını bu rehberin <strong>Sorunlar ve Çözümler</strong> bölümünde bulabilirsiniz.</p></blockquote>
+<hr>
+<h2>Sistem Gereksinimleri</h2>
+<ul><li>Ubuntu 22.04 veya üzeri</li><li>En az 4 GB RAM</li><li>En az 2 CPU çekirdeği</li><li>En az 15 GB boş disk alanı</li><li>Aktif internet bağlantısı</li><li>Docker</li><li>OptimAI hesabı</li></ul>
+<hr>
+<h2>1. Docker Kontrolü</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>docker --version</code></pre></div>
+<p>Docker sürümü görüntüleniyorsa <strong>2. OptimAI CLI Kurulumu</strong> bölümüne geçin.</p>
+<h3>Docker Yüklü Değilse</h3>
+<p>Docker&#x27;ı kurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -fsSL https://get.docker.com | sh</code></pre></div>
+<p>Docker&#x27;ı başlatın ve sistem açılışında otomatik çalışmasını etkinleştirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl enable --now docker</code></pre></div>
+<p>Kullanıcınızı Docker grubuna ekleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo usermod -aG docker $USER</code></pre></div>
+<p>Yeni grup yetkisini etkinleştirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>newgrp docker</code></pre></div>
+<p>Docker&#x27;ı kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>docker ps</code></pre></div>
+<hr>
+<h2>2. OptimAI CLI Kurulumu</h2>
+<p>OptimAI CLI&#x27;yi indirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -L https://cli-node.optimai.network/optimai_cli_ubuntu -o optimai-cli</code></pre></div>
+<p>Çalıştırma izni verin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x optimai-cli</code></pre></div>
+<p>CLI&#x27;yi <code>/usr/local/bin</code> dizinine taşıyın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo mv optimai-cli /usr/local/bin/optimai-cli</code></pre></div>
+<p>Kurulumu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli --version</code></pre></div>
+<hr>
+<h2>3. OptimAI Hesabına Giriş</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli auth login</code></pre></div>
+<ul><li>Terminalin verdiği URL&#x27;yi tarayıcıda açın.</li><li>OptimAI hesabınıza giriş yapın.</li><li>Tarayıcı localhost adresine yönlendirilirse adres çubuğundaki <strong>tam URL&#x27;yi</strong> kopyalayın.</li><li>URL&#x27;yi terminale yapıştırın.</li></ul>
+<p>Giriş durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli auth status</code></pre></div>
+<hr>
+<h2>4. Node&#x27;u İlk Kez Başlatma</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli node start</code></pre></div>
+<p>Başarılı çalışmada aşağıdakilere benzer loglar görebilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Docker daemon is available
+Container created and started
+Docker container is healthy
+Node is running normally. Connected to server, ready for tasks.</code></pre></div>
+<p>Görev geldiğinde aşağıdakilere benzer loglar görülebilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Assignments fetched: total=1
+Successfully crawled ...
+assignment submitted successfully</code></pre></div>
+<p><code>Assignments fetched: total=0</code> hata değildir. O anda node&#x27;a atanmış görev bulunmadığını gösterir.</p>
+<hr>
+<h2>5. Node&#x27;u Arka Planda Çalıştırma — systemd</h2>
+<p>VPS yeniden başladığında OptimAI node&#x27;unun otomatik olarak tekrar çalışması için bir systemd servisi oluşturun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nano /etc/systemd/system/optimai.service</code></pre></div>
+<p>Aşağıdaki içeriği ekleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>ini</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>[Unit]
+Description=OptimAI CLI Node
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Environment=HOME=/root
+ExecStart=/usr/local/bin/optimai-cli node start
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target</code></pre></div>
+<p>Dosyayı kaydedip çıkın.</p>
+<hr>
+<h2>6. Servisi Etkinleştirme</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl daemon-reload
+sudo systemctl enable optimai.service
+sudo systemctl start optimai.service</code></pre></div>
+<hr>
+<h2>7. Node Durumunu Kontrol Etme</h2>
+<p>Servis durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status optimai.service --no-pager</code></pre></div>
+<p>Son logları görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u optimai.service -n 40 --no-pager -l</code></pre></div>
+<p>Docker container&#x27;ını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>docker ps</code></pre></div>
+<p>Servisin VPS açılışında otomatik çalışacağını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-enabled optimai.service</code></pre></div>
+<p>Beklenen çıktı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>enabled</code></pre></div>
+<hr>
+<h2>8. Canlı Logları İzleme</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u optimai.service -f</code></pre></div>
+<p>Log ekranından çıkmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Ctrl+C</code></pre></div>
+<hr>
+<h2>9. Node&#x27;u Yeniden Başlatma</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl restart optimai.service</code></pre></div>
+<hr>
+<h2>10. Node&#x27;a İsim Verme</h2>
+<p>Node&#x27;a bir isim vermek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli node device rename NODE_ADI</code></pre></div>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli node device rename VPS-01</code></pre></div>
+<p>Birden fazla cihazda node çalıştırıyorsanız farklı isimler kullanmanız node&#x27;ları ayırt etmenizi kolaylaştırır.</p>
+<hr>
+<h2>11. Ödül Bakiyesini Kontrol Etme</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli rewards balance</code></pre></div>
+<hr>
+<h2>12. OptimAI CLI&#x27;yi Güncelleme</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli update</code></pre></div>
+<hr>
+<h2>13. Birden Fazla Cihazda OptimAI Çalıştırma</h2>
+<p>Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabilirsiniz.</p>
+<p>Örneğin:</p>
+<ul><li>macOS üzerinde Core Node Desktop</li><li>Ubuntu üzerinde Core Node Desktop</li><li>Windows üzerinde Core Node Desktop</li><li>VPS üzerinde Core Node CLI</li><li>Mobil cihazda Edge Node</li></ul>
+<p>Aynı IP üzerindeki farklı cihazlarda da node çalıştırılabilir. Her cihazın OptimAI&#x27;nin güncel kullanım ve ödül kurallarına uygun şekilde çalıştırılması gerekir.</p>
+<hr>
+<h2>14. Diğer OptimAI Node Seçenekleri</h2>
+<p>VPS kullanmak zorunda değilsiniz.</p>
+<h3>Core Node Desktop</h3>
+<ul><li>Windows</li><li>macOS</li><li>Ubuntu Linux</li></ul>
+<h3>Lite Node</h3>
+<p>Desteklenen tarayıcılar üzerinden çalıştırılabilir:</p>
+<ul><li>Chrome</li><li>Brave</li><li>Opera</li></ul>
+<h3>Telegram Node</h3>
+<p>Telegram Mini App üzerinden çalıştırılabilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>@OptimAI_Node_Bot</code></pre></div>
+<h3>Edge Node</h3>
+<p>Mobil cihazlarda:</p>
+<ul><li>iOS — App Store</li><li>Android — Google Play</li></ul>
+<p>üzerinden kullanılabilir.</p>
+<hr>
+<h2>15. Faydalı Komutlar</h2>
+<p>Node&#x27;u başlat:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli node start</code></pre></div>
+<p>Node durumunu kontrol et:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli node status</code></pre></div>
+<p>Ödül bakiyesini kontrol et:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli rewards balance</code></pre></div>
+<p>CLI&#x27;yi güncelle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli update</code></pre></div>
+<p>Servisi yeniden başlat:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl restart optimai.service</code></pre></div>
+<p>Servis durumunu kontrol et:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status optimai.service --no-pager</code></pre></div>
+<p>Canlı logları izle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u optimai.service -f</code></pre></div>
+<p>Docker container&#x27;ını kontrol et:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>docker ps</code></pre></div>
+<hr>
+<h2>Referans Bağlantısı</h2>
+<p>OptimAI hesabı oluşturmak isteyenler aşağıdaki referans bağlantısını kullanabilir:</p>
+<p><a href="https://node.optimai.network/register?ref=18ADBAE8" target="_blank" rel="noopener noreferrer">https://node.optimai.network/register?ref=18ADBAE8</a></p>
+<p><strong>Referans kodu:</strong> <code>18ADBAE8</code></p>
+<hr>
+<h2>Notlar</h2>
+<ul><li><code>Assignments fetched: total=0</code> hata değildir. O anda görev bulunmadığını gösterir.</li><li>Yeni görev geldiğinde node otomatik olarak çalışır.</li><li>systemd sayesinde VPS yeniden başlatıldığında OptimAI node otomatik olarak tekrar başlar.</li><li>Aynı hesapla birden fazla desteklenen cihazda node çalıştırılabilir.</li></ul>
+<h1>Sorunlar ve Çözümler</h1>
+<h2>Node Offline Oluyor / <code>Not authenticated</code> Hatası</h2>
+<p>OptimAI CLI Node çalışmayı durdurur ve aşağıdaki hatalar görülürse authentication oturumu sona ermiş olabilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Not authenticated. Run `optimai-cli auth login` first.
+Authentication lost. Stopping node...</code></pre></div>
+<p>Bu durumda systemd servisini tekrar tekrar yeniden başlatmak sorunu çözmez. OptimAI hesabına yeniden giriş yapılması gerekir.</p>
+<h3>1. OptimAI Servisini Durdurun</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl stop optimai</code></pre></div>
+<h3>2. Yeniden Giriş İşlemini Başlatın</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>optimai-cli auth login --paste</code></pre></div>
+<h3>3. Tarayıcıdan Giriş Yapın</h3>
+<p>Terminalde verilen OptimAI giriş bağlantısını kendi bilgisayarınızın tarayıcısında açın.</p>
+<p>OptimAI hesabınıza giriş yaptıktan sonra <strong>Copy code</strong> seçeneğiyle verilen kodu kopyalayın.</p>
+<h3>4. Kodu VPS Terminaline Yapıştırın</h3>
+<p>Kopyaladığınız kodu terminalde aşağıdaki istemin bulunduğu yere yapıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Paste the redirected URL (or just the `code` parameter):</code></pre></div>
+<p>Enter&#x27;a basın.</p>
+<p>Başarılı olduğunda:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Signed in successfully.</code></pre></div>
+<p>mesajı görüntülenir.</p>
+<h3>5. OptimAI Servisini Başlatın</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start optimai</code></pre></div>
+<h3>6. Servisin Çalıştığını Kontrol Edin</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status optimai --no-pager -l</code></pre></div>
+<p>Sağlıklı durumda:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>görülmelidir.</p>
+<blockquote><p><strong>Not:</strong> Birden fazla VPS üzerinde yapılan testlerde authentication kaybının ilk node kimliğinin oluşturulmasından yaklaşık 14 gün sonra gerçekleştiği gözlemlenmiştir. Ancak OptimAI&#x27;nin resmi dokümantasyonunda 14 günlük bir authentication süresi şu anda açıkça belirtilmemektedir. Bu nedenle bunun kesin ve tasarlanmış bir token süresi olduğu doğrulanana kadar gözlemsel bir bulgu olarak değerlendirilmelidir.</p></blockquote>
+        </div>
       </article>
 
     </div>

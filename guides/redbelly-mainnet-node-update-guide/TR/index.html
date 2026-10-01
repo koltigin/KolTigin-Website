@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,89 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Mainnet Node Güncelleme Rehberi</h1>
+<p>Bu rehber, yeni bir Redbelly Mainnet node sürümü yayınlandığında mevcut node&#x27;un güncel installer kullanılarak nasıl güncelleneceğini anlatır.</p>
+<p>Normal bir güncellemede mevcut blockchain database&#x27;inin korunması önemlidir. Bu nedenle installer sırasında database ile ilgili soruya verilecek cevaba özellikle dikkat edin.</p>
+<h2>1. Güncel Installer&#x27;ı İndirin</h2>
+<p>Redbelly Node Operator Support Portal&#x27;a giriş yapın:</p>
+<p><a href="https://redbelly.atlassian.net/servicedesk/customer/portal/13/article/1960869898" target="_blank" rel="noopener noreferrer">https://redbelly.atlassian.net/servicedesk/customer/portal/13/article/1960869898</a></p>
+<p>Yayınlanan en güncel Mainnet installer dosyasını indirin.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rbn-installer-mainnet-v1.3.16.run</code></pre></div>
+<p>Bu rehberde sürüm numarası:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>şeklinde gösterilecektir.</p>
+<p><code>X.X.X</code> yerine indirdiğiniz güncel Mainnet sürümünü kullanın.</p>
+<h2>2. Yeni Installer&#x27;ı Sunucuya Yükleyin</h2>
+<p>Sunucunuza SCP, SFTP veya tercih ettiğiniz başka bir yöntemle bağlanın.</p>
+<p>Eski installer dosyasını artık kullanmayacaksanız silebilirsiniz.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rm rbn-installer.run</code></pre></div>
+<p>veya eski installer sürüm numarası içeriyorsa:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rm rbn-installer-mainnet-vOLD.VERSION.run</code></pre></div>
+<blockquote><p>Bu işlem yalnızca eski installer dosyasını siler. Redbelly node database&#x27;ini veya blockchain verilerini silmeyin.</p></blockquote>
+<p>İndirdiğiniz yeni installer dosyasını sunucunuza yükleyin.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<h2>3. Güncellemeyi Başlatın</h2>
+<p>Yeni installer dosyasına çalıştırma izni verin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>Ardından installer&#x27;ı çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ./rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>Installer mevcut Redbelly kurulumunu algılayarak güncelleme işlemini başlatacaktır.</p>
+<h2>4. Güncelleme Sırasında Önemli Sorular</h2>
+<p>Güncelleme sırasında özellikle iki soruya dikkat edin.</p>
+<h3>UDP Status Server</h3>
+<p>Installer UDP Status Server&#x27;ı etkinleştirmek isteyip istemediğinizi sorabilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Do you want to enable the UDP status server? (y/n)</code></pre></div>
+<p>Cevap:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>y</code></pre></div>
+<p>UDP Status Server node durumunun izlenmesini sağlar ve monitoring sistemleri, Telegram bot ve benzeri araçlar tarafından kullanılabilir.</p>
+<h3>Database — Önemli</h3>
+<p>Installer mevcut database&#x27;i algıladığında aşağıdaki soruyu soracaktır:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Database detected, do you want to clear the locally stored data and re-download the chain</code></pre></div>
+<p>Normal bir node güncellemesinde cevap:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>n</code></pre></div>
+<p>olmalıdır.</p>
+<p>Seçeneklerin anlamı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>y → Mevcut database silinir ve blockchain verileri yeniden indirilir.
+n → Mevcut database korunur.</code></pre></div>
+<blockquote><p><strong>ÖNEMLİ:</strong> Normal bir node güncellemesinde mevcut senkronize database&#x27;i korumak için <code>n</code> seçin.</p></blockquote>
+<p><code>y</code> seçilmesi mevcut database&#x27;in temizlenmesine ve blockchain verilerinin yeniden indirilmesine neden olur. Bu nedenle database&#x27;i özellikle sıfırlamak istemediğiniz sürece <code>y</code> seçmeyin.</p>
+<h2>5. Güncelleme Sonrası Sürüm Kontrolü</h2>
+<p>Installer tamamlandıktan sonra kullandığınız installer sürümünü kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ./rbn-installer-mainnet-vX.X.X.run -- --version</code></pre></div>
+<h2>6. Node&#x27;un Çalıştığını Kontrol Edin</h2>
+<p>Güncelleme tamamlandıktan sonra Redbelly prosesini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>pgrep rbbc</code></pre></div>
+<p>Ardından servis durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Beklenen durum:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>Servis çalışıyorsa güncelleme sonrasında node yeniden aktif durumdadır.</p>
+<h2>7. Logları Kontrol Edin</h2>
+<p>Canlı Redbelly loglarını takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs.log</code></pre></div>
+<p>Hata loglarını kontrol etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<p>Systemd servis loglarını görüntülemek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u redbelly.service</code></pre></div>
+<p>Canlı log ekranından çıkmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Ctrl + C</code></pre></div>
+<p>kullanabilirsiniz.</p>
+<h2>Kısa Güncelleme Özeti</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1. Güncel Mainnet installer&#x27;ı indirin.
+2. Installer&#x27;ı sunucuya yükleyin.
+3. chmod +x rbn-installer-mainnet-vX.X.X.run
+4. sudo ./rbn-installer-mainnet-vX.X.X.run
+5. UDP Status Server → y
+6. Database clear / re-download → n
+7. Installer sürümünü kontrol edin.
+8. redbelly.service durumunu kontrol edin.
+9. Node loglarını kontrol edin.</code></pre></div>
+<blockquote><p><strong>Hatırlatma:</strong> Güncelleme sırasında en kritik seçim database sorusudur. Normal bir güncellemede mevcut blockchain verilerini korumak için <strong><code>n</code></strong> seçin.</p></blockquote>
+        </div>
       </article>
 
     </div>

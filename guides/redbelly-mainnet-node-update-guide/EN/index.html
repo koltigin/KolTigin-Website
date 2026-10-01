@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,87 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Mainnet Node Update Guide</h1>
+<p>This guide explains how to update an existing Redbelly Mainnet node using the latest installer when a new node version is released.</p>
+<p>During a normal update, it is important to preserve the existing blockchain database. Pay particular attention to the database-related question displayed by the installer.</p>
+<h2>1. Download the Latest Installer</h2>
+<p>Log in to the Redbelly Node Operator Support Portal:</p>
+<p><a href="https://redbelly.atlassian.net/servicedesk/customer/portal/13/article/1960869898" target="_blank" rel="noopener noreferrer">https://redbelly.atlassian.net/servicedesk/customer/portal/13/article/1960869898</a></p>
+<p>Download the latest Mainnet installer.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rbn-installer-mainnet-v1.3.16.run</code></pre></div>
+<p>Throughout this guide, the version-independent filename:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>will be used.</p>
+<p>Replace <code>X.X.X</code> with the current Mainnet version you downloaded.</p>
+<h2>2. Upload the New Installer to Your Server</h2>
+<p>Connect to your server using SCP, SFTP, or another preferred method.</p>
+<p>If you no longer need the old installer file, you can remove it.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rm rbn-installer.run</code></pre></div>
+<p>or, if the old installer includes a version number:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rm rbn-installer-mainnet-vOLD.VERSION.run</code></pre></div>
+<blockquote><p>This removes only the old installer file. Do not delete the Redbelly node database or blockchain data.</p></blockquote>
+<p>Upload the new installer file to your server.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<h2>3. Start the Update</h2>
+<p>Make the new installer executable:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>Then run the installer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ./rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>The installer will detect the existing Redbelly installation and begin the update process.</p>
+<h2>4. Important Questions During the Update</h2>
+<p>Pay particular attention to the following two questions during the update.</p>
+<h3>UDP Status Server</h3>
+<p>The installer may ask whether you want to enable the UDP Status Server:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Do you want to enable the UDP status server? (y/n)</code></pre></div>
+<p>Answer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>y</code></pre></div>
+<p>The UDP Status Server provides node status information and can be used by monitoring systems, Telegram bots, and similar tools.</p>
+<h3>Database — Important</h3>
+<p>When the installer detects the existing database, it will ask:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Database detected, do you want to clear the locally stored data and re-download the chain</code></pre></div>
+<p>For a normal node update, answer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>n</code></pre></div>
+<p>The options mean:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>y → Deletes the existing database and downloads the blockchain data again.
+n → Preserves the existing database.</code></pre></div>
+<blockquote><p><strong>IMPORTANT:</strong> For a normal node update, select <code>n</code> to preserve your existing synchronized database.</p></blockquote>
+<p>Selecting <code>y</code> will clear the existing database and cause the blockchain data to be downloaded again. Do not select <code>y</code> unless you intentionally want to rebuild the database.</p>
+<h2>5. Check the Version After the Update</h2>
+<p>After the installer completes, check the installer version:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ./rbn-installer-mainnet-vX.X.X.run -- --version</code></pre></div>
+<h2>6. Verify That the Node Is Running</h2>
+<p>After the update is complete, check the Redbelly process:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>pgrep rbbc</code></pre></div>
+<p>Then check the Redbelly service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>The expected status is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>If the service is running, the node is active again after the update.</p>
+<h2>7. Check the Logs</h2>
+<p>Follow the Redbelly logs in real time:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs.log</code></pre></div>
+<p>Check the error logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<p>View the systemd service logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u redbelly.service</code></pre></div>
+<p>To exit the live log view, press:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Ctrl + C</code></pre></div>
+<h2>Quick Update Summary</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1. Download the latest Mainnet installer.
+2. Upload the installer to your server.
+3. chmod +x rbn-installer-mainnet-vX.X.X.run
+4. sudo ./rbn-installer-mainnet-vX.X.X.run
+5. UDP Status Server → y
+6. Database clear / re-download → n
+7. Check the installer version.
+8. Check the redbelly.service status.
+9. Check the node logs.</code></pre></div>
+<blockquote><p><strong>Reminder:</strong> The most important choice during an update is the database question. For a normal update, select <strong><code>n</code></strong> to preserve the existing blockchain data.</p></blockquote>
+        </div>
       </article>
 
     </div>

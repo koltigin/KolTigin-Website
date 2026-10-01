@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,203 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Node Sorunlar ve Çözümler</h1>
+<p>Bu rehber, Redbelly Mainnet node işletimi sırasında karşılaşılabilecek bazı yaygın sorunların çözümünü içerir.</p>
+<p>Buradaki işlemler standart node kurulumundan farklı olarak bakım ve sorun giderme işlemleridir. Komutlardaki domain değerlerini kendi node bilgilerinizle değiştirin.</p>
+<hr>
+<h2>1. Redbelly Node Domain / Hostname Değiştirme</h2>
+<p>Çalışan bir Redbelly node&#x27;un domain veya hostname&#x27;i değiştirilecekse yalnızca DNS kaydını değiştirmek yeterli değildir.</p>
+<p>Yeni hostname için DNS kaydı ve TLS sertifikası hazırlanmalı, Redbelly servisinin kullandığı sertifika yolları güncellenmeli ve değişiklik Redbelly Support&#x27;a bildirilmelidir.</p>
+<p>Bu örnekte:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Eski domain: old.example.com
+Yeni domain: redbelly.example.com</code></pre></div>
+<p>kullanılacaktır.</p>
+<h3>1.1. Değişikliği Redbelly Support&#x27;a Bildirin</h3>
+<p>Hostname değişikliğini yapmadan önce Redbelly Support&#x27;a node bilgilerinizle birlikte yeni hostname&#x27;i bildirin.</p>
+<p>Hazır bulundurmanız gereken temel bilgiler:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Node ID
+Eski hostname
+Yeni hostname</code></pre></div>
+<p>Node registration/monitoring tarafında eski hostname kayıtlı olabileceği için bu adımı atlamayın.</p>
+<h3>1.2. Yeni DNS Kaydını Oluşturun</h3>
+<p>DNS sağlayıcınızda yeni hostname için sunucunuzun mevcut IP adresine yönlenen bir <strong>A kaydı</strong> oluşturun.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Type: A
+Name: redbelly
+Value: YOUR_SERVER_IP</code></pre></div>
+<p>DNS kaydını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nslookup redbelly.example.com</code></pre></div>
+<p>Dönen IP adresinin node sunucunuzun IP adresi olduğundan emin olun.</p>
+<h3>1.3. Yeni TLS Sertifikasını Oluşturun</h3>
+<p>Yeni hostname için Let&#x27;s Encrypt sertifikası oluşturun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certonly --standalone -d redbelly.example.com</code></pre></div>
+<p>Certbot başarılı olduğunda sertifikalar genellikle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/etc/letsencrypt/live/redbelly.example.com/</code></pre></div>
+<p>altında oluşturulur.</p>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ls -l /etc/letsencrypt/live/redbelly.example.com/</code></pre></div>
+<h3>1.4. Redbelly Sertifika Dizini Oluşturun</h3>
+<p>Yeni domain için Redbelly sertifika dizinini oluşturun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo mkdir -p /etc/redbelly/certs/redbelly.example.com</code></pre></div>
+<p>Yeni sertifikaları Redbelly dizinine kopyalayın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo cp /etc/letsencrypt/live/redbelly.example.com/fullchain.pem \
+/etc/redbelly/certs/redbelly.example.com/fullchain.pem</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo cp /etc/letsencrypt/live/redbelly.example.com/privkey.pem \
+/etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<h3>1.5. Sertifika Sahipliğini ve İzinlerini Ayarlayın</h3>
+<p>Redbelly servisi <code>rbnuser</code> kullanıcısıyla çalıştığı için sertifika dosyalarının bu kullanıcı tarafından okunabilmesi gerekir.</p>
+<p>Sahipliği ayarlayın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<p>Dosya izinlerini ayarlayın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo chmod 644 /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chmod 600 /etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ls -l /etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Beklenen yapı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>-rw-r--r-- rbnuser rbnuser ... fullchain.pem
+-rw------- rbnuser rbnuser ... privkey.pem</code></pre></div>
+<blockquote><p><strong>Önemli:</strong> Sertifikalar <code>root:root</code> olarak kalırsa Redbelly servisi private key dosyasını okuyamayabilir ve <code>permission denied</code> hatasıyla başlayamayabilir.</p></blockquote>
+<h3>1.6. Redbelly Service Yapılandırmasını Güncelleyin</h3>
+<p>Önce mevcut servis yapılandırmasını görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl cat redbelly.service</code></pre></div>
+<p>Servis dosyasının konumunu belirledikten sonra kullandığınız editörle açın.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nano /etc/systemd/system/redbelly.service</code></pre></div>
+<p>TLS certificate ve key yollarındaki eski domain&#x27;i yeni domain ile değiştirin.</p>
+<p>Eski:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>--tls.cert=/etc/redbelly/certs/old.example.com/fullchain.pem
+--tls.key=/etc/redbelly/certs/old.example.com/privkey.pem</code></pre></div>
+<p>Yeni:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>--tls.cert=/etc/redbelly/certs/redbelly.example.com/fullchain.pem
+--tls.key=/etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<p>Başka bir yerde eski hostname kullanılıyorsa onu da yeni hostname ile değiştirin.</p>
+<p>Dosyayı kaydedin.</p>
+<h3>1.7. Systemd Yapılandırmasını Yenileyin</h3>
+<p>Servis dosyasındaki değişiklikleri systemd&#x27;ye yükleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl daemon-reload</code></pre></div>
+<p>Redbelly servisini yeniden başlatın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl restart redbelly.service</code></pre></div>
+<p>Servisin durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Beklenen durum:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Active: active (running)</code></pre></div>
+<h3>1.8. Yeni Sertifikayı Dışarıdan Doğrulayın</h3>
+<p>Redbelly Recovery portu üzerinden sunulan sertifikayı kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>echo | openssl s_client \
+-servername redbelly.example.com \
+-connect redbelly.example.com:1111 2&gt;/dev/null \
+| openssl x509 -noout -subject -issuer -dates</code></pre></div>
+<p>Çıktıdaki:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>subject=</code></pre></div>
+<p>alanında yeni hostname&#x27;in bulunduğunu ve sertifikanın geçerlilik tarihlerinin doğru olduğunu kontrol edin.</p>
+<p>Bu işlem yalnızca dosyanın sunucuda bulunduğunu değil, Redbelly servisinin dışarıya gerçekten yeni sertifikayı sunduğunu doğrular.</p>
+<h3>1.9. Redbelly Support Tarafını Doğrulayın</h3>
+<p>Domain değişikliği tamamlandıktan sonra Redbelly Support&#x27;a:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Node ID
+Eski hostname
+Yeni hostname</code></pre></div>
+<p>bilgileriyle işlemin tamamlandığını bildirin.</p>
+<p>Node&#x27;un yeni hostname ile Redbelly monitoring/network tarafında doğru göründüğünün teyit edilmesini isteyin.</p>
+<hr>
+<h2>2. SSL Sertifikası Otomatik Yenilenmiyor</h2>
+<p>Redbelly installer Let&#x27;s Encrypt / Certbot kullanılarak kurulduysa sertifika yenileme işlemleri otomatik olarak gerçekleştirilebilir.</p>
+<p>Ancak Certbot <code>standalone</code> yöntemiyle yapılandırılmışsa sertifika doğrulaması sırasında TCP port <code>80</code> kullanılmalıdır.</p>
+<p>Port <code>80</code> başka bir servis tarafından kullanılıyorsa otomatik yenileme başarısız olabilir.</p>
+<h3>2.1. Certbot Yapılandırmasını Kontrol Edin</h3>
+<p>Mevcut sertifikaları görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Renewal yapılandırmasını kontrol etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo grep -R &quot;authenticator&quot; /etc/letsencrypt/renewal/</code></pre></div>
+<p>Aşağıdakine benzer bir çıktı görüyorsanız:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>authenticator = standalone</code></pre></div>
+<p>Certbot yenileme sırasında port <code>80</code> üzerinde kendi geçici doğrulama sunucusunu çalıştırmak zorundadır.</p>
+<h3>2.2. Otomatik Yenilemeyi Test Edin</h3>
+<p>Gerçek sertifikayı değiştirmeden renewal işlemini test edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot renew --dry-run</code></pre></div>
+<p>İşlem başarılıysa otomatik yenileme yapılandırması çalışıyor demektir.</p>
+<p>Port <code>80</code> kullanımda olduğu için hata alırsanız sonraki adıma geçin.</p>
+<h3>2.3. Port 80&#x27;i Hangi Servisin Kullandığını Kontrol Edin</h3>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ss -ltnp | grep &#x27;:80 &#x27;</code></pre></div>
+<p>Örneğin çıktıda:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nginx</code></pre></div>
+<p>görünüyorsa port <code>80</code> Nginx tarafından kullanılmaktadır.</p>
+<blockquote><p>Nginx veya port <code>80</code> kullanan başka bir servisi doğrudan durdurmadan önce bu servisin başka bir web sitesi, reverse proxy veya uygulama tarafından kullanılıp kullanılmadığını kontrol edin.</p></blockquote>
+<h3>2.4. Gereksiz Nginx Port 80&#x27;i Kullanıyorsa</h3>
+<p>Nginx bu sunucuda başka bir hizmet için gerekli değilse geçici olarak durdurabilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl stop nginx</code></pre></div>
+<p>Port <code>80</code> durumunu tekrar kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ss -ltnp | grep &#x27;:80 &#x27;</code></pre></div>
+<p>Çıktı dönmüyorsa port <code>80</code> artık boştur.</p>
+<p>Certbot testini tekrar çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot renew --dry-run</code></pre></div>
+<p>Test başarılı olmalıdır.</p>
+<h3>2.5. Sertifikayı Manuel Olarak Yenileme</h3>
+<p>Gerekirse gerçek renewal işlemini çalıştırabilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot renew</code></pre></div>
+<p>Belirli bir domain için yeni sertifika oluşturmanız gerekiyorsa:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certonly --standalone -d redbelly.example.com</code></pre></div>
+<h3>2.6. Redbelly Sertifika Dosyalarını Kontrol Edin</h3>
+<p>Let&#x27;s Encrypt sertifikaları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/etc/letsencrypt/live/redbelly.example.com/</code></pre></div>
+<p>altında bulunur.</p>
+<p>Redbelly tarafından kullanılan sertifikalar ise:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>altında bulunabilir.</p>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ls -l /etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Sahiplik ve izinların aşağıdaki gibi olduğundan emin olun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>fullchain.pem → rbnuser:rbnuser → 644
+privkey.pem   → rbnuser:rbnuser → 600</code></pre></div>
+<p>Gerekirse:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chown rbnuser:rbnuser /etc/redbelly/certs/redbelly.example.com/privkey.pem
+
+sudo chmod 644 /etc/redbelly/certs/redbelly.example.com/fullchain.pem
+sudo chmod 600 /etc/redbelly/certs/redbelly.example.com/privkey.pem</code></pre></div>
+<h3>2.7. Renewal Hook&#x27;u Kontrol Edin</h3>
+<p>Yeni Redbelly installer sürümleri Let&#x27;s Encrypt sertifikası yenilendiğinde güncel sertifikaları Redbelly sertifika dizinine aktarmak için renewal hook yapılandırabilir.</p>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ls -l /etc/letsencrypt/renewal-hooks/post/</code></pre></div>
+<p>Redbelly hook&#x27;u mevcutsa içeriğini kontrol edebilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo cat /etc/letsencrypt/renewal-hooks/post/redbelly.sh</code></pre></div>
+<p>Bu mekanizma Certbot sertifikayı başarıyla yeniledikten sonra çalışır.</p>
+<blockquote><p>Eğer <code>certbot renew</code> port <code>80</code> çakışması nedeniyle baştan başarısız oluyorsa renewal hook da çalışamaz. Bu durumda öncelikle Certbot&#x27;un sertifikayı başarıyla yenileyebilmesi sağlanmalıdır.</p></blockquote>
+<h3>2.8. Redbelly Servisini Kontrol Edin</h3>
+<p>Sertifika işlemlerinden sonra servisi yeniden başlatın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl restart redbelly.service</code></pre></div>
+<p>Durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Beklenen durum:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>Son olarak node&#x27;un dışarıya sunduğu sertifikayı kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>echo | openssl s_client \
+-servername redbelly.example.com \
+-connect redbelly.example.com:1111 2&gt;/dev/null \
+| openssl x509 -noout -subject -issuer -dates</code></pre></div>
+<p>Yeni sertifikanın hostname ve geçerlilik tarihleri doğruysa SSL işlemi tamamlanmıştır.</p>
+<hr>
+<h2>Hızlı Sorun Kontrolü</h2>
+<p>Node başlamıyorsa:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Detaylı servis logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u redbelly.service</code></pre></div>
+<p>Redbelly hata logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<p>Sertifika izinleri:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ls -l /etc/redbelly/certs/redbelly.example.com/</code></pre></div>
+<p>Port <code>80</code> kontrolü:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ss -ltnp | grep &#x27;:80 &#x27;</code></pre></div>
+<p>Certbot renewal testi:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot renew --dry-run</code></pre></div>
+<p>Dışarıya sunulan TLS sertifikasını kontrol etmek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>echo | openssl s_client \
+-servername redbelly.example.com \
+-connect redbelly.example.com:1111 2&gt;/dev/null \
+| openssl x509 -noout -subject -issuer -dates</code></pre></div>
+<p>Bu rehbere Redbelly node işletimi sırasında karşılaşılan yeni sorunlar ve doğrulanmış çözümler zaman içinde eklenebilir.</p>
+        </div>
       </article>
 
     </div>

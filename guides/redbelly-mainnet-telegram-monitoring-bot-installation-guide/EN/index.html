@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,166 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Mainnet Telegram Monitoring Bot Installation Guide</h1>
+<p>This guide explains how to install the KolTigin Redbelly Monitor to automatically monitor your Redbelly Mainnet node through Telegram.</p>
+<p>The monitor checks your node at the interval you choose and automatically sends a status report to Telegram.</p>
+<p>The report includes:</p>
+<ul><li>Node synchronization status</li><li><code>redbelly.service</code> status</li><li>Current role: Governor / Candidate</li><li>Next-round role</li><li>Node block height</li><li>Redbelly Mainnet network block height</li><li>Block difference</li><li>Superblock</li><li>Recovery status</li><li>Redbelly node version</li><li>SSL certificate status and remaining validity</li><li>CPU load</li><li>RAM usage</li><li>Disk usage</li></ul>
+<p>The installation uses a systemd service and timer. No cron configuration is required.</p>
+<hr>
+<h2>1. Create a Telegram Bot</h2>
+<p>Open <strong>@BotFather</strong> on Telegram.</p>
+<p>Send:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/newbot</code></pre></div>
+<p>BotFather will ask for:</p>
+<ol><li>A bot name</li><li>A bot username</li></ol>
+<p>The username must end in <code>bot</code>.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>My Redbelly Monitor
+my_redbelly_monitor_bot</code></pre></div>
+<p>After the bot is created, BotFather will provide a <strong>Bot Token</strong>.</p>
+<p>Example format:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre></div>
+<p>Keep this token private. Do not share it.</p>
+<hr>
+<h2>2. Get Your Chat ID</h2>
+<p>Open your newly created Telegram bot and send:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/start</code></pre></div>
+<p>Then run the following command on your server.</p>
+<p>Replace <code>YOUR_BOT_TOKEN</code> with the token provided by BotFather:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s &quot;https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates&quot; | jq</code></pre></div>
+<p>Find a section similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>json</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>&quot;chat&quot;: {
+  &quot;id&quot;: 123456789,
+  &quot;type&quot;: &quot;private&quot;
+}</code></pre></div>
+<p>The value:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>123456789</code></pre></div>
+<p>is your <strong>Chat ID</strong>.</p>
+<blockquote><p>If <code>result</code> is empty, send another message to your bot in Telegram and run the command again.</p></blockquote>
+<hr>
+<h2>3. Download and Install Redbelly Monitor</h2>
+<p>Switch to the root user:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo -i</code></pre></div>
+<p>Run the following command as one block:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd /root &amp;&amp; \
+curl -fsSL https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh -o redbelly-monitor.sh &amp;&amp; \
+chmod +x redbelly-monitor.sh &amp;&amp; \
+./redbelly-monitor.sh</code></pre></div>
+<p>The installer first displays the language selection:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1) Türkçe
+2) English
+
+Dil / Language [1]:</code></pre></div>
+<p>For English select:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>2</code></pre></div>
+<p>The installer will then ask for:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>🤖 Telegram Bot Token:
+💬 Telegram Chat ID:
+🌐 Redbelly node domain (e.g. node.example.com):
+⏱ How often should Telegram messages be sent, in minutes? [30]:</code></pre></div>
+<h3>Bot Token</h3>
+<p>Enter the token provided by BotFather.</p>
+<h3>Chat ID</h3>
+<p>Enter the Chat ID obtained in the previous step.</p>
+<h3>Node domain</h3>
+<p>Enter the registered domain name of your Redbelly node.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>node.example.com</code></pre></div>
+<h3>Message interval</h3>
+<p>Choose how often the node status report should be sent to Telegram.</p>
+<p>The default is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>30</code></pre></div>
+<p>minutes.</p>
+<p>Press Enter to keep the default value.</p>
+<hr>
+<h2>4. Telegram Connection Test</h2>
+<p>The installer first verifies the Telegram Bot Token and Chat ID.</p>
+<p>If the test succeeds, Telegram receives:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>✅ Redbelly Telegram Monitor connection test successful.</code></pre></div>
+<p>The installer then creates the monitor, configuration file and systemd timer.</p>
+<p>After installation, the first full node status report is automatically sent.</p>
+<hr>
+<h2>5. Telegram Node Report</h2>
+<p>After a successful installation, Telegram will receive a report similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>🧾 Redbelly Mainnet Node
+
+📊 Status: ✅ Synchronized
+⚙️ Service: ✅ Active
+🏛 Role: ⚪ Candidate
+🔄 Next Round: ⚪ Candidate
+📦 Node Block: ...
+🌐 Network Block: ...
+📉 Difference: ...
+🔷 Superblock: ...
+♻️ Recovery: ✅ Complete
+🧩 Version: ...
+🔐 Certificate: ✅ Valid
+🕒 Time: ...
+
+💻 Server
+🧠 CPU Load: ...
+🗂 RAM: ...
+💽 Disk: ...</code></pre></div>
+<h3>Governor / Candidate</h3>
+<p><code>Role</code> shows the node&#x27;s current role in the Redbelly reconfiguration round.</p>
+<p><code>Next Round</code> shows the role reported by the node logs for the next round.</p>
+<hr>
+<h2>6. Check the Timer</h2>
+<p>The monitor runs automatically through a systemd timer.</p>
+<p>Check its status with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status redbelly-telegram-monitor.timer</code></pre></div>
+<p>To see the next scheduled execution:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl list-timers redbelly-telegram-monitor.timer</code></pre></div>
+<p>The timer should be <code>active</code>.</p>
+<hr>
+<h2>7. Send a Manual Report</h2>
+<p>To send a new Telegram report without waiting for the next scheduled run:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start redbelly-telegram-monitor.service</code></pre></div>
+<p>To inspect monitor logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u redbelly-telegram-monitor.service -n 50 --no-pager</code></pre></div>
+<hr>
+<h2>8. Monitor Files</h2>
+<p>The installer creates:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/usr/local/bin/redbelly-telegram-monitor
+/etc/redbelly-telegram-monitor.conf
+/etc/systemd/system/redbelly-telegram-monitor.service
+/etc/systemd/system/redbelly-telegram-monitor.timer</code></pre></div>
+<p>The Telegram Bot Token is stored in:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/redbelly-telegram-monitor.conf</code></pre></div>
+<p>Do not share this file.</p>
+<hr>
+<h2>9. Uninstall the Monitor</h2>
+<p>From the directory containing the installer, run:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ./redbelly-monitor.sh --uninstall</code></pre></div>
+<p>The installer removes:</p>
+<ul><li>the systemd timer</li><li>the monitor service</li><li>the monitor executable</li><li>the configuration file</li></ul>
+<p>It does <strong>not</strong> remove your Redbelly node or blockchain data.</p>
+<hr>
+<h2>10. Update the Script</h2>
+<p>When a newer <code>redbelly-monitor.sh</code> version is published on KolTigin, download the latest installer with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd /root
+curl -fsSL https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh -o redbelly-monitor.sh
+chmod +x redbelly-monitor.sh</code></pre></div>
+<p>Then run it again:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ./redbelly-monitor.sh</code></pre></div>
+<hr>
+<h2>Quick Commands</h2>
+<p>Timer status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl status redbelly-telegram-monitor.timer</code></pre></div>
+<p>Next scheduled run:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl list-timers redbelly-telegram-monitor.timer</code></pre></div>
+<p>Manual report:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl start redbelly-telegram-monitor.service</code></pre></div>
+<p>Monitor logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u redbelly-telegram-monitor.service -n 50 --no-pager</code></pre></div>
+<p>Uninstall:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ./redbelly-monitor.sh --uninstall</code></pre></div>
+<hr>
+<p><strong>Download</strong></p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>https://koltigin.xyz/downloads/redbelly/redbelly-monitor.sh</code></pre></div>
+        </div>
       </article>
 
     </div>

@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,161 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Mainnet Node Kurulum Rehberi</h1>
+<p>Bu rehber, Redbelly Mainnet node&#x27;unun resmi <code>rbn-installer</code> kullanılarak kurulmasını ve kurulum sonrasında node&#x27;un çalıştığının kontrol edilmesini anlatır.</p>
+<p>Installer; Redbelly binary kurulumu, TLS sertifikası, systemd servisi ve gerekli sistem yapılandırmalarının büyük bölümünü otomatik olarak gerçekleştirir.</p>
+<h2>1. Kurulum Öncesi</h2>
+<p>Kuruluma başlamadan önce node için kullanacağınız bir domain veya subdomain&#x27;i sunucunuzun IP adresine yönlendirin.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>redbelly.example.com</code></pre></div>
+<p>DNS sağlayıcınızda sunucunun IP adresine yönlenen bir <strong>A kaydı</strong> oluşturun.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Type: A
+Name: redbelly
+Value: YOUR_SERVER_IP</code></pre></div>
+<p>DNS kaydının doğru IP adresine yönlendiğini kontrol edebilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nslookup redbelly.example.com</code></pre></div>
+<h3>Gerekli Portlar</h3>
+<p>Firewall üzerinde aşağıdaki portların açık olduğundan emin olun:</p>
+<p>| Port | Protokol | Kullanım | |---|---|---| | 22 | TCP | SSH | | 80 | TCP | Let&#x27;s Encrypt / Certbot | | 1888 | TCP | Consensus | | 1111 | TCP | Recovery | | 6540 | UDP | Status Server |</p>
+<p>UFW kullanıyorsanız:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 1888/tcp
+sudo ufw allow 1111/tcp
+sudo ufw allow 6540/udp</code></pre></div>
+<p>Firewall durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ufw status</code></pre></div>
+<blockquote><p>Consensus ve Recovery portları, Redbelly node registration sırasında bildirdiğiniz portlarla aynı olmalıdır.</p></blockquote>
+<h2>2. Node Registration</h2>
+<p>Kurulumdan önce node&#x27;un Redbelly tarafında kayıt edilmiş olması gerekir.</p>
+<p>Registration sırasında aşağıdaki bilgiler istenir:</p>
+<ul><li>Node Hostname</li><li>Reward Address</li><li>Vote Address</li><li>Consensus Port</li><li>Recovery Port</li><li>Discord kullanıcı adı</li></ul>
+<p>Registration işlemi Redbelly tarafından onaylandıktan sonra node&#x27;unuza özel bir <strong>Node ID</strong> verilir.</p>
+<p>Bu Node ID&#x27;yi kurulum sırasında kullanacağınız için hazır bulundurun.</p>
+<p>Ayrıca Vote/Signing adresinizin private key&#x27;ine ihtiyacınız olacaktır.</p>
+<blockquote><p><strong>Önemli:</strong> Private key&#x27;inizi hiçbir kişiyle paylaşmayın. Private key yalnızca installer&#x27;ın kendi terminal ekranındaki ilgili alana girilmelidir.</p></blockquote>
+<h2>3. Mainnet Installer&#x27;ı İndirin</h2>
+<p>Redbelly tarafından sağlanan en güncel Mainnet installer dosyasını Node Operator Support Portal üzerinden indirin.</p>
+<p>Installer sürüme göre örneğin şu şekilde olabilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rbn-installer-mainnet-v1.3.16.run</code></pre></div>
+<p>Bu rehberde sürüm numarası:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>şeklinde gösterilecektir.</p>
+<p><code>X.X.X</code> yerine indirdiğiniz güncel Mainnet sürümünü kullanın.</p>
+<p>Installer dosyasını SCP, SFTP veya tercih ettiğiniz başka bir yöntemle sunucunuza yükleyin.</p>
+<h2>4. Installer&#x27;ı Çalıştırın</h2>
+<p>Installer dosyasına çalıştırma izni verin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>Paket listesini güncelleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo apt update</code></pre></div>
+<p>Ardından installer&#x27;ı çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ./rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>Installer kurulum boyunca gerekli bilgileri interaktif olarak soracaktır.</p>
+<h2>5. Installer Soruları ve Verilecek Cevaplar</h2>
+<h3>Domain / DNS</h3>
+<p>Node için daha önce DNS kaydını oluşturduğunuz hostname&#x27;i girin.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>redbelly.example.com</code></pre></div>
+<p><code>https://</code> eklemeyin.</p>
+<h3>SSL / Certbot</h3>
+<p>Installer SSL/TLS sertifikasının Certbot kullanılarak oluşturulmasını sorduğunda:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>y</code></pre></div>
+<p>seçin.</p>
+<p>Sertifika kaydı için istenen e-posta adresini girin.</p>
+<p>Installer Let&#x27;s Encrypt sertifikasını oluşturacak ve Redbelly için gerekli sertifika yapılandırmasını gerçekleştirecektir.</p>
+<h3>Consensus Port</h3>
+<p>Varsayılan Consensus portu:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1888</code></pre></div>
+<p>Registration sırasında farklı bir port bildirmediyseniz varsayılan değeri kullanın.</p>
+<p>Installer varsayılan olarak <code>1888</code> gösteriyorsa yalnızca <strong>Enter</strong> tuşuna basabilirsiniz.</p>
+<h3>Recovery Port</h3>
+<p>Varsayılan Recovery portu:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1111</code></pre></div>
+<p>Registration sırasında farklı bir port bildirmediyseniz varsayılan değeri kullanın.</p>
+<p>Installer varsayılan olarak <code>1111</code> gösteriyorsa yalnızca <strong>Enter</strong> tuşuna basabilirsiniz.</p>
+<h3>UDP Status Server</h3>
+<p>Installer UDP Status Server&#x27;ı etkinleştirmek isteyip istemediğinizi soracaktır:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Enable UDP status server which allows tracking basic node statistics (y/n) (default: y):</code></pre></div>
+<p>Cevap:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>y</code></pre></div>
+<p>Varsayılan cevap <code>y</code> ise yalnızca <strong>Enter</strong> tuşuna da basabilirsiniz.</p>
+<p>UDP Status Server node durumunun izlenmesini sağlar ve monitoring sistemleri ile Telegram bot gibi araçlarda kullanılabilir.</p>
+<h3>UDP Status Port</h3>
+<p>Varsayılan UDP Status Server portu:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>6540</code></pre></div>
+<p>Varsayılan değer gösteriliyorsa <strong>Enter</strong> tuşuna basabilirsiniz.</p>
+<h3>Debug Logging</h3>
+<p>Normal node kullanımı için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>n</code></pre></div>
+<p>seçin.</p>
+<p>Varsayılan değer <code>n</code> ise yalnızca <strong>Enter</strong> tuşuna basabilirsiniz.</p>
+<h3>Logrotate</h3>
+<p>Log dosyalarının otomatik olarak yönetilmesi için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>y</code></pre></div>
+<p>seçin.</p>
+<p>Varsayılan değer <code>y</code> ise <strong>Enter</strong> yeterlidir.</p>
+<h3>State Scheme</h3>
+<p>Installer&#x27;ın varsayılan değeri:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>path</code></pre></div>
+<p>Standart kurulumda varsayılan değeri kullanmak için <strong>Enter</strong> tuşuna basın.</p>
+<h3>GC Mode</h3>
+<p>Installer&#x27;ın varsayılan değeri:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>full</code></pre></div>
+<p>Standart kurulumda varsayılan değeri kullanmak için <strong>Enter</strong> tuşuna basın.</p>
+<h3>Database Snapshot</h3>
+<p>Installer güncel database snapshot&#x27;ını indirmek isteyip istemediğinizi soracaktır.</p>
+<p>Yeni bir node kurulumu için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>y</code></pre></div>
+<p>seçin.</p>
+<p>Varsayılan değer <code>y</code> ise yalnızca <strong>Enter</strong> tuşuna basabilirsiniz.</p>
+<p>Installer güncel Mainnet database snapshot&#x27;ını indirerek node&#x27;un başlangıç senkronizasyonunu gerçekleştirir.</p>
+<h3>Node ID</h3>
+<p>Redbelly registration işlemi tamamlandıktan sonra size verilen Node ID&#x27;yi girin.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>114</code></pre></div>
+<p>Bu yalnızca örnektir. <strong>Kendi node&#x27;unuza ait Node ID&#x27;yi kullanın.</strong></p>
+<h3>Vote / Signing Private Key</h3>
+<p>Installer Vote/Signing adresinizin private key&#x27;ini isteyecektir.</p>
+<p>Private key&#x27;i <code>0x</code> öneki olmadan girin.</p>
+<p>Private key&#x27;i terminale yapıştırdığınızda karakterlerin ekranda görünmemesi normaldir. Input güvenlik nedeniyle gizlenmektedir.</p>
+<blockquote><p><strong>Güvenlik:</strong> Private key&#x27;inizi hiçbir kişiyle paylaşmayın ve ekran görüntüsü, rehber, log veya herhangi bir herkese açık ortamda yayınlamayın.</p></blockquote>
+<h2>6. Kurulum Sonrası Node Kontrolü</h2>
+<p>Installer işlemini tamamladıktan sonra Redbelly prosesinin çalışıp çalışmadığını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>pgrep rbbc</code></pre></div>
+<p>Komut bir PID döndürüyorsa <code>rbbc</code> prosesi çalışmaktadır.</p>
+<p>Ardından Redbelly servisinin durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Başarılı bir kurulumda servis durumunun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>olması gerekir.</p>
+<p>Servis loglarını görüntülemek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u redbelly.service</code></pre></div>
+<p>Canlı Redbelly loglarını takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs.log</code></pre></div>
+<p>Hata loglarını takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<p>Canlı log ekranından çıkmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Ctrl + C</code></pre></div>
+<p>kullanabilirsiniz.</p>
+<h2>Faydalı Komutlar</h2>
+<p>Node durumunu kontrol etmek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Node&#x27;u yeniden başlatmak:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl restart redbelly.service</code></pre></div>
+<p>Node&#x27;u durdurmak:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl stop redbelly.service</code></pre></div>
+<p>Node&#x27;u başlatmak:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl start redbelly.service</code></pre></div>
+<p>Canlı logları takip etmek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs.log</code></pre></div>
+<p>Hata loglarını takip etmek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<hr>
+<p>Kurulum tamamlandıktan ve <code>redbelly.service</code> servisi <code>active (running)</code> durumuna geldikten sonra node&#x27;unuzu düzenli olarak takip edebilirsiniz.</p>
+<p>Yeni bir Redbelly Mainnet sürümü yayınlandığında mevcut node&#x27;u güncellemek için ayrıca <strong>Redbelly Mainnet Node Güncelleme Rehberi</strong>ni kullanabilirsiniz.</p>
+        </div>
       </article>
 
     </div>

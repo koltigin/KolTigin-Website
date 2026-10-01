@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,360 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway Sorun Giderme</h1>
+<p>Bu rehber, AR.IO Gateway çalıştırırken karşılaşılabilecek yaygın sorunları ve bunları teşhis etmek için kullanılabilecek pratik kontrolleri kapsar.</p>
+<p>Yapılandırmayı değiştirmeden önce problemin hangi katmanda olduğunu belirlemeye çalışın:</p>
+<ul><li>Docker</li><li>AR.IO core servisi</li><li>Observer</li><li>DNS</li><li>SSL</li><li>Nginx</li><li>ArNS çözümleme</li><li>Solana wallet yapılandırması</li><li>disk alanı</li><li>çalışan release sürümü</li></ul>
+<h2>İlk Kontroller</h2>
+<p>Önce servislerin durumuna bakın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~/ar-io-node
+sudo docker compose ps</code></pre></div>
+<p>Core logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -n 100</code></pre></div>
+<p>Observer logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs observer -n 100</code></pre></div>
+<p>İkisini birlikte canlı takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Public gateway&#x27;i kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>AR.IO bilgilerini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Arweave veri erişimini test edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Beklenen cevap:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1984</code></pre></div>
+<h2>Release Sürümü Yanlış veya <code>-pre</code> İçeriyor</h2>
+<p>Çalışan release&#x27;i kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Ardından Git branch&#x27;ini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~/ar-io-node
+git branch --show-current</code></pre></div>
+<p>Normal production gateway için genellikle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>main</code></pre></div>
+<p>branch&#x27;i kullanılmalıdır.</p>
+<p>Repository bilgisini güncelleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git fetch
+git status</code></pre></div>
+<p>Gerekirse:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git pull</code></pre></div>
+<p>Ardından gateway&#x27;i mevcut AR.IO güncelleme prosedürüne göre yeniden başlatın.</p>
+<p>Release bilgisinin içinde:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>-pre</code></pre></div>
+<p>bulunması, gateway&#x27;in beklenen kararlı release yerine pre-release veya development sürümünde çalıştığını gösterebilir.</p>
+<h2>Gateway Network Araçlarında Offline Görünüyor</h2>
+<p>Gateway bazı network dashboardlarında offline görünürken sunucu ve servisler çalışmaya devam ediyor olabilir.</p>
+<p>Bağımsız olarak kontrol edin.</p>
+<p>Container&#x27;lar:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Public gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Veri erişimi:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short YOUR_DOMAIN</code></pre></div>
+<p>Loglar:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -n 200</code></pre></div>
+<p>Bu testler başarılıysa harici bir dashboard geçici olarak farklı bir durum gösterse bile gateway sağlıklı olabilir.</p>
+<h2>Observer Report <code>report pending</code> Gösteriyor</h2>
+<p>Şu endpoint&#x27;i kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>https://YOUR_DOMAIN/ar-io/observer/reports/current</code></pre></div>
+<p>Sonuç:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>report pending</code></pre></div>
+<p>gösteriyorsa Observer henüz raporu hazırlıyor olabilir.</p>
+<p>Yalnızca rapor geçici olarak pending olduğu için gateway&#x27;i restart veya rebuild etmeyin.</p>
+<p>Observation döngüsünün tamamlanmasını bekleyip tekrar kontrol edin.</p>
+<h2>Observer <code>Cannot read properties of undefined</code> Hatası Veriyor</h2>
+<p>Observer bazı kontroller sırasında:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Cannot read properties of undefined</code></pre></div>
+<p>benzeri bir hata gösterebilir.</p>
+<p>Güncel AR.IO troubleshooting dokümanına göre bu, Observer henüz uygulanmamış veya mevcut olmayan bazı verileri kontrol ederken görülebilen bir durumdur.</p>
+<p>Bu mesajı tek başına gateway&#x27;in bozuk olduğunun göstergesi olarak değerlendirmeyin.</p>
+<p>Şunları ayrıca kontrol edin:</p>
+<ul><li>gateway veri sunabiliyor mu</li><li><code>/ar-io/info</code> cevap veriyor mu</li><li>Docker servisleri çalışıyor mu</li><li>normal Observer raporları oluşuyor mu</li></ul>
+<h2>Gateway Observation Kontrolünden Geçemiyor</h2>
+<p>Diğer observer&#x27;lar gateway için failure raporluyorsa öncelikle public erişimi doğrulayın.</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p><code>.env</code> içerisindeki şu değerleri dikkatlice kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>AR_IO_WALLET=
+ARNS_ROOT_HOST=</code></pre></div>
+<p><code>AR_IO_WALLET</code> doğru gateway operatorünü göstermelidir.</p>
+<p><code>ARNS_ROOT_HOST</code>, gateway&#x27;in public root hostname&#x27;iyle eşleşmelidir.</p>
+<p>Ayrıca şunları kontrol edin:</p>
+<ul><li>DNS</li><li>SSL sertifikası</li><li>wildcard DNS</li><li>wildcard SSL</li><li>Nginx</li><li>güncel AR.IO release</li><li>Observer yapılandırması</li></ul>
+<h2>Failed Epoch</h2>
+<p>Gateway bir epoch içerisinde başarısız olduysa nedenini belirlemek için Observer raporunu kullanın.</p>
+<p>Önce gateway erişimini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Test transaction&#x27;ını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Observer raporu:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>https://YOUR_DOMAIN/ar-io/observer/reports/current</code></pre></div>
+<p>Mevcutsa AR.IO Network Portal üzerinden manuel observation da çalıştırabilirsiniz.</p>
+<p>Yaygın failure nedenleri:</p>
+<ul><li>gateway&#x27;e ulaşılamaması</li><li>süresi dolmuş SSL sertifikası</li><li>DNS problemleri</li><li>hatalı ArNS yapılandırması</li><li>yavaş ArNS resolution</li><li>hatalı gateway yapılandırması</li><li>eski node release&#x27;i</li></ul>
+<p>Gateway yeterli sayıda prescribed observer kontrolünden geçemezse ilgili epoch için failed olarak değerlendirilebilir ve o epoch ödüllerini alamayabilir.</p>
+<h2><code>.env</code> Değişiklikleri Gateway&#x27;e Yansımıyor</h2>
+<p>Şu dosyada değişiklik yaptıysanız:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>.env</code></pre></div>
+<p>ancak gateway eski değerleri kullanmaya devam ediyorsa container&#x27;ların yeni environment ile yeniden oluşturulması gerekebilir.</p>
+<p>Önce dosyayı kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nano .env</code></pre></div>
+<p>Ardından kullanılan release için uygun Docker Compose prosedürüyle servisleri yeniden başlatın.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose down
+sudo docker compose up -d</code></pre></div>
+<p>Mevcut AR.IO release dokümanı özellikle recreate veya rebuild işlemi istiyorsa o sürümün talimatlarını uygulayın.</p>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>ile kontrol edin.</p>
+<p><code>.env</code> dosyasını değiştirmek, zaten çalışan container içerisindeki environment değerlerini otomatik olarak değiştirmez.</p>
+<h2>Gateway Başlamıyor</h2>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -n 200</code></pre></div>
+<p>Şunlara dikkat edin:</p>
+<ul><li>eksik environment variable</li><li>hatalı wallet yapılandırması</li><li>port çakışması</li><li>database hataları</li><li>permission hataları</li><li>yetersiz disk alanı</li><li>Docker image problemleri</li></ul>
+<p>Servisleri tekrar başlatmayı deneyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Ardından logları hemen kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<h2>Nginx 502 Bad Gateway Hatası Veriyor</h2>
+<p><code>502 Bad Gateway</code> genellikle Nginx&#x27;in çalıştığını ancak arkasındaki AR.IO servisine başarılı şekilde ulaşamadığını gösterir.</p>
+<p>Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<p>AR.IO container&#x27;ları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~/ar-io-node
+sudo docker compose ps</code></pre></div>
+<p>Core logları:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -n 200</code></pre></div>
+<p>Gateway servisinin lokal portta dinleyip dinlemediğini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ss -lntp | grep 3000</code></pre></div>
+<p>Nginx proxy ayarını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>proxy_pass http://localhost:3000;</code></pre></div>
+<p>Sonra:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>Başarılıysa:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl reload nginx</code></pre></div>
+<p>Gerçek problem AR.IO core container&#x27;ın çalışmamasıysa Nginx&#x27;i tekrar tekrar restart etmek sorunu çözmez.</p>
+<h2>Domainde 404 veya Nginx Hatası</h2>
+<p>Önce Nginx&#x27;i test edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>Durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<p>Aktif yapılandırmayı görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -T</code></pre></div>
+<p>Şunun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>server_name YOUR_DOMAIN *.YOUR_DOMAIN;</code></pre></div>
+<p>gateway domaininizle eşleştiğini doğrulayın.</p>
+<p>Ayrıca:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>ARNS_ROOT_HOST=YOUR_DOMAIN</code></pre></div>
+<p>değerini kontrol edin.</p>
+<p>DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short YOUR_DOMAIN</code></pre></div>
+<p>Wildcard DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short test.YOUR_DOMAIN</code></pre></div>
+<h2>Domain Çözümlenmiyor</h2>
+<p>Ana gateway domainini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short YOUR_DOMAIN</code></pre></div>
+<p>Sunucunuzun IP adresini döndürmelidir.</p>
+<p>Wildcard:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short test.YOUR_DOMAIN</code></pre></div>
+<p>Her ikisi de gateway sunucusuna çözülmelidir.</p>
+<p>Tipik DNS yapısı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>YOUR_DOMAIN        -&gt; SERVER_IP
+*.YOUR_DOMAIN      -&gt; SERVER_IP</code></pre></div>
+<p>DNS kayıtlarını yeni değiştirdiyseniz yayılım için zaman tanıyın.</p>
+<p>Çakışan A, AAAA veya CNAME kayıtlarını da kontrol edin.</p>
+<h2>Ana Domain Çalışıyor Fakat ArNS Subdomainleri Çalışmıyor</h2>
+<p>Bu durum çoğunlukla gateway&#x27;in kendisinden ziyade wildcard routing yapılandırmasına işaret eder.</p>
+<p>Wildcard DNS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig +short test.YOUR_DOMAIN</code></pre></div>
+<p>Bilinen bir ArNS tarzı hostname:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://ardrive.YOUR_DOMAIN</code></pre></div>
+<p>Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>server_name YOUR_DOMAIN *.YOUR_DOMAIN;</code></pre></div>
+<p><code>.env</code>:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>ARNS_ROOT_HOST=YOUR_DOMAIN</code></pre></div>
+<p>SSL sertifikasının da her ikisini kapsadığını doğrulayın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>YOUR_DOMAIN
+*.YOUR_DOMAIN</code></pre></div>
+<p>Root gateway çalışıyor fakat wildcard hostlar çalışmıyorsa özellikle şu alanlara odaklanın:</p>
+<ul><li>wildcard DNS</li><li>wildcard sertifika</li><li>Nginx <code>server_name</code></li><li><code>ARNS_ROOT_HOST</code></li></ul>
+<h2>Tarayıcı <code>Your Connection Is Not Private</code> Gösteriyor</h2>
+<p>Mevcut sertifikaları kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Sertifikanın son kullanma tarihini ve kapsadığı domainleri kontrol edin.</p>
+<p>ArNS subdomainleri sunuyorsanız sertifika hem root gateway&#x27;i hem wildcard hostname&#x27;i kapsamalıdır.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>gateway.example.com
+*.gateway.example.com</code></pre></div>
+<p>Sertifika süresi dolduysa yenileyin veya yeni sertifika alın ve Nginx&#x27;in doğru sertifika dosyalarını kullandığından emin olun.</p>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre></div>
+<h2>Wildcard SSL Sertifikası Alınamıyor</h2>
+<p>Wildcard sertifikalar genellikle DNS challenge gerektirir.</p>
+<p>Örnek:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certonly \
+  --manual \
+  --preferred-challenges dns \
+  -d YOUR_DOMAIN \
+  -d &#x27;*.YOUR_DOMAIN&#x27;</code></pre></div>
+<p>Certbot aşağıdakine benzer bir TXT kaydı isteyecektir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>_acme-challenge.YOUR_DOMAIN</code></pre></div>
+<p>Yayılımı kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dig TXT _acme-challenge.YOUR_DOMAIN</code></pre></div>
+<p>Beklenen TXT kaydı internette görünmeden Certbot işlemine devam etmeyin.</p>
+<p>Yaygın hata nedenleri:</p>
+<ul><li>TXT kaydının yanlış DNS zone&#x27;a eklenmesi</li><li>eski TXT kaydının hâlâ bulunması</li><li>DNS propagation gecikmesi</li><li>yanlış domain</li><li>wildcard domainin sertifika isteğine eklenmemesi</li></ul>
+<h2>Sertifika Yenilendi Ama Nginx Eski Sertifikayı Kullanıyor</h2>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Nginx&#x27;in kullandığı sertifika yollarını görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -T | grep -E &#x27;ssl_certificate|ssl_certificate_key&#x27;</code></pre></div>
+<p>Dosya yollarını doğruladıktan sonra:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre></div>
+<p>Dışarıdan kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -Iv https://YOUR_DOMAIN</code></pre></div>
+<p>Sertifikanın başarıyla yenilenmiş olması tek başına yeterli değildir. Nginx yeni sertifikayı yüklememiş olabilir.</p>
+<h2>Nginx Yapılandırmasını Değiştirdim Ama Değişiklik Yansımadı</h2>
+<p>Her zaman önce test edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>Sonra reload:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl reload nginx</code></pre></div>
+<p>Kontrol:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<p>Configuration ve sertifika değişikliklerinde genellikle reload yeterlidir.</p>
+<p>Sunucunun tamamen reboot edilmesi normalde gerekli değildir.</p>
+<h2>AR.IO Header Sorunları</h2>
+<p>AR.IO reverse proxy yapılandırmasının AR.IO&#x27;ya özgü header&#x27;ları aktardığını doğrulayın.</p>
+<p>Nginx <code>location /</code> içerisinde:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>proxy_set_header X-AR-IO-Origin $http_x_ar_io_origin;
+proxy_set_header X-AR-IO-Origin-Node-Release $http_x_ar_io_origin_node_release;
+proxy_set_header X-AR-IO-Hops $http_x_ar_io_hops;</code></pre></div>
+<p>satırları bulunmalıdır.</p>
+<p>Standart proxy header&#x27;larını da koruyun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</code></pre></div>
+<p>Değişiklikten sonra:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre></div>
+<h2>Observer Başlamıyor</h2>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs observer -n 200</code></pre></div>
+<p><code>.env</code> yapılandırmasını kontrol edin.</p>
+<p>Özellikle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>RUN_OBSERVER=true
+OBSERVER_WALLET=</code></pre></div>
+<p>değerlerine bakın.</p>
+<p>Kullandığınız yapılandırmaya göre:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>OBSERVER_PRIVATE_KEY=</code></pre></div>
+<p>veya:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>OBSERVER_KEYPAIR_PATH=</code></pre></div>
+<p>değerini doğrulayın.</p>
+<p>Kullanılıyorsa upload signer yapılandırmasını da kontrol edin.</p>
+<p>Private key&#x27;leri public support kanallarına veya ekran görüntülerine eklemeyin.</p>
+<h2>Solana Wallet veya Signing Hataları</h2>
+<p>Core ve Observer loglarını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -n 200</code></pre></div>
+<p>Şunları doğrulayın:</p>
+<ul><li>operator public key</li><li>observer public key</li><li>observer private key veya keypair</li><li>upload signing key veya keypair</li><li>Solana RPC bağlantısı</li><li>gerekli işlemler için yeterli SOL</li></ul>
+<p>Sorun giderirken private key paylaşmayın.</p>
+<h2>ArNS İsimleri Çok Yavaş Açılıyor</h2>
+<p>Normal gateway istekleri çalışıyor fakat ArNS isimleri çok yavaş çözümleniyorsa şunları kontrol edin:</p>
+<ul><li>gateway güncel release üzerinde mi</li><li><code>ARNS_ROOT_HOST</code> doğru mu</li><li>wildcard DNS çalışıyor mu</li><li>DNS resolver sağlıklı mı</li><li>sunucu kaynakları tükenmiş mi</li><li>disk darboğazı var mı</li></ul>
+<p>Load:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>uptime</code></pre></div>
+<p>Memory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>free -h</code></pre></div>
+<p>Disk:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -h</code></pre></div>
+<p>Container kullanımı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker stats</code></pre></div>
+<p>AR.IO troubleshooting rehberi, sürekli yüksek ArNS resolution sürelerinin gateway yapılandırma problemi gösterebileceğini belirtiyor.</p>
+<h2>Disk Alanı Bitti</h2>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -h</code></pre></div>
+<p>Inode kullanımını da kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -i</code></pre></div>
+<p>Dosya sisteminde boş alan bulunmasına rağmen inode&#x27;ların tamamı tükenmişse yeni dosya oluşturulamayabilir.</p>
+<p>Docker kullanımı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>Büyük dizinleri bulun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo du -xh /var/lib/docker 2&gt;/dev/null | sort -h | tail -30</code></pre></div>
+<p>AR.IO dizini:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo du -xh ~/ar-io-node 2&gt;/dev/null | sort -h | tail -30</code></pre></div>
+<p>Gateway database veya indexed data dosyalarını ne olduklarını doğrulamadan silmeyin.</p>
+<p>Silme işleminden önce disk alanını gerçekte hangi dosyaların kullandığını belirleyin.</p>
+<h2>Docker Çok Fazla Disk Kullanıyor</h2>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>Kullanılmayan Docker kaynaklarını kaldırmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system prune</code></pre></div>
+<p>Onay vermeden önce gösterilen listeyi ve uyarıyı okuyun.</p>
+<p>Sunucuda başka Docker uygulamaları da bulunuyorsa onların ihtiyaç duyabileceği kaynakları silmediğinizden emin olun.</p>
+<p>Production gateway üzerinde agresif cleanup seçeneklerini kontrol etmeden kullanmayın.</p>
+<h2>Sunucu Kaynaklarını Kontrol Etme</h2>
+<p>CPU/load:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>uptime</code></pre></div>
+<p>Memory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>free -h</code></pre></div>
+<p>Disk:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -h</code></pre></div>
+<p>Inode:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -i</code></pre></div>
+<p>Docker:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker stats</code></pre></div>
+<p>Bu kontroller, configuration problemi ile kaynak tükenmesini hızlı şekilde birbirinden ayırmaya yardımcı olur.</p>
+<h2>Firewall Kontrolü</h2>
+<p>UFW durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ufw status</code></pre></div>
+<p>Tipik public portlar:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>22/tcp
+80/tcp
+443/tcp</code></pre></div>
+<p>Nginx arkasındaki AR.IO internal portunun normal şartlarda doğrudan public internete açılması gerekmez.</p>
+<h2>80 veya 443 Portu Başka Bir Servis Tarafından Kullanılıyor</h2>
+<p>Kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ss -lntp | grep -E &#x27;:80|:443&#x27;</code></pre></div>
+<p>Normalde public HTTP/HTTPS portlarını Nginx kullanmalıdır.</p>
+<p>Standalone Certbot kullanırken port 80 çakışması da yaşanabilir.</p>
+<p>Certbot port 80 kullanım hatası veriyorsa:</p>
+<ul><li>uygun webroot/Nginx/DNS challenge yöntemini kullanın</li><li>veya challenge için ilgili servisi bilinçli olarak durdurup işlem sonrasında tekrar başlatın</li></ul>
+<p>Processleri kontrol etmeden sonlandırmayın.</p>
+<h2>Hızlı Sorun Giderme Sırası</h2>
+<p>Gateway aniden cevap vermeyi bıraktığında şu sıra pratik bir başlangıçtır:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~/ar-io-node
+
+sudo docker compose ps
+sudo docker compose logs core -n 100
+sudo docker compose logs observer -n 100
+
+df -h
+df -i
+
+sudo nginx -t
+sudo systemctl status nginx
+
+dig +short YOUR_DOMAIN
+dig +short test.YOUR_DOMAIN
+
+curl -I https://YOUR_DOMAIN
+curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Bu sıra, yapılandırmayı değiştirmeye başlamadan önce application, storage, reverse proxy, DNS ve public endpoint katmanlarını kontrol eder.</p>
+<h2>Sorun Giderme Kontrol Listesi</h2>
+<p>Bir AR.IO Gateway sorununu araştırırken şunları kontrol edin:</p>
+<ul><li>doğru release çalışıyor</li><li>uygun durumda <code>main</code> branch aktif</li><li>Docker container&#x27;ları sağlıklı</li><li>core servisi cevap veriyor</li><li>Observer çalışıyor</li><li>domain doğru çözümleniyor</li><li>wildcard DNS doğru çözümleniyor</li><li>SSL sertifikası geçerli</li><li>wildcard sertifika geçerli</li><li>Nginx yapılandırması başarılı</li><li>Nginx doğru backend&#x27;e yönleniyor</li><li>AR.IO header&#x27;ları aktarılıyor</li><li><code>ARNS_ROOT_HOST</code> doğru</li><li><code>AR_IO_WALLET</code> doğru</li><li>Solana signing yapılandırması doğru</li><li>gerektiğinde yeterli SOL mevcut</li><li>disk alanı yeterli</li><li>inode mevcut</li><li>sunucu kaynakları sağlıklı</li><li>gateway <code>1984</code> test transaction&#x27;ını döndürüyor</li><li>Observer raporlarında sürekli failure bulunmuyor</li></ul>
+<p>Sorun giderirken her seferinde tek bir değişiklik yapın. Aynı anda çok sayıda configuration değişikliği yapmak, sorunu hangi değişikliğin çözdüğünü veya oluşturduğunu belirlemeyi zorlaştırır.</p>
+        </div>
       </article>
 
     </div>

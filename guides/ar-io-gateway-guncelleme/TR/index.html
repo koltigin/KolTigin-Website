@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,163 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway Güncelleme </h1>
+<p>AR.IO Gateway&#x27;in güncel tutulması ağ uyumluluğu, güvenlik ve gateway&#x27;in güvenilir biçimde çalışması açısından önemlidir.</p>
+<p>Bu rehber, resmi <code>ar-io-node</code> Git repository&#x27;sinden kurulmuş mevcut bir AR.IO Gateway&#x27;in güvenli şekilde nasıl güncelleneceğini anlatır.</p>
+<h2>Mevcut Release Sürümünü Kontrol Etme</h2>
+<p>Güncellemeden önce gateway üzerinde çalışan release sürümünü kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Aynı adresi tarayıcıdan da açabilirsiniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>https://YOUR_DOMAIN/ar-io/info</code></pre></div>
+<p>Buradaki:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>YOUR_DOMAIN</code></pre></div>
+<p>değerini kendi gateway domaininizle değiştirin.</p>
+<p>Güncellemeye başlamadan önce mevcut release bilgisini not edin.</p>
+<p>Release numarasının içerisinde:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>-pre</code></pre></div>
+<p>bulunuyorsa gateway kararlı <code>main</code> branch yerine <code>develop</code> branch üzerinde çalışıyor olabilir.</p>
+<p>Production gateway kullanıyorsanız devam etmeden önce doğru branch üzerinde olduğunuzu kontrol edin.</p>
+<h2>AR.IO Node Dizinine Girme</h2>
+<p>Repository home dizinine kurulduysa:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~/ar-io-node</code></pre></div>
+<p>Aktif Git branch&#x27;ini kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git branch --show-current</code></pre></div>
+<p>Standart production kurulumunda bunun genellikle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>main</code></pre></div>
+<p>olması gerekir.</p>
+<p>Repository durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git status</code></pre></div>
+<p>Tracked dosyalarda manuel değişiklik yaptıysanız <code>git pull</code> işleminden önce bunları inceleyin.</p>
+<p>Özel yapılandırmaları kontrol etmeden üzerine yazmayın.</p>
+<h2>Yeni Release Kontrolü</h2>
+<p>Remote repository bilgisini güncelleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git fetch</code></pre></div>
+<p>Son commitleri görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git log --oneline --decorate -10</code></pre></div>
+<p>Local branch durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git status</code></pre></div>
+<p>Güncellemeden önce resmi AR.IO release notlarını ve duyurularını da kontrol edin.</p>
+<p>Yeni release&#x27;ler şunları içerebilir:</p>
+<ul><li>yeni environment variable&#x27;lar</li><li>değişen varsayılan değerler</li><li>Docker Compose değişiklikleri</li><li>observer değişiklikleri</li><li>Solana yapılandırma değişiklikleri</li><li>yeni servis veya bağımlılıklar</li></ul>
+<h2>Yapılandırmayı Yedekleme</h2>
+<p>Güncellemeden önce <code>.env</code> dosyanızın bir yedeğini alın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cp .env ~/.ar-io-env-backup-$(date +%Y%m%d-%H%M%S)</code></pre></div>
+<p>Wallet veya keypair dosyaları kullanıyorsanız bunların sunucudan ayrı ve güvenli yedeklerinin bulunduğundan emin olun.</p>
+<p>Private key, seed phrase veya keypair dosyalarını hiçbir zaman public repository&#x27;ye göndermeyin.</p>
+<h2>Son Değişiklikleri Alma</h2>
+<p>Repository&#x27;yi güncelleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git pull</code></pre></div>
+<p>İşlemin başarıyla tamamlandığını kontrol edin.</p>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>git status</code></pre></div>
+<p>komutunu çalıştırın.</p>
+<h2>Yeni Environment Variable&#x27;ları Kontrol Etme</h2>
+<p>AR.IO Gateway güncellemesinin en önemli aşamalarından biri budur.</p>
+<p>Güncel örnek environment dosyasını mevcut <code>.env</code> dosyanızla karşılaştırın.</p>
+<p>Örnek dosyayı incelemek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nano .env.example</code></pre></div>
+<p>Mevcut yapılandırmanız:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nano .env</code></pre></div>
+<p><code>.env</code> dosyanızı doğrudan <code>.env.example</code> ile değiştirmeyin.</p>
+<p>Mevcut <code>.env</code>, gateway&#x27;inize özel yapılandırmayı içerir.</p>
+<p>Bunun yerine yeni eklenen değişkenleri belirleyin ve yalnızca gerekli olanları mevcut <code>.env</code> dosyanıza ekleyin.</p>
+<p>Özellikle şu alanlarla ilgili değişiklikleri kontrol edin:</p>
+<ul><li>Solana wallet</li><li>observer</li><li>upload signing</li><li>ArNS</li><li>network yapılandırması</li><li>yeni gateway servisleri</li></ul>
+<h2>Gateway&#x27;i Durdurma</h2>
+<p>Çalışan container&#x27;ları durdurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose down -v</code></pre></div>
+<p>Güncel resmi AR.IO upgrade prosedürü <code>down -v</code> kullanmaktadır.</p>
+<p>AR.IO&#x27;nun indekslenmiş gateway verileri disposable Docker volume&#x27;larından ayrı tutulduğu için standart gateway güncelleme işlemi indeksleme ilerlemesini silmez.</p>
+<p>Ancak standart kurulumu değiştirdiyseniz volume silmeden önce kendi Docker ve storage yapılandırmanızı mutlaka kontrol edin.</p>
+<h2>Güncel Docker Image&#x27;larını Alma</h2>
+<p>Mevcut Docker Compose yapılandırmasının kullandığı image&#x27;ları çekin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose pull</code></pre></div>
+<p>Böylece gateway yeniden başlatılmadan önce güncel image&#x27;lar hazır olur.</p>
+<h2>Güncellenmiş Gateway&#x27;i Başlatma</h2>
+<p>Gateway&#x27;i başlatın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Güncel standart AR.IO sürümlerinde başlatma sırasında genellikle:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>--build</code></pre></div>
+<p>kullanılması gerekmez.</p>
+<p>Servisleri kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<h2>Logları Kontrol Etme</h2>
+<p>Gateway başladıktan hemen sonra core loglarını inceleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core -f -n 100</code></pre></div>
+<p>Observer loglarını da kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>İkisini birlikte takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Log ekranından çıkmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Ctrl+C</code></pre></div>
+<p>kullanın.</p>
+<p>Bu işlem gateway&#x27;i durdurmaz.</p>
+<h2>Gateway Sürümünü Doğrulama</h2>
+<p>Güncellemeden sonra bilgi endpoint&#x27;ini tekrar kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Beklediğiniz release sürümünün çalıştığını doğrulayın.</p>
+<h2>Arweave Veri Erişimini Test Etme</h2>
+<p>Standart gateway testini çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Beklenen cevap:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1984</code></pre></div>
+<p><code>1984</code> cevabını alıyorsanız gateway test transaction&#x27;ını başarıyla sunuyor demektir.</p>
+<h2>HTTPS Kontrolü</h2>
+<p>Public endpoint&#x27;i kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Güncellemeden sonra HTTPS&#x27;in çalışmaya devam ettiğinden emin olun.</p>
+<h2>ArNS / Wildcard Kontrolü</h2>
+<p>Gateway wildcard ArNS routing kullanıyorsa bir subdomain üzerinden test edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -I https://ardrive.YOUR_DOMAIN</code></pre></div>
+<p>Bu kontrol güncellemenin aşağıdaki bileşenleri etkilemediğini doğrulamaya yardımcı olur:</p>
+<ul><li>wildcard DNS</li><li>wildcard SSL</li><li>Nginx</li><li><code>ARNS_ROOT_HOST</code></li><li>gateway routing</li></ul>
+<h2>Observer Kontrolü</h2>
+<p>Güncellemeden sonra observer loglarını takip edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Şunlarla ilgili tekrar eden hatalara dikkat edin:</p>
+<ul><li>Solana RPC</li><li>observer wallet</li><li>signing</li><li>yetersiz SOL</li><li>network yapılandırması</li><li>upload yapılandırması</li></ul>
+<h2>Disk Kullanımını Kontrol Etme</h2>
+<p>Boş disk alanını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>df -h</code></pre></div>
+<p>Docker kullanımını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>Gateway zaman içerisinde önemli miktarda veri biriktirebilir. Bu nedenle disk kullanımı düzenli olarak takip edilmelidir.</p>
+<h2>İsteğe Bağlı Docker Temizliği</h2>
+<p>Birden fazla güncellemeden sonra kullanılmayan Docker kaynakları birikebilir.</p>
+<p>Önce mevcut kullanımı kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>Kullanılmayan Docker kaynaklarını temizlemek isterseniz:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo docker system prune</code></pre></div>
+<p>Onaylamadan önce Docker&#x27;ın gösterdiği uyarıyı dikkatlice okuyun.</p>
+<p>Bu komut kullanılmayan container, network ve image&#x27;ları kaldırabilir.</p>
+<p>Sunucuda AR.IO dışında başka servisler çalışıyorsa devam etmeden önce nelerin silineceğini kontrol edin.</p>
+<p>Production sunucuda agresif Docker temizleme komutlarını kontrol etmeden kullanmayın.</p>
+<h2>Hızlı Güncelleme</h2>
+<p>Sağlıklı çalışan, release notlarını kontrol ettiğiniz ve manuel configuration migration gerektirmediğini doğruladığınız bir gateway için temel güncelleme akışı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd ~/ar-io-node
+
+git status
+git pull
+
+sudo docker compose down -v
+sudo docker compose pull
+sudo docker compose up -d
+
+sudo docker compose ps
+sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Ardından:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>ve:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>komutlarını çalıştırın.</p>
+<p>Beklenen gateway test cevabı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>1984</code></pre></div>
+<h2>Güncelleme Kontrol Listesi</h2>
+<p>Her güncellemeden sonra şunları doğrulayın:</p>
+<ul><li>repository başarıyla güncellendi</li><li>doğru Git branch aktif</li><li>yeni environment variable&#x27;lar kontrol edildi</li><li><code>.env</code> doğru gateway yapılandırmasını koruyor</li><li>Docker container&#x27;ları çalışıyor</li><li>core loglarında sürekli tekrarlanan hata yok</li><li>observer doğru çalışıyor</li><li><code>/ar-io/info</code> cevap veriyor</li><li>beklenen release çalışıyor</li><li>gateway testi <code>1984</code> döndürüyor</li><li>HTTPS çalışıyor</li><li>wildcard ArNS subdomainleri çalışıyor</li><li>Nginx sağlıklı</li><li>SSL sertifikası geçerli</li><li>yeterli boş disk alanı var</li><li>Solana wallet ve observer yapılandırması doğru</li></ul>
+<p>Yalnızca <code>git pull</code> komutunun başarılı olması gateway güncellemesinin tamamlandığı anlamına gelmez. Restart işleminden sonra çalışan servisleri ve public gateway&#x27;i mutlaka doğrulayın.</p>
+        </div>
       </article>
 
     </div>

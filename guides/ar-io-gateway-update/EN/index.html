@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,162 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway Update </h1>
+<p>Keeping your AR.IO Gateway up to date is important for compatibility, security and reliable participation in the network.</p>
+<p>This guide explains how to safely update an existing AR.IO Gateway installed from the official <code>ar-io-node</code> Git repository.</p>
+<h2>Check the Current Release</h2>
+<p>Before updating, check the release currently running on your gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>You can also open:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>https://YOUR_DOMAIN/ar-io/info</code></pre></div>
+<p>in a browser.</p>
+<p>Replace:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>YOUR_DOMAIN</code></pre></div>
+<p>with your gateway domain.</p>
+<p>Review the returned information and note the current release before continuing.</p>
+<p>If the release number contains:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>-pre</code></pre></div>
+<p>your gateway may be running the <code>develop</code> branch instead of the stable <code>main</code> branch.</p>
+<p>For a production gateway, verify that you are using the intended stable branch before continuing.</p>
+<h2>Go to the AR.IO Node Directory</h2>
+<p>If the repository was installed in your home directory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~/ar-io-node</code></pre></div>
+<p>Check the current Git branch:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git branch --show-current</code></pre></div>
+<p>For the normal production setup, this should generally return:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>main</code></pre></div>
+<p>Check the repository status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git status</code></pre></div>
+<p>If you have manually modified tracked files, review those changes before pulling an update.</p>
+<p>Do not blindly overwrite custom configuration.</p>
+<h2>Check for New Releases</h2>
+<p>Fetch the latest repository information:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git fetch</code></pre></div>
+<p>Check the latest commits:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git log --oneline --decorate -10</code></pre></div>
+<p>You can compare your local branch with the remote branch:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git status</code></pre></div>
+<p>Before updating, also review the official AR.IO release notes and announcements.</p>
+<p>New releases may introduce:</p>
+<ul><li>new environment variables</li><li>changed default values</li><li>Docker Compose changes</li><li>observer changes</li><li>Solana-related configuration changes</li><li>new services or dependencies</li></ul>
+<h2>Back Up Your Configuration</h2>
+<p>Before an update, create a backup of your environment configuration.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cp .env ~/.ar-io-env-backup-$(date +%Y%m%d-%H%M%S)</code></pre></div>
+<p>If you use wallet/keypair files, make sure you already have secure backups stored separately from the server.</p>
+<p>Do not expose or commit private keys, seed phrases or keypair files.</p>
+<h2>Pull the Latest Changes</h2>
+<p>Update the repository:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git pull</code></pre></div>
+<p>Confirm that the pull completed successfully.</p>
+<p>Then check:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git status</code></pre></div>
+<h2>Check for New Environment Variables</h2>
+<p>This is one of the most important steps during an AR.IO Gateway update.</p>
+<p>Compare the current example environment file with your existing <code>.env</code>.</p>
+<p>You can inspect:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nano .env.example</code></pre></div>
+<p>and your configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nano .env</code></pre></div>
+<p>Do not simply replace your <code>.env</code> with <code>.env.example</code>.</p>
+<p>Your <code>.env</code> contains your gateway-specific configuration.</p>
+<p>Instead, identify newly introduced variables and add only the required changes to your existing <code>.env</code>.</p>
+<p>Pay particular attention to variables related to:</p>
+<ul><li>Solana wallets</li><li>observer</li><li>upload signing</li><li>ArNS</li><li>network configuration</li><li>new gateway services</li></ul>
+<h2>Stop the Gateway</h2>
+<p>Stop the existing containers:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose down -v</code></pre></div>
+<p>The current official AR.IO upgrade procedure uses <code>down -v</code>.</p>
+<p>AR.IO&#x27;s indexed gateway data is stored separately from Docker&#x27;s disposable container volumes, so the normal gateway upgrade process does not erase the gateway&#x27;s indexing progress.</p>
+<p>However, always make sure you understand your own Docker/storage configuration before deleting volumes, especially if you have customized the standard installation.</p>
+<h2>Pull Updated Docker Images</h2>
+<p>Pull the images referenced by the current Docker Compose configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose pull</code></pre></div>
+<p>This ensures that updated images are available before the gateway is started again.</p>
+<h2>Start the Updated Gateway</h2>
+<p>Start the gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Recent AR.IO releases do not normally require:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>--build</code></pre></div>
+<p>when starting the standard gateway configuration.</p>
+<p>Check the services:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<h2>Watch the Logs</h2>
+<p>Immediately inspect the core logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -f -n 100</code></pre></div>
+<p>Check the observer as well:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Or monitor both:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Press:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Ctrl+C</code></pre></div>
+<p>to leave the log view.</p>
+<p>This does not stop the gateway.</p>
+<h2>Verify the Gateway</h2>
+<p>After the update, check the gateway endpoint again:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>Confirm that the expected release is now running.</p>
+<h2>Test Arweave Data Retrieval</h2>
+<p>Run the standard gateway test:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Expected response:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1984</code></pre></div>
+<p>If you receive <code>1984</code>, the gateway is successfully serving the test transaction.</p>
+<h2>Test HTTPS</h2>
+<p>Check the public endpoint:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://YOUR_DOMAIN</code></pre></div>
+<p>Make sure HTTPS is still working correctly after the update.</p>
+<h2>Test ArNS / Wildcard Resolution</h2>
+<p>If your gateway uses wildcard ArNS routing, test a subdomain:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://ardrive.YOUR_DOMAIN</code></pre></div>
+<p>This helps verify that the update has not affected:</p>
+<ul><li>wildcard DNS</li><li>wildcard SSL</li><li>Nginx</li><li><code>ARNS_ROOT_HOST</code></li><li>gateway routing</li></ul>
+<h2>Check the Observer</h2>
+<p>Monitor the observer after the update:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Look for repeated errors related to:</p>
+<ul><li>Solana RPC</li><li>observer wallet</li><li>signing</li><li>insufficient SOL</li><li>network configuration</li><li>upload configuration</li></ul>
+<h2>Check Disk Usage</h2>
+<p>Check available disk space:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -h</code></pre></div>
+<p>Check Docker usage:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>A gateway can accumulate significant amounts of data over time, so disk usage should be monitored regularly.</p>
+<h2>Optional Docker Cleanup</h2>
+<p>Unused Docker resources can accumulate after multiple upgrades.</p>
+<p>Check usage first:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system df</code></pre></div>
+<p>If you decide to clean unused Docker resources:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system prune</code></pre></div>
+<p>Read Docker&#x27;s warning carefully before confirming.</p>
+<p>This command can remove unused containers, networks and images.</p>
+<p>If the server runs services other than AR.IO, verify what will be removed before continuing.</p>
+<p>Do not use aggressive Docker cleanup commands blindly on a production server.</p>
+<h2>Quick Update Procedure</h2>
+<p>For an already healthy gateway where you have reviewed the release notes and confirmed that no manual configuration migration is required:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~/ar-io-node
+
+git status
+git pull
+
+sudo docker compose down -v
+sudo docker compose pull
+sudo docker compose up -d
+
+sudo docker compose ps
+sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Afterward:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://YOUR_DOMAIN/ar-io/info | jq</code></pre></div>
+<p>and:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://YOUR_DOMAIN/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>Expected gateway test response:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1984</code></pre></div>
+<h2>Update Checklist</h2>
+<p>After every update, verify:</p>
+<ul><li>repository update completed successfully</li><li>correct Git branch is active</li><li>new environment variables were reviewed</li><li><code>.env</code> still contains the correct configuration</li><li>Docker containers are running</li><li>core logs do not show repeating errors</li><li>observer is running correctly</li><li><code>/ar-io/info</code> responds</li><li>expected release is running</li><li>gateway test returns <code>1984</code></li><li>HTTPS works</li><li>wildcard ArNS subdomains work</li><li>Nginx is healthy</li><li>SSL certificate is valid</li><li>sufficient disk space remains</li><li>Solana wallet and observer configuration remain correct</li></ul>
+<p>A successful <code>git pull</code> alone does not mean the gateway update is complete. Always verify the running services and public gateway after restarting.</p>
+        </div>
       </article>
 
     </div>

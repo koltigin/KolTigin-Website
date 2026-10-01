@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,300 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway Installation</h1>
+<p>This guide explains how to install and run an AR.IO Gateway on an Ubuntu server using Docker, a custom domain, SSL and Nginx.</p>
+<p>AR.IO has migrated its protocol layer to Solana. The gateway still serves and indexes Arweave data, but operator and observer identities now use Solana addresses.</p>
+<p>This guide focuses on getting the gateway infrastructure online. Registering the gateway on the AR.IO network and staking ARIO are separate steps.</p>
+<h2>System Requirements</h2>
+<h3>Minimum</h3>
+<ul><li>4 CPU cores</li><li>4 GB RAM</li><li>500 GB storage</li><li>SSD recommended</li><li>Stable 50 Mbps internet connection</li></ul>
+<h3>Recommended</h3>
+<ul><li>12 CPU cores</li><li>32 GB RAM</li><li>2 TB SSD</li><li>Stable 1 Gbps internet connection</li></ul>
+<p>For a long-running production gateway, SSD storage and sufficient free disk space are strongly recommended.</p>
+<h2>Update the Server</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo apt update -y &amp;&amp; sudo apt upgrade -y</code></pre></div>
+<h2>Install Required Packages</h2>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo apt install -y curl openssh-server git certbot nginx sqlite3 build-essential</code></pre></div>
+<p>Enable SSH:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl enable ssh</code></pre></div>
+<h2>Configure the Firewall</h2>
+<p>Allow SSH, HTTP and HTTPS:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw enable</code></pre></div>
+<p>Check the firewall:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ufw status</code></pre></div>
+<p>Make sure you do not lock yourself out of the server when enabling UFW.</p>
+<h2>Install Docker</h2>
+<p>Add Docker&#x27;s official repository:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  -o /etc/apt/keyrings/docker.asc
+
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+  &quot;deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release &amp;&amp; echo &quot;$VERSION_CODENAME&quot;) stable&quot; | \
+  sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+
+sudo apt-get update</code></pre></div>
+<p>Install Docker Engine and Docker Compose:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo apt-get install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin</code></pre></div>
+<p>Verify the installation:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>docker --version
+docker compose version</code></pre></div>
+<h2>Install Node.js</h2>
+<p>Install NVM:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash</code></pre></div>
+<p>Reload the shell:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>source ~/.bashrc</code></pre></div>
+<p>Install the Node.js version currently used by the official AR.IO setup documentation:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nvm install 20.11.1
+nvm use 20.11.1
+npm install -g yarn@1.22.22</code></pre></div>
+<p>Check the versions:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>node -v
+npm -v
+yarn -v</code></pre></div>
+<h2>Clone the AR.IO Node Repository</h2>
+<p>Move to the directory where you want to keep the gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ~</code></pre></div>
+<p>Clone the official repository:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>git clone -b main https://github.com/ar-io/ar-io-node</code></pre></div>
+<p>Enter the directory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>cd ar-io-node</code></pre></div>
+<p>The gateway databases are stored with the node data. If you intend to use a separate SSD or storage volume, plan the storage location before allowing the gateway to build a large index.</p>
+<h2>Prepare the Solana Wallets</h2>
+<p>The current AR.IO protocol uses Solana identities.</p>
+<p>You need an operator address and an observer address.</p>
+<p>The operator is identified by:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>AR_IO_WALLET</code></pre></div>
+<p>The observer is identified by:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>OBSERVER_WALLET</code></pre></div>
+<p>The observer address must be unique to the gateway.</p>
+<p>A simple deployment may use the same Solana keypair for multiple gateway roles, while operators who want stronger key separation can use a dedicated observer keypair.</p>
+<p>Never publish private keys or keypair JSON files.</p>
+<h2>Create the Environment File</h2>
+<p>From the AR.IO node directory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nano .env</code></pre></div>
+<p>A basic configuration looks like this:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>GRAPHQL_HOST=turbo-gateway.com
+GRAPHQL_PORT=443
+START_HEIGHT=1000000
+
+RUN_OBSERVER=true
+
+ARNS_ROOT_HOST=YOUR_DOMAIN
+
+AR_IO_WALLET=YOUR_SOLANA_OPERATOR_PUBLIC_KEY
+OBSERVER_WALLET=YOUR_SOLANA_OBSERVER_PUBLIC_KEY
+
+OBSERVER_PRIVATE_KEY=YOUR_OBSERVER_BASE58_PRIVATE_KEY
+SOLANA_UPLOAD_PRIVATE_KEY=YOUR_OBSERVER_BASE58_PRIVATE_KEY</code></pre></div>
+<p>Replace:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>YOUR_DOMAIN
+YOUR_SOLANA_OPERATOR_PUBLIC_KEY
+YOUR_SOLANA_OBSERVER_PUBLIC_KEY
+YOUR_OBSERVER_BASE58_PRIVATE_KEY</code></pre></div>
+<p>with your own values.</p>
+<p>Do not include angle brackets around the final values.</p>
+<h3>Using Keypair Files Instead</h3>
+<p>If you prefer JSON keypair files instead of inline private keys, place the required keypair in the gateway&#x27;s <code>wallets</code> directory.</p>
+<p>Then remove:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>OBSERVER_PRIVATE_KEY=
+SOLANA_UPLOAD_PRIVATE_KEY=</code></pre></div>
+<p>and configure:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>env</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>OBSERVER_KEYPAIR_PATH=/app/wallets/YOUR_OBSERVER_KEYPAIR.json
+SOLANA_UPLOAD_KEYPAIR_PATH=/app/wallets/YOUR_OBSERVER_KEYPAIR.json</code></pre></div>
+<p>Do not configure both the inline private key and keypair path for the same role.</p>
+<h2>Protect Wallet Files</h2>
+<p>Private key material should never be publicly accessible.</p>
+<p>For example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod 600 wallets/*.json</code></pre></div>
+<p>Do not commit:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>.env
+wallets/
+private keys
+seed phrases</code></pre></div>
+<p>to a public Git repository.</p>
+<h2>Configure DNS</h2>
+<p>Your gateway needs a domain.</p>
+<p>Assume the gateway domain is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>gateway.example.com</code></pre></div>
+<p>Create an A record pointing the gateway domain to your server:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>gateway.example.com -&gt; SERVER_IP</code></pre></div>
+<p>AR.IO also requires wildcard subdomain resolution for ArNS names.</p>
+<p>Create:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>*.gateway.example.com -&gt; SERVER_IP</code></pre></div>
+<p>You should therefore have both:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>gateway.example.com
+*.gateway.example.com</code></pre></div>
+<p>pointing to the gateway server.</p>
+<p>Wait for DNS propagation before continuing.</p>
+<p>Check the main record:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short gateway.example.com</code></pre></div>
+<p>Check a wildcard subdomain:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig +short test.gateway.example.com</code></pre></div>
+<p>Both should resolve to your server.</p>
+<h2>Start the Gateway</h2>
+<p>From the AR.IO node directory:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Check the containers:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Follow the core logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -f -n 100</code></pre></div>
+<p>Follow the core and observer logs together:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Use:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Ctrl+C</code></pre></div>
+<p>to leave the log view. This does not stop the containers.</p>
+<h2>Check the Local Gateway</h2>
+<p>Check whether the gateway is listening:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>You can also inspect the logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -n 100</code></pre></div>
+<p>When <code>ARNS_ROOT_HOST</code> is configured, some localhost-based tests may not behave the same way as requests made through the configured public hostname. The final validation should therefore be performed through your domain.</p>
+<h2>Obtain an SSL Certificate</h2>
+<p>AR.IO gateways need HTTPS for both the main gateway domain and wildcard ArNS subdomains.</p>
+<p>For:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>gateway.example.com
+*.gateway.example.com</code></pre></div>
+<p>request a wildcard certificate using a DNS challenge:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certonly \
+  --manual \
+  --preferred-challenges dns \
+  -d gateway.example.com \
+  -d &#x27;*.gateway.example.com&#x27;</code></pre></div>
+<p>Certbot will ask you to create a DNS TXT record.</p>
+<p>Create the requested TXT record at your DNS provider and wait until it becomes publicly visible before continuing.</p>
+<p>You can verify it with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dig TXT _acme-challenge.gateway.example.com</code></pre></div>
+<p>Continue Certbot only after the expected TXT value appears.</p>
+<h3>Wildcard Certificate Renewal</h3>
+<p>Manual DNS wildcard certificates cannot normally renew unattended.</p>
+<p>For a production gateway, using a DNS provider with a supported Certbot DNS plugin or API-based ACME automation is preferable.</p>
+<p>Monitor certificate expiration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Do not allow the gateway certificate to expire.</p>
+<h2>Configure Nginx</h2>
+<p>Open the default Nginx configuration:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nano /etc/nginx/sites-available/default</code></pre></div>
+<p>Use a configuration similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>server {
+    listen 80;
+    listen [::]:80;
+
+    server_name gateway.example.com *.gateway.example.com;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name gateway.example.com *.gateway.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/gateway.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gateway.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header X-AR-IO-Origin $http_x_ar_io_origin;
+        proxy_set_header X-AR-IO-Origin-Node-Release $http_x_ar_io_origin_node_release;
+        proxy_set_header X-AR-IO-Hops $http_x_ar_io_hops;
+    }
+}</code></pre></div>
+<p>Replace:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>gateway.example.com</code></pre></div>
+<p>with your actual gateway domain.</p>
+<p>The <code>X-AR-IO-*</code> headers are important for AR.IO gateway communication and should not be removed from the proxy configuration.</p>
+<h2>Test Nginx</h2>
+<p>Always test the configuration before reloading:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t</code></pre></div>
+<p>If the result is successful:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl reload nginx</code></pre></div>
+<p>Check the service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status nginx</code></pre></div>
+<h2>Test HTTPS</h2>
+<p>Check the gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://gateway.example.com</code></pre></div>
+<p>Then test the official AR.IO gateway test transaction:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl https://gateway.example.com/3lyxgbgEvqNSvJrTX2J7CfRychUD5KClFhhVLyTPNCQ</code></pre></div>
+<p>The expected response is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1984</code></pre></div>
+<p>If you receive <code>1984</code>, the gateway is successfully serving Arweave data through your domain.</p>
+<h2>Check Gateway Information</h2>
+<p>Check the AR.IO information endpoint:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -s https://gateway.example.com/ar-io/info | jq</code></pre></div>
+<p>Pay particular attention to the configured wallet and network information.</p>
+<p>After the Solana migration, the gateway should report the Solana configuration expected for the network you are targeting.</p>
+<h2>Test Wildcard / ArNS Resolution</h2>
+<p>Test a known ArNS-style subdomain:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>curl -I https://ardrive.gateway.example.com</code></pre></div>
+<p>The request should reach your gateway using the wildcard DNS record and wildcard SSL certificate.</p>
+<p>If the main domain works but subdomains fail, check:</p>
+<ul><li>wildcard DNS</li><li>wildcard SSL certificate</li><li>Nginx <code>server_name</code></li><li><code>ARNS_ROOT_HOST</code></li><li>gateway logs</li></ul>
+<h2>Check the Observer</h2>
+<p>Follow observer-related logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Or monitor both services:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core observer -f -n 100</code></pre></div>
+<p>Observer-related problems are often caused by:</p>
+<ul><li>incorrect Solana wallet configuration</li><li>missing private key/keypair</li><li>insufficient SOL for transactions</li><li>upload signer configuration</li><li>Solana RPC connectivity</li><li>incorrect network configuration</li></ul>
+<h2>Useful Commands</h2>
+<p>Check running containers:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose ps</code></pre></div>
+<p>Start the gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose up -d</code></pre></div>
+<p>Stop the gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose down</code></pre></div>
+<p>Restart the gateway:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose restart</code></pre></div>
+<p>Follow core logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs core -f -n 100</code></pre></div>
+<p>Follow observer logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker compose logs observer -f -n 100</code></pre></div>
+<p>Check Nginx:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo nginx -t
+sudo systemctl status nginx</code></pre></div>
+<p>Check certificates:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo certbot certificates</code></pre></div>
+<p>Check disk space:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>df -h</code></pre></div>
+<p>Check Docker disk usage:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo docker system df</code></pre></div>
+<h2>Final Checklist</h2>
+<p>Before considering the gateway installation complete, verify:</p>
+<ul><li>Docker containers are running</li><li>Core service is healthy</li><li>Observer is running</li><li>Domain resolves to the correct server</li><li>Wildcard DNS resolves correctly</li><li>HTTPS works</li><li>Wildcard HTTPS works</li><li>Nginx configuration passes</li><li>AR.IO headers are forwarded</li><li>Gateway test returns <code>1984</code></li><li><code>/ar-io/info</code> responds</li><li>Solana wallet configuration is correct</li><li>Observer has the required signing configuration</li><li>Wallets have sufficient SOL for required protocol transactions</li></ul>
+<h2>Joining the AR.IO Network</h2>
+<p>Running a gateway and registering it in the AR.IO Gateway Address Registry are separate steps.</p>
+<p>A production gateway should first be fully functional with:</p>
+<ul><li>custom domain</li><li>HTTPS</li><li>wildcard ArNS resolution</li><li>working gateway requests</li><li>correct Solana wallet configuration</li></ul>
+<p>Network registration currently requires ARIO operator stake and SOL for Solana transaction fees.</p>
+<p>Complete and verify the gateway installation before registering it on the network.</p>
+        </div>
       </article>
 
     </div>

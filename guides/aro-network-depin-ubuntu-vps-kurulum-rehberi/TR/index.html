@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,240 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>ARO Network DePIN — Ubuntu / VPS Kurulum Rehberi</h1>
+<blockquote><p>Ubuntu tabanlı bilgisayarlar ve VPS sunucuları için topluluk kurulum rehberi.</p></blockquote>
+<p>ARO Network, kullanılabilir ağ ve bilgi işlem kaynaklarının merkeziyetsiz altyapıya katkı sağlamasına yönelik bir DePIN projesidir.</p>
+<p>Bu rehber, ARO Server Node&#x27;un Ubuntu tabanlı bir bilgisayar veya VPS üzerinde kurulmasını, gerekli servislerin etkinleştirilmesini, Web Console üzerinden Device SN bilgisinin alınmasını ve node&#x27;un ARO Dashboard&#x27;a eklenmesini anlatır.</p>
+<h2>Kayıt ve Topluluk</h2>
+<p>ARO Network&#x27;e aşağıdaki referral bağlantısı ile kayıt olabilirsiniz:</p>
+<ul><li>Kayıt: <a href="https://dashboard.aro.network/signup?referral=9KAG" target="_blank" rel="noopener noreferrer">https://dashboard.aro.network/signup?referral=9KAG</a></li><li>Referral Code: <code>9KAG</code></li><li>Discord: <a href="https://discord.gg/aronetwork" target="_blank" rel="noopener noreferrer">https://discord.gg/aronetwork</a></li></ul>
+<h2>Platform Notları</h2>
+<ul><li>Android cihazlara kurulabilir.</li><li>Solana Seeker üzerinde kullanılması önerilmez.</li><li>macOS sürümü hâlâ test aşamasında olduğu için Mac üzerinde şu aşamada önerilmez.</li><li>Ubuntu tabanlı fiziksel bilgisayarlarda çalıştırılabilir.</li><li>Ubuntu tabanlı VPS sunucularında Server Node olarak çalıştırılabilir.</li></ul>
+<blockquote><p><strong>Önemli:</strong> Kurulum komutlarını tek tek çalıştırın. Her satır ayrı bir komuttur.</p></blockquote>
+<hr>
+<h2>1. ARO Kurulum Paketini İndirin</h2>
+<p>Önce <code>/root</code> dizinine geçin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cd /root</code></pre></div>
+<p>ARO Network Debian kurulum paketini resmi indirme bağlantısından indirin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>wget https://download.aro.network/files/packages/linux/ARO_Desktop_latest_debian.deb</code></pre></div>
+<p>İndirilen dosyanın bulunduğunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>ls -lh /root/ARO_Desktop_latest_debian.deb</code></pre></div>
+<p>Dosyaya okuma izni verin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod 644 /root/ARO_Desktop_latest_debian.deb</code></pre></div>
+<hr>
+<h2>2. ARO Paketini Kurun</h2>
+<p>ARO paketini kurun:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dpkg -i /root/ARO_Desktop_latest_debian.deb</code></pre></div>
+<p>Kurulum sırasında eksik bağımlılık uyarısı alırsanız bağımlılıkları yükleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>apt -f install -y</code></pre></div>
+<hr>
+<h2>3. Kurulumu Doğrulayın</h2>
+<p>ARO paketinin başarıyla kurulduğunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>dpkg -l | grep -i &#x27;^ii  aro&#x27;</code></pre></div>
+<p>Başarılı bir kurulumda aşağıdakine benzer bir çıktı görülür:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>ii  aro  1.0.0  all  ARO Agent</code></pre></div>
+<blockquote><p>Paket sürümü zaman içinde değişebileceği için sürüm numarası örnektekinden farklı olabilir.</p></blockquote>
+<hr>
+<h2>4. Çalıştırılabilir Dosyaların İzinlerini Ayarlayın</h2>
+<p>ARO&#x27;nun kullandığı çalıştırılabilir dosyalara gerekli izinleri verin.</p>
+<p>Komutları tek tek çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/agent/agent</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/agent/updater</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/agent/agent_before.sh</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/rpc/frpc</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/rpc/rpc_start.sh</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/wx-data/.lotso/start.sh</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>chmod +x /opt/src/wx-data/.lotso/lotso</code></pre></div>
+<hr>
+<h2>5. Servis Dosyalarını systemd Dizinine Kopyalayın</h2>
+<p>ARO servis dosyalarını systemd servis dizinine kopyalayın.</p>
+<p>Komutları tek tek çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cp /opt/src/agent/agent.service /etc/systemd/system/</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cp /opt/src/agent/updater.service /etc/systemd/system/</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cp /opt/src/rpc/rpc.service /etc/systemd/system/</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>cp /opt/src/wx-data/lotso.service /etc/systemd/system/</code></pre></div>
+<hr>
+<h2>6. systemd Yapılandırmasını Yenileyin</h2>
+<p>Yeni servis dosyalarının systemd tarafından algılanması için yapılandırmayı yenileyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl daemon-reload</code></pre></div>
+<hr>
+<h2>7. Servislerin Otomatik Başlamasını Etkinleştirin</h2>
+<p>ARO servislerinin sunucu veya bilgisayar yeniden başlatıldığında otomatik olarak çalışması için servisleri etkinleştirin.</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl enable lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl enable updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl enable rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl enable agent.service</code></pre></div>
+<hr>
+<h2>8. ARO Servislerini Başlatın</h2>
+<p>Servisleri tek tek başlatın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl start agent.service</code></pre></div>
+<hr>
+<h2>9. Servislerin Durumunu Kontrol Edin</h2>
+<p>Dört ARO servisinin de çalıştığını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status lotso.service --no-pager</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status rpc.service --no-pager</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status updater.service --no-pager</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl status agent.service --no-pager</code></pre></div>
+<p>Çalışan servislerde aşağıdakine benzer bir durum görülmelidir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Active: active (running)</code></pre></div>
+<hr>
+<h2>10. RPC Bağlantısını Kontrol Edin</h2>
+<p>RPC servisinin son loglarını görüntüleyin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u rpc.service -n 30 --no-pager -l</code></pre></div>
+<p>Sağlıklı çalışan bir bağlantıda aşağıdakilere benzer kayıtlar görülebilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>login to server success
+proxy added
+start proxy success</code></pre></div>
+<p>Bu kayıtlar RPC bağlantısının oluşturulduğunu ve proxy servisinin başlatıldığını gösterir.</p>
+<hr>
+<h2>11. Web Console Portunu Açın</h2>
+<p>ARO Web Console varsayılan olarak <code>40001/tcp</code> portu üzerinden erişilebilir.</p>
+<p>UFW kullanıyorsanız ve bu port henüz açık değilse:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>ufw allow 40001/tcp</code></pre></div>
+<p>Firewall durumunu kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>ufw status</code></pre></div>
+<p>Listede <code>40001/tcp</code> için izin verildiğini doğrulayın.</p>
+<blockquote><p>VPS sağlayıcınız ayrıca harici bir firewall veya güvenlik duvarı kullanıyorsa <code>40001/tcp</code> portuna sağlayıcı panelinden de izin vermeniz gerekebilir.</p></blockquote>
+<hr>
+<h2>12. ARO Web Console&#x27;u Açın</h2>
+<p>Bilgisayarınızdaki tarayıcıdan aşağıdaki adresi açın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>http://VPS_IP:40001</code></pre></div>
+<p><code>VPS_IP</code> yerine ARO node&#x27;un çalıştığı sunucunun gerçek public IP adresini yazın.</p>
+<p>Örnek yapı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>http://203.0.113.10:40001</code></pre></div>
+<p>Web Console açıldığında ana sayfada cihaz ve node bilgileri görüntülenir.</p>
+<hr>
+<h2>13. Device SN Değerini Alın</h2>
+<p>Web Console ana sayfasında görünen:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Device SN</code></pre></div>
+<p>değerini bulun ve kopyalayın.</p>
+<p>Örnek Device SN:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>OLKN4Y76W578V19W</code></pre></div>
+<p>Bu değer bir sonraki adımda ARO Dashboard&#x27;a node eklemek için kullanılacaktır.</p>
+<hr>
+<h2>14. Doğru Seri Numarasını Kullandığınızdan Emin Olun</h2>
+<p>Bu adım önemlidir.</p>
+<p>ARO Dashboard&#x27;a girilecek seri numarası <strong>Web Console üzerinde gösterilen <code>Device SN</code> değeridir.</strong></p>
+<p>Sistemde aşağıdaki dosya da bulunabilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/etc/enreach/x86_sn</code></pre></div>
+<p>Bu dosyanın içindeki değer <code>STWL...</code> ile başlayabilir.</p>
+<p>Örneğin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>STWL...</code></pre></div>
+<p>Bu değer ARO Dashboard node kaydı için <strong>kullanılmaz</strong>.</p>
+<p>Dashboard&#x27;a eklerken mutlaka Web Console üzerinde gösterilen:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Device SN</code></pre></div>
+<p>değerini kullanın.</p>
+<hr>
+<h2>15. Node&#x27;u ARO Dashboard&#x27;a Ekleyin</h2>
+<p>ARO Dashboard&#x27;a giriş yapın.</p>
+<p>Ardından:</p>
+<ol><li><code>Add New Node</code> seçeneğine tıklayın.</li><li>Node türü olarak <code>Server</code> seçin.</li><li>Web Console&#x27;dan kopyaladığınız <code>Device SN</code> değerini girin.</li><li><code>Continue</code> seçeneğine tıklayın.</li><li>Son ekranda <code>Location</code> bilgisi otomatik olarak doğru geliyorsa değiştirmeden bırakın.</li><li><code>Add</code> seçeneğine tıklayarak node&#x27;u hesabınıza ekleyin.</li></ol>
+<p>Node başarıyla eklendiğinde ARO Dashboard üzerinden görüntülenebilir.</p>
+<hr>
+<h2>16. Genel Log Kontrollerini Yapın</h2>
+<p>ARO servislerinin son loglarını ayrı ayrı kontrol edebilirsiniz.</p>
+<p>Agent:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u agent.service -n 50 --no-pager -l</code></pre></div>
+<p>RPC:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u rpc.service -n 50 --no-pager -l</code></pre></div>
+<p>Updater:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u updater.service -n 50 --no-pager -l</code></pre></div>
+<p>Lotso:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u lotso.service -n 50 --no-pager -l</code></pre></div>
+<p>Bir servisle ilgili sorun yaşarsanız ilk kontrol edilmesi gereken yerlerden biri ilgili servisin loglarıdır.</p>
+<hr>
+<h2>17. Canlı Log Takibi Yapın</h2>
+<p>Agent servisinin loglarını gerçek zamanlı takip etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u agent.service -f</code></pre></div>
+<p>Canlı log ekranından çıkmak için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Ctrl+C</code></pre></div>
+<p>kullanın.</p>
+<p><code>Ctrl+C</code> yalnızca log görüntüleme işlemini sonlandırır; ARO servisini durdurmaz.</p>
+<hr>
+<h2>18. Hızlı Durum Kontrolü Yapın</h2>
+<p>Tüm ARO servislerinin aktif olup olmadığını hızlıca kontrol etmek için aşağıdaki komutları çalıştırın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active agent.service</code></pre></div>
+<p>Dört komutun da beklenen çıktısı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>active</code></pre></div>
+<p>olmalıdır.</p>
+<hr>
+<h2>19. Auto-Sleep Uyarısını Kontrol Edin</h2>
+<p>ARO aşağıdaki uyarıyı gösterebilir:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Warning: Host machine OS has inappropriate auto-sleep settings.</code></pre></div>
+<p>Bu uyarı özellikle Windows, macOS ve Ubuntu Desktop gibi fiziksel bilgisayarlarda önemlidir.</p>
+<p>Bilgisayar uyku moduna girerse ARO node&#x27;un çalışması durabilir. Bu nedenle fiziksel bir bilgisayarda node çalıştırıyorsanız sistemin otomatik uyku ayarlarını kapatmanız gerekir.</p>
+<p>VPS sunucularında normal şartlarda uyku modu kullanılmaz.</p>
+<p>VPS üzerinde bu uyarıyı görüyorsanız öncelikle servislerin gerçekten çalışıp çalışmadığını kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active agent.service</code></pre></div>
+<p>Dört servisin de çıktısı:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>active</code></pre></div>
+<p>ise ARO servisleri çalışmaktadır.</p>
+<hr>
+<h2>20. ARO Servislerini Yeniden Başlatın</h2>
+<p>Node veya servislerden biriyle ilgili sorun yaşarsanız servisleri yeniden başlatabilirsiniz.</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl restart lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl restart updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl restart rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl restart agent.service</code></pre></div>
+<p>Ardından durumlarını tekrar kontrol edin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active lotso.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active rpc.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active updater.service</code></pre></div>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active agent.service</code></pre></div>
+<hr>
+<h2>21. Sorun Giderme ve Son Kontrol</h2>
+<p>Agent servisiyle ilgili ayrıntılı son logları kontrol etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u agent.service -n 100 --no-pager -l</code></pre></div>
+<p>RPC servisi için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u rpc.service -n 100 --no-pager -l</code></pre></div>
+<p>Updater servisi için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u updater.service -n 100 --no-pager -l</code></pre></div>
+<p>Lotso servisi için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u lotso.service -n 100 --no-pager -l</code></pre></div>
+<p>Kurulum sonunda dört servisin de aktif olduğunu doğrulayın:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>systemctl is-active lotso.service
+systemctl is-active rpc.service
+systemctl is-active updater.service
+systemctl is-active agent.service</code></pre></div>
+<p>Beklenen sonuç:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>active
+active
+active
+active</code></pre></div>
+<p>RPC bağlantısını son kez kontrol etmek için:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u rpc.service -n 30 --no-pager -l</code></pre></div>
+<p>Web Console&#x27;un erişilebilir olduğunu doğrulamak için tarayıcıdan:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>http://VPS_IP:40001</code></pre></div>
+<p>adresini açın.</p>
+<p>Node&#x27;un ARO Dashboard üzerinde kayıtlı ve çevrimiçi olduğunu da kontrol edin.</p>
+<hr>
+<h2>Kurulum Özeti</h2>
+<p>Kurulum tamamlandığında aşağıdaki dört servis çalışıyor olmalıdır:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>lotso.service
+rpc.service
+updater.service
+agent.service</code></pre></div>
+<p>Web Console:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>http://VPS_IP:40001</code></pre></div>
+<p>Dashboard kaydında kullanılacak seri numarası:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>Web Console → Device SN</code></pre></div>
+<p>Dashboard kaydında <strong>kullanılmaması gereken</strong> değer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>/etc/enreach/x86_sn → STWL...</code></pre></div>
+<hr>
+<h2>Topluluk Rehberi Notu</h2>
+<p>Bu rehber topluluk deneyimine dayalı olarak hazırlanmıştır ve resmi ARO Network dokümantasyonu değildir.</p>
+<p>ARO Network tarafından paket sürümü, dosya yolları, servis adları veya kurulum yöntemi değiştirilirse rehberdeki bazı komutların güncellenmesi gerekebilir.</p>
+        </div>
       </article>
 
     </div>

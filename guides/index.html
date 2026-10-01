@@ -165,7 +165,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -189,7 +189,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -214,7 +214,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -262,14 +262,155 @@
 
       <article class="contact" data-page="contact"></article>
 
-      <article class="guides-page" data-page="guides">
+      <article class="guides-page active" data-page="guides">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.guides">Guides</h2>
         </header>
         <section class="guides-landing">
           <p data-i18n="guides.landing">Setup and installation guides for KolTigin’s node, testnet, and DePIN projects.</p>
           <div class="blog-posts">
-            <ul class="blog-posts-list guides-posts-list" data-guides-index></ul>
+            <ul class="blog-posts-list guides-posts-list" data-guides-index>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/how-to-get-an-arns-domain/EN/" data-guide-open="how-to-get-an-arns-domain" data-guide-lang="EN" data-guide-public-slug="how-to-get-an-arns-domain">
+              <figure class="blog-banner-box writings-cover" data-cover-for="how-to-get-an-arns-domain">
+                <img src="/assets/images/og/guides/en/how-to-get-an-arns-domain.png" alt="How to Get an ArNS Domain" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">AR.IO</p></div>
+                <h3 class="h3 blog-item-title">How to Get an ArNS Domain</h3>
+                <p class="blog-text">ArNS (Ar.io Name System) allows you to register a human-readable domain for the Arweave ecosystem.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/ar-io-gateway-troubleshooting/EN/" data-guide-open="ar-io-gateway-troubleshooting" data-guide-lang="EN" data-guide-public-slug="ar-io-gateway-troubleshooting">
+              <figure class="blog-banner-box writings-cover" data-cover-for="ar-io-gateway-troubleshooting">
+                <img src="/assets/images/og/guides/en/ar-io-gateway-troubleshooting.png" alt="AR.IO Gateway Troubleshooting" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">AR.IO</p></div>
+                <h3 class="h3 blog-item-title">AR.IO Gateway Troubleshooting</h3>
+                <p class="blog-text">This guide covers common AR.IO Gateway problems and practical steps for diagnosing them.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/ar-io-gateway-update/EN/" data-guide-open="ar-io-gateway-update" data-guide-lang="EN" data-guide-public-slug="ar-io-gateway-update">
+              <figure class="blog-banner-box writings-cover" data-cover-for="ar-io-gateway-update">
+                <img src="/assets/images/og/guides/en/ar-io-gateway-update.png" alt="AR.IO Gateway Update" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">AR.IO</p></div>
+                <h3 class="h3 blog-item-title">AR.IO Gateway Update</h3>
+                <p class="blog-text">Keeping your AR.IO Gateway up to date is important for compatibility, security and reliable participation in the network.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/ar-io-gateway-installation/EN/" data-guide-open="ar-io-gateway-installation" data-guide-lang="EN" data-guide-public-slug="ar-io-gateway-installation">
+              <figure class="blog-banner-box writings-cover" data-cover-for="ar-io-gateway-installation">
+                <img src="/assets/images/og/guides/en/ar-io-gateway-installation.png" alt="AR.IO Gateway Installation" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">AR.IO</p></div>
+                <h3 class="h3 blog-item-title">AR.IO Gateway Installation</h3>
+                <p class="blog-text">This guide explains how to install and run an AR.IO Gateway on an Ubuntu server using Docker, a custom domain, SSL and Nginx.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/redbelly-mainnet-telegram-monitoring-bot-installation-guide/EN/" data-guide-open="redbelly-mainnet-telegram-monitoring-bot-installation-guide" data-guide-lang="EN" data-guide-public-slug="redbelly-mainnet-telegram-monitoring-bot-installation-guide">
+              <figure class="blog-banner-box writings-cover" data-cover-for="redbelly-mainnet-telegram-monitoring-bot-installation-guide">
+                <img src="/assets/images/og/guides/en/redbelly-mainnet-telegram-monitoring-bot-installation-guide.png" alt="Redbelly Mainnet Telegram Monitoring Bot Installation Guide" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">Redbelly Network</p></div>
+                <h3 class="h3 blog-item-title">Redbelly Mainnet Telegram Monitoring Bot Installation Guide</h3>
+                <p class="blog-text">This guide explains how to install the KolTigin Redbelly Monitor to automatically monitor your Redbelly Mainnet node through Telegram.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/redbelly-node-troubleshooting/EN/" data-guide-open="redbelly-node-troubleshooting" data-guide-lang="EN" data-guide-public-slug="redbelly-node-troubleshooting">
+              <figure class="blog-banner-box writings-cover" data-cover-for="redbelly-node-troubleshooting">
+                <img src="/assets/images/og/guides/en/redbelly-node-troubleshooting.png" alt="Redbelly Node Troubleshooting" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">Redbelly Network</p></div>
+                <h3 class="h3 blog-item-title">Redbelly Node Troubleshooting</h3>
+                <p class="blog-text">This guide covers solutions to some common issues that may occur while operating a Redbelly Mainnet node.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/redbelly-mainnet-node-update-guide/EN/" data-guide-open="redbelly-mainnet-node-update-guide" data-guide-lang="EN" data-guide-public-slug="redbelly-mainnet-node-update-guide">
+              <figure class="blog-banner-box writings-cover" data-cover-for="redbelly-mainnet-node-update-guide">
+                <img src="/assets/images/og/guides/en/redbelly-mainnet-node-update-guide.png" alt="Redbelly Mainnet Node Update Guide" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">Redbelly Network</p></div>
+                <h3 class="h3 blog-item-title">Redbelly Mainnet Node Update Guide</h3>
+                <p class="blog-text">This guide explains how to update an existing Redbelly Mainnet node using the latest installer when a new node version is released.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/redbelly-mainnet-node-installation-guide/EN/" data-guide-open="redbelly-mainnet-node-installation-guide" data-guide-lang="EN" data-guide-public-slug="redbelly-mainnet-node-installation-guide">
+              <figure class="blog-banner-box writings-cover" data-cover-for="redbelly-mainnet-node-installation-guide">
+                <img src="/assets/images/og/guides/en/redbelly-mainnet-node-installation-guide.png" alt="Redbelly Mainnet Node Installation Guide" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">Redbelly Network</p></div>
+                <h3 class="h3 blog-item-title">Redbelly Mainnet Node Installation Guide</h3>
+                <p class="blog-text">This guide explains how to install a Redbelly Mainnet node using the official rbn-installer and how to verify that the node is running correctly after installa…</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/aro-network-depin-ubuntu-vps-installation-guide/EN/" data-guide-open="aro-network-depin-ubuntu-vps-installation-guide" data-guide-lang="EN" data-guide-public-slug="aro-network-depin-ubuntu-vps-installation-guide">
+              <figure class="blog-banner-box writings-cover" data-cover-for="aro-network-depin-ubuntu-vps-installation-guide">
+                <img src="/assets/images/og/guides/en/aro-network-depin-ubuntu-vps-installation-guide.png" alt="ARO Network DePIN — Ubuntu / VPS Installation Guide" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">ARO</p></div>
+                <h3 class="h3 blog-item-title">ARO Network DePIN — Ubuntu / VPS Installation Guide</h3>
+                <p class="blog-text">Community installation guide for Ubuntu-based computers and VPS servers.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="https://koltigin.xyz/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/EN/" data-guide-open="optimai-cli-node-setup-guide-ubuntu-24-04-vps" data-guide-lang="EN" data-guide-public-slug="optimai-cli-node-setup-guide-ubuntu-24-04-vps">
+              <figure class="blog-banner-box writings-cover" data-cover-for="optimai-cli-node-setup-guide-ubuntu-24-04-vps">
+                <img src="/assets/images/og/guides/en/optimai-cli-node-setup-guide-ubuntu-24-04-vps.png" alt="OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">OptimAI</p></div>
+                <h3 class="h3 blog-item-title">OptimAI CLI Node Setup Guide — Ubuntu 24.04 VPS</h3>
+                <p class="blog-text">There are several ways to participate in the OptimAI Network.</p>
+                <span class="writings-card-cta">Read Guide</span>
+              </div>
+            </a>
+          </li>
+            </ul>
           </div>
         </section>
       </article>

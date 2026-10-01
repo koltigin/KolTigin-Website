@@ -502,6 +502,202 @@ def writing_article_section(
     """
 
 
+def guide_article_html(*, lang: str, body: str) -> str:
+    copy = "Kopyala" if lang == "tr" else "Copy"
+    return markdown_to_html(body, copy_label=copy)
+
+
+def project_names_by_guide(root: Path) -> dict[str, str]:
+    projects = load_json(root / "projects" / "projects.json", {}) or {}
+    names: dict[str, str] = {}
+    if not isinstance(projects, dict):
+        return names
+    for rows in projects.values():
+        if not isinstance(rows, list):
+            continue
+        for project in rows:
+            if not isinstance(project, dict):
+                continue
+            name = str(project.get("name") or "").strip()
+            links = project.get("links") if isinstance(project.get("links"), list) else []
+            for link in links:
+                guide_id = str((link or {}).get("guide") or "").strip() if isinstance(link, dict) else ""
+                if guide_id and name:
+                    names.setdefault(guide_id, name)
+    return names
+
+
+def static_guide_cards(root: Path, guides: list[dict], mode: str, *, lang: str = "en") -> str:
+    base = origin(root)
+    project_names = project_names_by_guide(root)
+    guide_manifest = load_json(root / "content" / "guides" / "index.json", {}) or {}
+    guide_order = guide_manifest.get("guides") if isinstance(guide_manifest, dict) else []
+    order_by_id = {
+        str(item_id): index
+        for index, item_id in enumerate(guide_order if isinstance(guide_order, list) else [])
+    }
+    cards = []
+    for fallback_index, item in enumerate(guides):
+        data = (item.get("langs") or {}).get(lang)
+        if not isinstance(data, dict):
+            continue
+        item_id = str(item.get("id") or "").strip()
+        source_index = order_by_id.get(item_id, len(order_by_id) + fallback_index)
+        alternates = guide_alternates(mode, base, item_id, item.get("langs") or {})
+        href = alternates.get(lang)
+        if not href:
+            continue
+        cover = str(data.get("cover") or "").strip()
+        if cover:
+            name = Path(cover.replace("\\", "/")).name
+            cover_src = f"/assets/images/guides/{item_id}/{quote(name)}"
+        else:
+            cover_src = f"/assets/images/og/guides/{lang}/{item_id}.png"
+        title = str(data.get("title") or item_id).strip()
+        description = str(data.get("description") or "").strip()
+        project = project_names.get(item_id, "")
+        project_html = f'<p class="blog-category">{html.escape(project)}</p>' if project else ""
+        excerpt_html = f'<p class="blog-text">{html.escape(description)}</p>' if description else ""
+        cta = "Rehberi Aç" if lang == "tr" else "Read Guide"
+        card = f"""
+          <li class="blog-post-item">
+            <a class="writings-card guides-card" href="{html.escape(href, quote=True)}" data-guide-open="{html.escape(item_id, quote=True)}" data-guide-lang="{lang.upper()}" data-guide-public-slug="{html.escape(str(data.get('slug') or ''), quote=True)}">
+              <figure class="blog-banner-box writings-cover" data-cover-for="{html.escape(item_id, quote=True)}">
+                <img src="{html.escape(cover_src, quote=True)}" alt="{html.escape(title, quote=True)}" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta">{project_html}</div>
+                <h3 class="h3 blog-item-title">{html.escape(title)}</h3>
+                {excerpt_html}
+                <span class="writings-card-cta">{html.escape(cta)}</span>
+              </div>
+            </a>
+          </li>"""
+        cards.append((str(data.get("date") or ""), source_index, item_id, card))
+    cards.sort(key=lambda row: (row[0], -row[1], row[2]), reverse=True)
+    return "\n".join(row[3] for row in cards)
+
+
+def static_writing_cards(root: Path, writings: list[dict], mode: str, *, lang: str = "en") -> str:
+    base = origin(root)
+    cards = []
+    for source_index, item in enumerate(writings):
+        data = (item.get("langs") or {}).get(lang)
+        if not isinstance(data, dict):
+            continue
+        kind = str(item.get("kind") or "").strip()
+        item_id = str(item.get("id") or "").strip()
+        href = writing_alternates(mode, base, kind, item_id, item.get("langs") or {}).get(lang)
+        if not href:
+            continue
+        title = str(data.get("title") or item_id).strip()
+        description = str(data.get("description") or "").strip()
+        date_label = format_display_date(data.get("date"), lang)
+        category = kind_label(root, kind, lang)
+        meta = " · ".join(part for part in (category, date_label) if part)
+        cover = str(data.get("cover") or "").strip()
+        cover_src = (
+            "/assets/images/blog/" + quote(Path(cover.replace("\\", "/")).name)
+            if cover
+            else f"/assets/images/og/writings/{lang}/{kind}/{item_id}.png"
+        )
+        cta = "Yazıyı Oku →" if lang == "tr" else "Read →"
+        card = f"""
+          <li class="blog-post-item">
+            <a class="writings-card" href="{html.escape(href, quote=True)}">
+              <figure class="blog-banner-box writings-cover" data-cover-for="{html.escape(f'{kind}/{item_id}', quote=True)}">
+                <img src="{html.escape(cover_src, quote=True)}" alt="{html.escape(title, quote=True)}" loading="lazy" decoding="async">
+              </figure>
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">{html.escape(meta)}</p></div>
+                <h3 class="h3 blog-item-title">{html.escape(title)}</h3>
+                <p class="blog-text">{html.escape(description)}</p>
+                <span class="writings-card-cta">{html.escape(cta)}</span>
+              </div>
+            </a>
+          </li>"""
+        cards.append((str(data.get("date") or ""), source_index, f"{kind}/{item_id}", card))
+    manifest = load_json(root / "content" / "index.json", {}) or {}
+    next_index = len(cards)
+    for kind_meta in writing_types(root):
+        kind = str(kind_meta.get("id") or "").strip()
+        if not kind or not is_external(root, kind):
+            continue
+        entry = manifest.get(kind) if isinstance(manifest, dict) else None
+        files = entry.get(lang, []) if isinstance(entry, dict) else entry if isinstance(entry, list) else []
+        for filename in files:
+            path = root / "content" / kind / lang / str(filename)
+            if not path.is_file():
+                continue
+            meta, body = parse_front_matter(path.read_text(encoding="utf-8"))
+            href = str(meta.get("externalUrl") or "").strip()
+            if not re.match(r"^https?://", href, flags=re.IGNORECASE):
+                continue
+            item_id = path.stem
+            title = str(meta.get("title") or item_id).strip()
+            description = str(meta.get("summary") or meta.get("excerpt") or excerpt(body)).strip()
+            date = published_date(meta.get("date"))
+            date_label = format_display_date(date, lang)
+            category = "X Thread" if str(meta.get("thread") or "").lower() == "true" else kind_label(root, kind, lang)
+            meta_label = " · ".join(part for part in (category, date_label) if part)
+            cover = str(meta.get("cover") or meta.get("image") or "").strip()
+            cover_html = ""
+            if cover:
+                cover_src = "/assets/images/blog/" + quote(Path(cover.replace("\\", "/")).name)
+                cover_html = f"""<figure class="blog-banner-box writings-cover" data-cover-for="{html.escape(f'{kind}/{item_id}', quote=True)}">
+                <img src="{html.escape(cover_src, quote=True)}" alt="{html.escape(title, quote=True)}" loading="lazy" decoding="async">
+              </figure>"""
+            cta_config = kind_meta.get("cta") if isinstance(kind_meta.get("cta"), dict) else {}
+            cta = str(cta_config.get(lang) or cta_config.get("en") or "View on X →")
+            card = f"""
+          <li class="blog-post-item">
+            <a class="writings-card" href="{html.escape(href, quote=True)}" target="_blank" rel="noopener noreferrer">
+              {cover_html}
+              <div class="blog-content">
+                <div class="blog-meta"><p class="blog-category">{html.escape(meta_label)}</p></div>
+                <h3 class="h3 blog-item-title">{html.escape(title)}</h3>
+                <p class="blog-text">{html.escape(description)}</p>
+                <span class="writings-card-cta">{html.escape(cta)}</span>
+              </div>
+            </a>
+          </li>"""
+            cards.append((str(date or ""), next_index, f"{kind}/{item_id}", card))
+            next_index += 1
+    cards.sort(key=lambda row: (row[0], -row[1], row[2]), reverse=True)
+    return "\n".join(row[3] for row in cards)
+
+
+def activate_section_html(source: str, route_id: str) -> str:
+    targets = {
+        "about": ("about", "about"),
+        "resume": ("resume", "resume"),
+        "projects": ("projects-page", "projects"),
+        "writings": ("blog", "blog"),
+        "videos": ("videos", "videos"),
+        "contact": ("contact", "contact"),
+        "guides": ("guides-page", "guides"),
+    }
+    article_class, nav_page = targets.get(route_id, ("about", "about"))
+    html_out = re.sub(r'(<article class="[^"]+) active(" data-page=)', r"\1\2", source, count=1)
+    html_out = html_out.replace(
+        f'<article class="{article_class}" data-page=',
+        f'<article class="{article_class} active" data-page=',
+        1,
+    )
+    html_out = re.sub(
+        r' class="navbar-link active"( data-nav-link data-nav-page="[^"]+") aria-current="page"',
+        r' class="navbar-link"\1',
+        html_out,
+        count=1,
+    )
+    html_out = html_out.replace(
+        f'class="navbar-link" data-nav-link data-nav-page="{nav_page}"',
+        f'class="navbar-link active" data-nav-link data-nav-page="{nav_page}" aria-current="page"',
+        1,
+    )
+    return html_out
+
+
 def excerpt(body: str, limit: int = 160) -> str:
     chunks: list[str] = []
     for line in (body or "").split("\n"):
@@ -1222,7 +1418,7 @@ def discover_guides(root: Path) -> list[dict]:
             if not path.is_file():
                 continue
             text = path.read_text(encoding="utf-8")
-            meta, _body = parse_front_matter(text)
+            meta, body = parse_front_matter(text)
             title = first_heading(text) or folder.name
             if not title.strip() or title.strip() == "#":
                 continue
@@ -1233,6 +1429,7 @@ def discover_guides(root: Path) -> list[dict]:
                 "date": published_date(meta.get("date")),
                 "updated": published_date(meta.get("updated") or meta.get("modified")),
                 "slug": str(meta.get("slug") or "").strip(),
+                "body": body,
             }
         if rec["langs"]:
             items.append(rec)
@@ -1384,6 +1581,7 @@ def patch_guide_spa_page(
     image: str,
     alternates: dict[str, str],
     json_ld: dict,
+    article_html: str,
     content_id: str = "",
     en_slug: str = "",
     tr_slug: str = "",
@@ -1445,10 +1643,36 @@ def patch_guide_spa_page(
         f'  <script>try{{localStorage.setItem("siteLang","{html.escape(lang)}");}}catch(e){{}}</script>'
     )
     html_out = html_out.replace("</head>", "\n".join(extras) + "\n</head>", 1)
+    html_out = html_out.replace('class="about active"', 'class="about"', 1)
+    html_out = html_out.replace('class="guide-page"', 'class="guide-page active"', 1)
+    html_out = html_out.replace(
+        'navbar-link active" data-nav-link data-nav-page="about" aria-current="page"',
+        'navbar-link" data-nav-link data-nav-page="about"',
+        1,
+    )
+    html_out = html_out.replace(
+        'navbar-link" data-nav-link data-nav-page="guides">',
+        'navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">',
+        1,
+    )
+    html_out, count = re.subn(
+        r'(<div class="guide-body blog-post-content" data-guide-content>)[\s\S]*?(</div>)',
+        rf"\1\n{article_html}\n        \2",
+        html_out,
+        count=1,
+    )
+    if count != 1:
+        html_out = html_out.replace(
+            "</body>",
+            f'<main class="guide-body blog-post-content" data-guide-content>\n{article_html}\n</main>\n</body>',
+            1,
+        )
     return html_out
 
 
-def write_section_pages(root: Path) -> list[str]:
+def write_section_pages(
+    root: Path, *, writings: list[dict], guides: list[dict], mode: str
+) -> list[str]:
     index_path = root / "index.html"
     if not index_path.is_file():
         return []
@@ -1467,6 +1691,36 @@ def write_section_pages(root: Path) -> list[str]:
             canonical=canonical,
             image=section_image_url(base, image),
         )
+        if spec["id"] in {"guides", "writings"}:
+            html_out = activate_section_html(html_out, spec["id"])
+        if spec["id"] == "guides":
+            cards = static_guide_cards(root, guides, mode, lang="en")
+            html_out, count = re.subn(
+                r'(<ul class="blog-posts-list guides-posts-list" data-guides-index>)[\s\S]*?(</ul>)',
+                rf"\1\n{cards}\n            \2",
+                html_out,
+                count=1,
+            )
+            if count != 1:
+                html_out = html_out.replace(
+                    "</body>",
+                    f'<main><ul class="blog-posts-list guides-posts-list" data-guides-index>\n{cards}\n</ul></main>\n</body>',
+                    1,
+                )
+        elif spec["id"] == "writings":
+            cards = static_writing_cards(root, writings, mode, lang="en")
+            html_out, count = re.subn(
+                r'(<ul class="blog-posts-list">)[\s\S]*?(</ul>)',
+                rf"\1\n{cards}\n            \2",
+                html_out,
+                count=1,
+            )
+            if count != 1:
+                html_out = html_out.replace(
+                    "</body>",
+                    f'<main><ul class="blog-posts-list">\n{cards}\n</ul></main>\n</body>',
+                    1,
+                )
         dest = root / spec["dir"] / "index.html"
         write_text(dest, html_out)
         written.append(str(dest.relative_to(root)))
@@ -1693,6 +1947,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
                 image=image,
                 alternates=alternates,
                 json_ld=payload,
+                article_html=guide_article_html(lang=lang, body=data.get("body") or ""),
                 content_id=item_id,
                 en_slug=en_slug,
                 tr_slug=tr_slug,
@@ -1766,7 +2021,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
     for spec in PUBLIC_SECTION_ROUTES:
         if spec["dir"]:
             keep.add((root / spec["dir"] / "index.html").resolve())
-    section_pages = write_section_pages(root)
+    section_pages = write_section_pages(root, writings=writings, guides=guides, mode=mode)
     removed = prune_generated(
         root,
         keep,

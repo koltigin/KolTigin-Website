@@ -173,7 +173,7 @@
       <nav class="navbar">
         <ul class="navbar-list">
           <li class="navbar-item">
-            <a href="/about/" class="navbar-link active" data-nav-link data-nav-page="about" aria-current="page">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.about">About</span>
             </a>
@@ -197,7 +197,7 @@
             </a>
           </li>
           <li class="navbar-item">
-            <a href="/guides/" class="navbar-link" data-nav-link data-nav-page="guides">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
               <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
               <span class="navbar-label" data-i18n="nav.guides">Guides</span>
             </a>
@@ -222,7 +222,7 @@
         </div>
       </nav>
 
-      <article class="about active" data-page="about">
+      <article class="about" data-page="about">
         <header>
           <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
         </header>
@@ -282,7 +282,7 @@
         </section>
       </article>
 
-      <article class="guide-page" data-page="guide">
+      <article class="guide-page active" data-page="guide">
         <header class="guide-header">
           <div class="guide-toolbar">
             <button type="button" class="back-btn" data-guide-back>
@@ -292,7 +292,155 @@
           </div>
           <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
         </header>
-        <div class="guide-body blog-post-content" data-guide-content></div>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>Redbelly Mainnet Node Installation Guide</h1>
+<p>This guide explains how to install a Redbelly Mainnet node using the official <code>rbn-installer</code> and how to verify that the node is running correctly after installation.</p>
+<p>The installer automatically handles most of the required setup, including the Redbelly binary, TLS certificate, systemd service, and related system configuration.</p>
+<h2>1. Before Installation</h2>
+<p>Before starting the installation, point the domain or subdomain you will use for your node to your server&#x27;s IP address.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>redbelly.example.com</code></pre></div>
+<p>Create an <strong>A record</strong> with your DNS provider pointing to your server&#x27;s IP address.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Type: A
+Name: redbelly
+Value: YOUR_SERVER_IP</code></pre></div>
+<p>You can verify that the DNS record resolves to the correct IP address with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nslookup redbelly.example.com</code></pre></div>
+<h3>Required Ports</h3>
+<p>Make sure the following ports are open in your firewall:</p>
+<p>| Port | Protocol | Purpose | |---|---|---| | 22 | TCP | SSH | | 80 | TCP | Let&#x27;s Encrypt / Certbot | | 1888 | TCP | Consensus | | 1111 | TCP | Recovery | | 6540 | UDP | Status Server |</p>
+<p>If you are using UFW:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 1888/tcp
+sudo ufw allow 1111/tcp
+sudo ufw allow 6540/udp</code></pre></div>
+<p>Check the firewall status:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ufw status</code></pre></div>
+<blockquote><p>The Consensus and Recovery ports must match the ports you provided during Redbelly node registration.</p></blockquote>
+<h2>2. Node Registration</h2>
+<p>Before installation, your node must be registered with Redbelly.</p>
+<p>During registration, you will be asked to provide:</p>
+<ul><li>Node Hostname</li><li>Reward Address</li><li>Vote Address</li><li>Consensus Port</li><li>Recovery Port</li><li>Discord username</li></ul>
+<p>After your registration has been approved by Redbelly, you will receive a unique <strong>Node ID</strong>.</p>
+<p>Keep this Node ID available because you will need it during installation.</p>
+<p>You will also need the private key of your Vote/Signing address.</p>
+<blockquote><p><strong>Important:</strong> Never share your private key with anyone. The private key should only be entered directly into the appropriate prompt in the installer.</p></blockquote>
+<h2>3. Download the Mainnet Installer</h2>
+<p>Download the latest Redbelly Mainnet installer provided through the Node Operator Support Portal.</p>
+<p>Depending on the current version, the installer filename may look like:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rbn-installer-mainnet-v1.3.16.run</code></pre></div>
+<p>Throughout this guide, the version-independent filename:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>will be used.</p>
+<p>Replace <code>X.X.X</code> with the current Mainnet version you downloaded.</p>
+<p>Upload the installer file to your server using SCP, SFTP, or another preferred method.</p>
+<h2>4. Run the Installer</h2>
+<p>Make the installer executable:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod +x rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>Update the package list:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo apt update</code></pre></div>
+<p>Then run the installer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo ./rbn-installer-mainnet-vX.X.X.run</code></pre></div>
+<p>The installer will interactively ask for the information required to configure the node.</p>
+<h2>5. Installer Questions and Recommended Answers</h2>
+<h3>Domain / DNS</h3>
+<p>Enter the hostname for which you previously created the DNS record.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>redbelly.example.com</code></pre></div>
+<p>Do not include <code>https://</code>.</p>
+<h3>SSL / Certbot</h3>
+<p>When the installer asks whether you want to generate the SSL/TLS certificate using Certbot, select:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>y</code></pre></div>
+<p>Enter your email address when requested for certificate registration.</p>
+<p>The installer will generate the Let&#x27;s Encrypt certificate and configure the required certificate files for Redbelly.</p>
+<h3>Consensus Port</h3>
+<p>The default Consensus port is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1888</code></pre></div>
+<p>Unless you registered your node with a different port, use the default value.</p>
+<p>If the installer shows <code>1888</code> as the default, simply press <strong>Enter</strong>.</p>
+<h3>Recovery Port</h3>
+<p>The default Recovery port is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>1111</code></pre></div>
+<p>Unless you registered your node with a different port, use the default value.</p>
+<p>If the installer shows <code>1111</code> as the default, simply press <strong>Enter</strong>.</p>
+<h3>UDP Status Server</h3>
+<p>The installer will ask whether you want to enable the UDP Status Server:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Enable UDP status server which allows tracking basic node statistics (y/n) (default: y):</code></pre></div>
+<p>Answer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>y</code></pre></div>
+<p>If <code>y</code> is already the default, you can simply press <strong>Enter</strong>.</p>
+<p>The UDP Status Server provides node status information and can also be used by monitoring systems and tools such as a Telegram monitoring bot.</p>
+<h3>UDP Status Port</h3>
+<p>The default UDP Status Server port is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>6540</code></pre></div>
+<p>If this is shown as the default value, simply press <strong>Enter</strong>.</p>
+<h3>Debug Logging</h3>
+<p>For normal node operation, select:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>n</code></pre></div>
+<p>If <code>n</code> is the default value, simply press <strong>Enter</strong>.</p>
+<h3>Logrotate</h3>
+<p>To enable automatic management of log files, select:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>y</code></pre></div>
+<p>If <code>y</code> is the default value, simply press <strong>Enter</strong>.</p>
+<h3>State Scheme</h3>
+<p>The installer&#x27;s default value is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>path</code></pre></div>
+<p>For a standard installation, press <strong>Enter</strong> to use the default value.</p>
+<h3>GC Mode</h3>
+<p>The installer&#x27;s default value is:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>full</code></pre></div>
+<p>For a standard installation, press <strong>Enter</strong> to use the default value.</p>
+<h3>Database Snapshot</h3>
+<p>The installer will ask whether you want to download a recent database snapshot.</p>
+<p>For a new node installation, select:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>y</code></pre></div>
+<p>If <code>y</code> is the default value, simply press <strong>Enter</strong>.</p>
+<p>The installer will download the current Mainnet database snapshot and use it for the node&#x27;s initial synchronization.</p>
+<h3>Node ID</h3>
+<p>Enter the Node ID provided to you after your Redbelly registration was approved.</p>
+<p>Example:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>114</code></pre></div>
+<p>This is only an example. <strong>Use the Node ID assigned to your own node.</strong></p>
+<h3>Vote / Signing Private Key</h3>
+<p>The installer will ask for the private key of your Vote/Signing address.</p>
+<p>Enter the private key without the <code>0x</code> prefix.</p>
+<p>When you paste the private key into the terminal, the characters may not appear on the screen. This is normal because the input is hidden for security purposes.</p>
+<blockquote><p><strong>Security:</strong> Never share your private key with anyone or expose it in screenshots, guides, logs, or any publicly accessible location.</p></blockquote>
+<h2>6. Verify the Node After Installation</h2>
+<p>After the installer finishes, check whether the Redbelly process is running:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>pgrep rbbc</code></pre></div>
+<p>If the command returns a PID, the <code>rbbc</code> process is running.</p>
+<p>Then check the Redbelly service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>A successful installation should show:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Active: active (running)</code></pre></div>
+<p>To view the service logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u redbelly.service</code></pre></div>
+<p>To follow the Redbelly logs in real time:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs.log</code></pre></div>
+<p>To follow the error logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<p>To exit the live log view, press:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Ctrl + C</code></pre></div>
+<h2>Useful Commands</h2>
+<p>Check the node service:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl status redbelly.service</code></pre></div>
+<p>Restart the node:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl restart redbelly.service</code></pre></div>
+<p>Stop the node:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl stop redbelly.service</code></pre></div>
+<p>Start the node:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo systemctl start redbelly.service</code></pre></div>
+<p>Follow the live logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs.log</code></pre></div>
+<p>Follow the error logs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>sudo tail -f /var/log/redbelly/rbn_logs/rbbc_logs_error.log</code></pre></div>
+<hr>
+<p>Once the installation is complete and <code>redbelly.service</code> is shown as <code>active (running)</code>, you can begin monitoring your node.</p>
+<p>When a new Redbelly Mainnet version is released, use the <strong>Redbelly Mainnet Node Update Guide</strong> to upgrade your existing node.</p>
+        </div>
       </article>
 
     </div>

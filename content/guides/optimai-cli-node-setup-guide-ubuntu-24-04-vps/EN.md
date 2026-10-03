@@ -17,6 +17,16 @@ You can run nodes on multiple supported devices using the same OptimAI account.
 
 This guide is intended for users who want to run an **OptimAI Core CLI Node on an Ubuntu 24.04 VPS or server**.
 
+## Before You Begin: Create an OptimAI Account
+
+You need an OptimAI account to continue with the installation. If you do not have an account yet, you can register through my referral link:
+
+https://node.optimai.network/register?ref=18ADBAE8
+
+**Referral code:** `18ADBAE8`
+
+---
+
 > [!IMPORTANT]
 > **OptimAI CLI authentication is designed to expire every 2 weeks (14 days).**
 >
@@ -389,16 +399,6 @@ Check the Docker container:
 ```bash
 docker ps
 ```
-
----
-
-## Referral Link
-
-If you want to create an OptimAI account, you can use the referral link below:
-
-https://node.optimai.network/register?ref=18ADBAE8
-
-**Referral code:** `18ADBAE8`
 
 ---
 

@@ -17,6 +17,16 @@ Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabili
 
 Bu rehber, **Ubuntu 24.04 kullanan bir VPS veya sunucuda OptimAI Core CLI Node çalıştırmak isteyenler** için hazırlanmıştır.
 
+## Başlamadan Önce: OptimAI Hesabı Oluşturun
+
+Kuruluma devam edebilmek için bir OptimAI hesabına ihtiyacınız vardır. Henüz hesabınız yoksa aşağıdaki referans bağlantısını kullanarak kayıt olabilirsiniz:
+
+https://node.optimai.network/register?ref=18ADBAE8
+
+**Referans kodu:** `18ADBAE8`
+
+---
+
 > [!IMPORTANT]
 > **OptimAI CLI authentication oturumu her 2 haftada (14 gün) bir sona erecek şekilde tasarlanmıştır.**
 >
@@ -389,16 +399,6 @@ Docker container'ını kontrol et:
 ```bash
 docker ps
 ```
-
----
-
-## Referans Bağlantısı
-
-OptimAI hesabı oluşturmak isteyenler aşağıdaki referans bağlantısını kullanabilir:
-
-https://node.optimai.network/register?ref=18ADBAE8
-
-**Referans kodu:** `18ADBAE8`
 
 ---
 

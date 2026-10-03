@@ -298,6 +298,11 @@
 <ul><li><strong>Lite Node:</strong> Can run in supported Chromium-based browsers such as Chrome, Brave, and Opera.</li><li><strong>Telegram Node:</strong> Can run through the Telegram Mini App.</li><li><strong>Core Node Desktop:</strong> Available for Windows, macOS, and Ubuntu Linux.</li><li><strong>Core Node CLI:</strong> Available for Windows, macOS, Ubuntu Linux, and servers.</li><li><strong>Edge Node:</strong> Available for iOS and Android devices.</li></ul>
 <p>You can run nodes on multiple supported devices using the same OptimAI account.</p>
 <p>This guide is intended for users who want to run an <strong>OptimAI Core CLI Node on an Ubuntu 24.04 VPS or server</strong>.</p>
+<h2>Before You Begin: Create an OptimAI Account</h2>
+<p>You need an OptimAI account to continue with the installation. If you do not have an account yet, you can register through my referral link:</p>
+<p><a href="https://node.optimai.network/register?ref=18ADBAE8" target="_blank" rel="noopener noreferrer">https://node.optimai.network/register?ref=18ADBAE8</a></p>
+<p><strong>Referral code:</strong> <code>18ADBAE8</code></p>
+<hr>
 <blockquote><p>[!IMPORTANT] <strong>OptimAI CLI authentication is designed to expire every 2 weeks (14 days).</strong>  When the authentication expires, the node will stop running. To keep the node running, you need to <strong>manually log in to your OptimAI account again and restart the node</strong>.  You can find the re-authentication and restart instructions in the <strong>Troubleshooting</strong> section of this guide.</p></blockquote>
 <hr>
 <h2>System Requirements</h2>
@@ -445,11 +450,6 @@ sudo systemctl start optimai.service</code></pre></div>
 <div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>journalctl -u optimai.service -f</code></pre></div>
 <p>Check the Docker container:</p>
 <div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>docker ps</code></pre></div>
-<hr>
-<h2>Referral Link</h2>
-<p>If you want to create an OptimAI account, you can use the referral link below:</p>
-<p><a href="https://node.optimai.network/register?ref=18ADBAE8" target="_blank" rel="noopener noreferrer">https://node.optimai.network/register?ref=18ADBAE8</a></p>
-<p><strong>Referral code:</strong> <code>18ADBAE8</code></p>
 <hr>
 <h2>Notes</h2>
 <ul><li><code>Assignments fetched: total=0</code> is not an error. It means there is no task available at that moment.</li><li>The node will process new tasks when they become available.</li><li>systemd allows the OptimAI node to start automatically after the VPS reboots.</li><li>Multiple supported devices can run under the same OptimAI account.</li></ul>

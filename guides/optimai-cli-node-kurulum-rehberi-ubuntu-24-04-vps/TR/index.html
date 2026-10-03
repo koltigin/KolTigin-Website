@@ -298,6 +298,11 @@
 <ul><li><strong>Lite Node:</strong> Chrome, Brave ve Opera gibi desteklenen Chromium tabanlı tarayıcılarda çalıştırılabilir.</li><li><strong>Telegram Node:</strong> Telegram Mini App üzerinden kullanılabilir.</li><li><strong>Core Node Desktop:</strong> Windows, macOS ve Ubuntu Linux üzerinde çalıştırılabilir.</li><li><strong>Core Node CLI:</strong> Windows, macOS, Ubuntu Linux ve sunucularda çalıştırılabilir.</li><li><strong>Edge Node:</strong> iOS ve Android cihazlarda kullanılabilir.</li></ul>
 <p>Aynı OptimAI hesabıyla birden fazla desteklenen cihazda node çalıştırabilirsiniz.</p>
 <p>Bu rehber, <strong>Ubuntu 24.04 kullanan bir VPS veya sunucuda OptimAI Core CLI Node çalıştırmak isteyenler</strong> için hazırlanmıştır.</p>
+<h2>Başlamadan Önce: OptimAI Hesabı Oluşturun</h2>
+<p>Kuruluma devam edebilmek için bir OptimAI hesabına ihtiyacınız vardır. Henüz hesabınız yoksa aşağıdaki referans bağlantısını kullanarak kayıt olabilirsiniz:</p>
+<p><a href="https://node.optimai.network/register?ref=18ADBAE8" target="_blank" rel="noopener noreferrer">https://node.optimai.network/register?ref=18ADBAE8</a></p>
+<p><strong>Referans kodu:</strong> <code>18ADBAE8</code></p>
+<hr>
 <blockquote><p>[!IMPORTANT] <strong>OptimAI CLI authentication oturumu her 2 haftada (14 gün) bir sona erecek şekilde tasarlanmıştır.</strong>  Authentication süresi dolduğunda node çalışmayı durdurur. Node&#x27;un çalışmaya devam edebilmesi için OptimAI hesabınıza <strong>manuel olarak yeniden giriş yapmanız ve node&#x27;u yeniden başlatmanız gerekir</strong>.  Yeniden giriş ve başlatma adımlarını bu rehberin <strong>Sorunlar ve Çözümler</strong> bölümünde bulabilirsiniz.</p></blockquote>
 <hr>
 <h2>Sistem Gereksinimleri</h2>
@@ -445,11 +450,6 @@ sudo systemctl start optimai.service</code></pre></div>
 <div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>journalctl -u optimai.service -f</code></pre></div>
 <p>Docker container&#x27;ını kontrol et:</p>
 <div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>docker ps</code></pre></div>
-<hr>
-<h2>Referans Bağlantısı</h2>
-<p>OptimAI hesabı oluşturmak isteyenler aşağıdaki referans bağlantısını kullanabilir:</p>
-<p><a href="https://node.optimai.network/register?ref=18ADBAE8" target="_blank" rel="noopener noreferrer">https://node.optimai.network/register?ref=18ADBAE8</a></p>
-<p><strong>Referans kodu:</strong> <code>18ADBAE8</code></p>
 <hr>
 <h2>Notlar</h2>
 <ul><li><code>Assignments fetched: total=0</code> hata değildir. O anda görev bulunmadığını gösterir.</li><li>Yeni görev geldiğinde node otomatik olarak çalışır.</li><li>systemd sayesinde VPS yeniden başlatıldığında OptimAI node otomatik olarak tekrar başlar.</li><li>Aynı hesapla birden fazla desteklenen cihazda node çalıştırılabilir.</li></ul>

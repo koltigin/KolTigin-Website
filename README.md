@@ -37,6 +37,12 @@ You do **not** need to edit `scripts/generate-share.py`, fallback HTML, or gener
 - **Your Writing cover (optional):** create this yourself. Recommended source **1600×900** (16:9). Stored with the writing, for example under `assets/images/blog/`.
 - **Social preview:** generated automatically at **1200×630**. Do not hand-make the 1200×630 fallback; the project rasterizes custom covers or draws the approved identity fallback.
 
+## Acknowledgements
+
+This website was originally based on [vCard - Personal Portfolio](https://github.com/codewithsadee/vcard-personal-portfolio), an open-source project created by [Sadee (codewithsadee)](https://github.com/codewithsadee). KolTigin has since expanded and adapted that foundation with its own content architecture, multilingual routing, publishing tools, SEO system, and site-specific design and functionality.
+
+Thank you to Sadee for making the original work available to the open-source community under the MIT License.
+
 ## License
 
 Project source code is MIT licensed (see `LICENSE`).

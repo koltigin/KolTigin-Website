@@ -3959,6 +3959,10 @@ article.guide-page.active > header .article-title {
   margin-bottom: 0;
 }
 
+.guide-intro-sticky {
+  display: contents;
+}
+
 .guide-langs {
   display: flex;
   align-items: center;
@@ -4112,6 +4116,46 @@ article.guide-page.active > header .article-title {
 }
 
 @media (min-width: 1024px) {
+  article.guide-page.active > header {
+    top: 65px;
+    padding-top: 17px;
+    padding-bottom: 8px;
+  }
+
+  article.guide-page.active > header + .guide-body {
+    margin-top: 12px;
+  }
+
+  .guide-header,
+  .guide-toolbar {
+    margin-bottom: 0;
+  }
+
+  .guide-intro-sticky {
+    display: block;
+    position: sticky;
+    top: var(--guide-intro-top, 122px);
+    z-index: 8;
+    margin: 0 0 20px;
+    padding: 4px 0 10px;
+    background: var(--eerie-black-2);
+    box-shadow: 0 10px 14px -14px hsla(0, 0%, 0%, 0.55);
+  }
+
+  .guide-intro-sticky > h1 {
+    margin-bottom: 0;
+  }
+
+  .guide-intro-sticky > h1 + .share-actions {
+    margin: 12px 0;
+  }
+
+  .guide-intro-sticky .guide-toc {
+    position: static;
+    margin: 4px 0 0;
+    padding: 0;
+  }
+
   .guide-toc {
     --guide-toc-top: 96px;
   }

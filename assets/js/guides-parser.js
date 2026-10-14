@@ -15,6 +15,7 @@ class GuidesParser {
     this.sourceUrl = '';
     this.tocObserver = null;
     this.tocNav = null;
+    this.tocIntro = null;
     this.tocResize = null;
     this.pendingHeading = '';
 
@@ -560,6 +561,15 @@ class GuidesParser {
     else this.bodyEl.insertAdjacentHTML('afterbegin', html);
 
     this.tocNav = this.bodyEl.querySelector('[data-guide-toc-nav]');
+    if (heading && this.tocNav) {
+      const intro = document.createElement('div');
+      intro.className = 'guide-intro-sticky';
+      heading.before(intro);
+      intro.append(heading);
+      if (topShare) intro.append(topShare);
+      intro.append(this.tocNav);
+      this.tocIntro = intro;
+    }
     this.tocNav?.querySelector('[data-guide-toc-toggle]')?.addEventListener('click', () => {
       this.setTocOpen(!this.isTocOpen());
     });
@@ -604,8 +614,15 @@ class GuidesParser {
     const header = this.guideStickyHeader();
     const nav = this.tocNav;
     if (!header || !nav) return;
-    const top = Math.max(0, Math.ceil(header.getBoundingClientRect().height));
-    nav.style.setProperty('--guide-toc-top', `${top}px`);
+    const headerHeight = Math.ceil(header.getBoundingClientRect().height);
+    const desktop = window.matchMedia && window.matchMedia('(min-width: 1024px)').matches;
+    if (desktop && this.tocIntro) {
+      const headerTop = Number.parseFloat(window.getComputedStyle(header).top) || 0;
+      this.tocIntro.style.setProperty('--guide-intro-top', `${Math.max(0, Math.ceil(headerTop + headerHeight))}px`);
+      nav.style.removeProperty('--guide-toc-top');
+      return;
+    }
+    nav.style.setProperty('--guide-toc-top', `${Math.max(0, headerHeight)}px`);
   }
 
   teardownToc() {
@@ -616,11 +633,24 @@ class GuidesParser {
     }
     this.tocNav?.remove();
     this.tocNav = null;
+    if (this.tocIntro) {
+      const parent = this.tocIntro.parentNode;
+      if (parent) {
+        while (this.tocIntro.firstChild) parent.insertBefore(this.tocIntro.firstChild, this.tocIntro);
+        this.tocIntro.remove();
+      }
+      this.tocIntro = null;
+    }
     this.bodyEl?.querySelector('[data-guide-toc-nav]')?.remove();
   }
 
   headingScrollOffset() {
     this.syncTocStickyOffset();
+    const desktop = window.matchMedia && window.matchMedia('(min-width: 1024px)').matches;
+    if (desktop && this.tocIntro) {
+      const introTop = Number.parseFloat(window.getComputedStyle(this.tocIntro).top) || 0;
+      return Math.ceil(introTop + this.tocIntro.getBoundingClientRect().height + 12);
+    }
     const tocH = this.tocNav ? Math.ceil(this.tocNav.getBoundingClientRect().height) : 44;
     const header = this.guideStickyHeader();
     const headerH = header ? Math.ceil(header.getBoundingClientRect().height) : 0;

@@ -757,11 +757,13 @@ class BlogParser {
 
     this.view.innerHTML = `
       <section class="blog-post-detail">
-        <button type="button" class="back-btn" data-writings-back>
-          <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
-          <span>${this.t('writings.back', 'Back to writings')}</span>
-        </button>
-        <header class="blog-post-header">
+        <div class="writing-detail-toolbar">
+          <button type="button" class="back-btn" data-writings-back>
+            <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+            <span>${this.t('writings.back', 'Back to writings')}</span>
+          </button>
+        </div>
+        <header class="blog-post-header writing-intro-sticky">
           <div class="blog-post-meta">
             <p class="blog-category">${this.escapeHtml(meta)}</p>
           </div>

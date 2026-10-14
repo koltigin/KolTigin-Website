@@ -481,11 +481,13 @@ def writing_article_section(
     author = html.escape(brand)
     return f"""
       <section class="blog-post-detail" data-writing-article>
-        <a class="back-btn" href="/writings/">
-          <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
-          <span>{html.escape(back)}</span>
-        </a>
-        <header class="blog-post-header">
+        <div class="writing-detail-toolbar">
+          <a class="back-btn" href="/writings/">
+            <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+            <span>{html.escape(back)}</span>
+          </a>
+        </div>
+        <header class="blog-post-header writing-intro-sticky">
           <div class="blog-post-meta">
             <p class="blog-category">{html.escape(meta)}</p>
           </div>

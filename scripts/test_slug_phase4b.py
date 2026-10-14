@@ -42,7 +42,7 @@ PHASE4B_SCRIPT_MARKERS = {
     "assets/js/url-map.js": "phase4b",
     "assets/js/site.js": "prod13",
     "assets/js/share-actions.js": "prod5",
-    "assets/js/blog-parser.js": "prod20",
+    "assets/js/blog-parser.js": "prod21",
     "assets/js/projects-parser.js": "prod14",
     "assets/js/guide-markdown.js": "prod7",
     "assets/js/guides-parser.js": "prod21",

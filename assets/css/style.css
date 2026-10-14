@@ -3446,6 +3446,10 @@ textarea.form-input::-webkit-resizer { display: none; }
     box-shadow: 0 -30px 0 var(--eerie-black-2);
   }
 
+  .writing-detail-toolbar .back-btn {
+    width: max-content;
+  }
+
   .writing-intro-sticky {
     position: sticky;
     top: 137px;
@@ -3453,7 +3457,9 @@ textarea.form-input::-webkit-resizer { display: none; }
     margin: 0 0 20px;
     padding: 4px 0 10px;
     background: var(--eerie-black-2);
-    box-shadow: 0 10px 14px -14px hsla(0, 0%, 0%, 0.55);
+    box-shadow:
+      0 -12px 0 var(--eerie-black-2),
+      0 10px 14px -14px hsla(0, 0%, 0%, 0.55);
   }
 
   .navbar {
@@ -4154,7 +4160,7 @@ article.guide-page.active > header .article-title {
 @media (min-width: 1024px) {
   article.guide-page.active > header {
     top: 65px;
-    padding-top: 17px;
+    padding-top: 22px;
     padding-bottom: 8px;
   }
 

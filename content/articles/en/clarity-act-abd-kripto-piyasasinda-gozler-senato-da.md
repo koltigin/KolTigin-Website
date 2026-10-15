@@ -4,61 +4,51 @@ date: 2026-09-12
 slug: clarity-act-all-eyes-on-the-us-senate
 ---
 
-# CLARITY Act: All Eyes on the U.S. Senate
-
-The CLARITY Act, one of the most important pieces of legislation for the future of the U.S. crypto market, is once again at the center of attention.
+The CLARITY Act aims to define how the U.S. digital asset market will be regulated and how authority will be divided.
 
 After passing the Senate Banking Committee by a 15 to 9 vote on May 14, all eyes are now on September 15.[1]
 
-So, why is this legislation so important?
+## Beyond Bitcoin
 
-## This Is About More Than Bitcoin
+Regulatory uncertainty has troubled the U.S. crypto industry for years.
 
-One of the biggest problems the U.S. crypto industry has faced for years is regulatory uncertainty.
+The debate centers on when a digital asset should be treated as a security or a commodity and where the authority of the SEC ends and that of the CFTC begins.
 
-When should a digital asset be considered a security, and when should it be considered a commodity?
+The CLARITY Act seeks to clarify those boundaries and establish a regulatory framework for the digital asset market.[2]
 
-Where does the SEC's authority end, and where does the CFTC's authority begin?
+The bill could affect Bitcoin and crypto exchanges as well as stablecoins, RWAs, tokenization, and institutional blockchain adoption.
 
-Of course, the division of authority between the SEC and CFTC is a much more complex legal issue than these questions suggest. But one of the central goals of the CLARITY Act is to make these boundaries clearer and establish a more comprehensive regulatory framework for the digital asset market.[2]
-
-Its potential impact goes far beyond Bitcoin or crypto exchanges.
-
-Stablecoins, RWAs, tokenization, and institutional blockchain adoption could all be significantly affected.
-
-## Why Does This Matter for RWAs?
+## The RWA connection
 
 RWA, or Real World Assets, refers to the representation of real-world assets on blockchain networks.
 
 Government bonds, funds, private credit, real estate, and many other financial assets can potentially be tokenized.
 
-An important distinction needs to be made here: the CLARITY Act is not specifically an RWA bill.
+The CLARITY Act is not an RWA bill. The connection runs through the regulatory environment.
 
-The connection is indirect.
-
-If major financial institutions are going to move billions of dollars worth of real-world assets onto blockchain infrastructure, they will need more than fast and scalable networks. They will also need legal and regulatory predictability.
+Financial institutions moving real-world assets onto blockchain infrastructure need technical performance, legal certainty, and regulatory predictability.
 
 This is why I see a connection between the CLARITY Act and the development of RWAs. A clearer regulatory environment for digital assets could reduce one of the uncertainties facing institutional tokenization.
 
 If the legislation contributes to greater regulatory clarity in the U.S., RWAs, tokenization, and blockchain infrastructure designed with regulatory compliance in mind could attract greater institutional attention.
 
-That does not mean any particular blockchain network or token will necessarily increase in value.
+This does not indicate that any particular blockchain network or token will increase in value.
 
-Regulation is only one factor. Technology, security, liquidity, scalability, and real-world adoption remain equally important.
+Regulation is one part of the picture. Technology, security, liquidity, scalability, and real-world adoption also shape institutional demand.
 
-## Why Are Parts of the Banking Industry Pushing Back?
+## The banks' objection
 
-One of the more interesting aspects of the debate is the opposition coming from some groups within the U.S. banking industry.
+Some groups within the U.S. banking industry oppose the bill.
 
 One of their main concerns is that rewards offered on stablecoins could compete with traditional bank deposits and potentially lead to deposit outflows.[3]
 
-It would be unfair to describe this concern simply as opposition to technology.
+The concern has an economic basis.
 
 Deposits play an important role in the traditional banking system and in the credit creation process. From that perspective, concerns about the potential impact of stablecoins on bank deposits have an understandable economic basis.
 
 Where I differ is on the response.
 
-Rather than slowing technological transformation, I believe the banking system should adapt to the new competitive environment.
+I believe banks should adapt to this competitive environment by developing products and services.
 
 Türkiye provides some interesting examples.
 
@@ -68,19 +58,15 @@ Ak Yatırım, meanwhile, acquired a majority stake in the crypto platform Stable
 
 At the same time, Turkish banks are increasingly providing their customers with access to U.S. equity markets. Through banks such as Akbank and Yapı Kredi, investors can trade companies listed on NASDAQ and the NYSE.[6][7]
 
-Of course, these examples from Türkiye are not direct equivalents of the U.S. debate over stablecoins and bank deposits.
-
-The point is not to suggest that the two countries have identical regulatory structures or financial systems. Rather, these examples show that traditional financial institutions can respond to digital assets and new investment technologies by developing new products and services instead of simply resisting the transformation.
+These examples from Türkiye are not direct equivalents of the U.S. debate over stablecoins and bank deposits, and the two countries have different regulatory structures. They do show that traditional financial institutions can respond to digital assets by developing new products and services.
 
 The boundaries between traditional finance and digital finance are becoming increasingly fluid.
 
-If stablecoins are going to compete with traditional bank deposits, restricting the development of stablecoins should not be the only option under discussion. How the banking system itself adapts to this new competitive environment should also be part of the debate.
+If stablecoins compete with traditional bank deposits, the debate should also address how banks adapt to that competition.
 
-## The Bigger Competition
+## Competition in global finance
 
-I do not see the CLARITY Act as simply another crypto law.
-
-There is a much bigger question:
+I view the CLARITY Act in the context of America's position in the global digital financial system. The underlying question is:
 
 **Who will help shape the rules of the new digital financial system?**
 
@@ -88,63 +74,45 @@ The United States has one of the world's largest capital markets, while the U.S.
 
 If blockchain-based finance continues to grow, it would hardly be surprising for the United States to seek an influential role in shaping the standards and rules of this emerging system.
 
-This is not to suggest that the U.S. will necessarily establish some form of "crypto hegemony."
+This does not imply that the U.S. will establish a "crypto hegemony." It does place the CLARITY Act in the context of America's position in the emerging global digital financial system.[8]
 
-Rather, I believe the CLARITY Act should also be viewed in the context of America's position in the emerging global digital financial system, not simply as a domestic crypto regulation.[8]
+For the United States, the question is whether it will be one of the countries defining the rules and standards of this financial system.
 
-In my view, the question for the United States is no longer simply whether it should accept crypto.
+## Regulation and decentralization
 
-The bigger question is whether it will be one of the countries helping to define the rules and standards of this rapidly developing financial system.
-
-## Are Regulation and Decentralization in Conflict?
-
-Another distinction is important here.
-
-Blockchain technology does not exist only for banks or institutional finance.
+Blockchain technology extends beyond banks and institutional finance.
 
 Permissionless networks, decentralized finance, and the ability of users to transact without relying on a central intermediary remain important parts of the blockchain ecosystem.
 
 But if we are talking about moving bonds, funds, private credit, and other real-world financial assets onto blockchain infrastructure at scale, it is difficult to imagine financial institutions simply ignoring the rules under which they operate.
 
-Regulation-compliant institutional blockchain use and permissionless decentralized blockchain use therefore do not necessarily have to be mutually exclusive.
+Regulated institutional use and permissionless decentralized use can develop as models serving different needs.
 
 Different parts of the crypto ecosystem can continue to develop under different models.
 
-## What Happens Next?
+## The Senate process
 
-All eyes are now on the critical Senate vote expected on September 15.
-
-There is an important distinction here.
+The next stage is the Senate vote expected on September 15.
 
 The September 15 vote is not the final vote on the CLARITY Act.
 
-The bill needs **60 votes in the critical procedural vote to advance in the Senate.**[3]
+The bill needs **60 votes in the procedural vote to advance in the Senate.**[3]
 
 Republicans cannot reach that threshold on their own, meaning support from Democratic senators will also be necessary.
-
-This is where the real political battle is taking place.
 
 If the required 60 votes are secured, the CLARITY Act will advance to the next stage in the Senate.
 
 That would not mean the bill has passed into law. Additional stages of the legislative process would still remain.
 
-However, clearing the 60-vote threshold would represent an important political milestone for comprehensive U.S. digital asset legislation.
+Clearing the 60-vote threshold would move comprehensive U.S. digital asset legislation to the next stage in the Senate.
 
 If the 60 votes cannot be secured, the legislation will not necessarily be dead either. But advancing it in its current form would become significantly more difficult, and further political negotiations could follow.
 
-That is why the **60-vote threshold on September 15 is particularly important to watch.**
+I am watching the **60-vote threshold on September 15** because the outcome will affect the regulatory setting for RWAs, tokenization, and compliance-oriented blockchain networks.
 
-I believe the next phase could be especially important for RWAs, tokenization, and blockchain networks designed with regulatory compliance in mind.
+My assessment concerns the regulatory uncertainty surrounding institutional blockchain adoption; it is not a price prediction for a blockchain or token.
 
-This is not a price prediction for any particular blockchain or token.
-
-It is an assessment of how one of the major uncertainties surrounding institutional blockchain adoption, the regulatory environment, could evolve.
-
-Because the key question in the coming years may no longer simply be:
-
-**"Does the blockchain work?"**
-
-For institutional finance and real-world assets, a far more important question may emerge:
+For institutional finance and real-world assets, the practical question is:
 
 **"Can blockchain operate within the rules of the real financial system?"**
 

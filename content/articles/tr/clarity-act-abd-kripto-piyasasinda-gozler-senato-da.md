@@ -4,59 +4,51 @@ date: 2026-09-12
 slug: clarity-act-abd-kripto-piyasasinda-gozler-senato-da
 ---
 
-# CLARITY Act: ABD Kripto Piyasasında Gözler Senato'da
-
-ABD'de kripto piyasasının geleceğini yakından ilgilendiren CLARITY Act yeniden gündemin merkezinde.
+CLARITY Act, ABD'deki dijital varlık piyasasının hangi kurumlar tarafından ve hangi kurallarla denetleneceğini belirlemeyi amaçlıyor.
 
 14 Mayıs'ta Senato Bankacılık Komitesi'nden 15'e 9 oyla geçen tasarı için şimdi gözler 15 Eylül'e çevrilmiş durumda.[1]
 
-Peki bu yasa neden bu kadar önemli?
+## Bitcoin'in ötesindeki kapsam
 
-## Mesele sadece Bitcoin değil
+ABD kripto sektörünün yıllardır çözmeye çalıştığı sorunlardan biri düzenleyici belirsizlik.
 
-ABD'de kripto sektörünün yıllardır yaşadığı en büyük problemlerden biri düzenleyici belirsizlik.
+Tartışmanın merkezinde bir dijital varlığın ne zaman menkul kıymet veya emtia sayılacağı ve SEC ile CFTC arasındaki yetki sınırı bulunuyor.
 
-Bir dijital varlık ne zaman menkul kıymet, ne zaman emtia?
+CLARITY Act, bu sınırları daha belirgin hale getirmeyi ve dijital varlık piyasası için kapsamlı bir düzenleyici çerçeve oluşturmayı hedefliyor.[2]
 
-SEC nerede yetkili, CFTC nerede devreye giriyor?
+Tasarı Bitcoin ve kripto borsalarının yanında stablecoinleri, RWA'ları, tokenizasyonu ve kurumsal blockchain kullanımını da etkileyebilir.
 
-Elbette SEC ve CFTC arasındaki yetki paylaşımı bundan çok daha karmaşık bir hukuki konu. Ancak CLARITY Act'in temel amaçlarından biri, dijital varlık piyasasında bu sınırları daha belirgin hale getirmek ve daha kapsamlı bir düzenleyici çerçeve oluşturmak.[2]
-
-Bunun etkisi yalnızca Bitcoin veya kripto borsalarıyla sınırlı olmayabilir.
-
-Stablecoinler, RWA, tokenizasyon ve kurumsal blockchain kullanımı açısından da önemli sonuçlar doğurabilir.
-
-## RWA tarafı neden önemli?
+## RWA bağlantısı
 
 RWA, yani Real World Assets, gerçek dünyadaki varlıkların blockchain üzerinde temsil edilmesini ifade ediyor.
 
 Tahviller, fonlar, özel krediler, gayrimenkuller ve farklı finansal varlıklar tokenlaştırılabilir.
 
-Burada önemli bir ayrım yapmak gerekiyor: CLARITY Act doğrudan bir RWA yasası değil.
+CLARITY Act doğrudan bir RWA yasası değil. İki konu arasındaki bağlantı düzenleyici ortam üzerinden kuruluyor.
 
-Ancak büyük finans kuruluşlarının milyarlarca dolarlık gerçek dünya varlığını blockchain altyapısına taşıması için yalnızca hızlı ve ölçeklenebilir blockchainlere değil, hukuki ve düzenleyici öngörülebilirliğe de ihtiyaç var.
+Büyük finans kuruluşlarının milyarlarca dolarlık gerçek dünya varlığını blockchain altyapısına taşıması için teknik performansın yanında hukuki ve düzenleyici öngörülebilirlik gerekiyor.
 
-Bu nedenle CLARITY Act ile RWA arasındaki bağlantıyı doğrudan değil, düzenleyici ortamın daha öngörülebilir hale gelmesinin yaratabileceği dolaylı etki üzerinden değerlendiriyorum.
+Ben CLARITY Act ile RWA arasındaki ilişkiyi bu dolaylı etki üzerinden değerlendiriyorum.
 
 Eğer bu süreç ABD'deki dijital varlık piyasasının hukuki çerçevesini daha belirgin hale getirirse, RWA, tokenizasyon ve özellikle regülasyon uyumluluğu gözetilerek geliştirilen blockchain altyapıları daha fazla kurumsal ilgi görebilir.
 
-Ancak bunun herhangi bir blockchain ağının veya tokenın değerinin mutlaka artacağı anlamına gelmediğini de belirtmek gerekiyor.
+Bu durum belirli bir blockchain ağının veya tokenın değerinin artacağını göstermez.
 
-Regülasyon yalnızca faktörlerden biri. Teknoloji, güvenlik, likidite, ölçeklenebilirlik ve gerçek kullanım alanları da en az düzenleyici netlik kadar önemli.
+Regülasyon bu tablonun bir parçası. Teknoloji, güvenlik, likidite, ölçeklenebilirlik ve gerçek kullanım alanları da kurumsal benimsenmeyi belirler.
 
-## Bankacılık sektörünün bir bölümü neden karşı çıkıyor?
+## Bankaların itirazı
 
-İşin ilginç taraflarından biri de ABD bankacılık sektöründeki bazı grupların tasarıya yönelik itirazları.
+ABD bankacılık sektöründeki bazı gruplar tasarıya itiraz ediyor.
 
 Özellikle stablecoinlere verilen ödüllerin banka mevduatlarıyla rekabet edeceği ve bankalardan mevduat çıkışına neden olabileceği savunuluyor.[3]
 
-Bu kaygıyı yalnızca teknoloji karşıtlığı olarak değerlendirmek doğru olmaz.
+Bu kaygının ekonomik bir dayanağı var.
 
 Mevduatlar geleneksel bankacılık sisteminin ve kredi mekanizmasının önemli parçalarından biri. Dolayısıyla bankaların stablecoinlerin mevduat tabanı üzerindeki olası etkilerini tartışması ekonomik açıdan anlaşılabilir.
 
 Benim ayrıldığım nokta çözüm konusunda.
 
-Teknolojik dönüşümü yavaşlatmak yerine bankacılık sisteminin yeni rekabet ortamına uyum sağlamasının daha doğru olduğunu düşünüyorum.
+Bence bankacılık sistemi bu yeni rekabet ortamına ürün ve hizmet geliştirerek uyum sağlamalı.
 
 Türkiye bu açıdan ilginç örnekler sunuyor.
 
@@ -66,19 +58,15 @@ Ak Yatırım ise kripto platformu Stablex'in çoğunluk hisselerini satın aldı
 
 Aynı zamanda Türkiye'deki bankalar müşterilerine ABD borsalarına erişim de sağlıyor. Örneğin Akbank ve Yapı Kredi üzerinden NASDAQ ve NYSE'de işlem gören şirketlere yatırım yapılabiliyor.[6][7]
 
-Elbette Türkiye'deki bu örnekler ABD'deki stablecoin ve banka mevduatı tartışmasının birebir karşılığı değil.
-
-Buradaki karşılaştırmanın amacı iki ülkenin düzenleyici yapılarını veya finansal sistemlerini aynı kabul etmek değil. Bu örnekler, geleneksel finans kuruluşlarının dijital varlıklar ve yeni yatırım teknolojileri karşısında yalnızca direnmek yerine yeni ürün ve hizmetlerle dönüşüme uyum sağlayabileceğini göstermesi açısından önemli.
+Türkiye'deki bu örnekler ABD'deki stablecoin ve banka mevduatı tartışmasının birebir karşılığı değil. İki ülkenin düzenleyici yapıları da aynı değil. Örnekler, geleneksel finans kuruluşlarının dijital varlıklara yeni ürün ve hizmetlerle cevap verebildiğini gösteriyor.
 
 Geleneksel finans ile dijital finans arasındaki sınır giderek daha geçirgen hale geliyor.
 
-Bence stablecoinler geleneksel banka mevduatlarına rakip olacaksa tartışılması gereken tek seçenek stablecoinlerin gelişimini sınırlamak olmamalı. Bankacılık sisteminin bu yeni rekabet ortamında nasıl dönüşeceği de tartışmanın bir parçası olmalı.
+Stablecoinler geleneksel banka mevduatlarıyla rekabet edecekse tartışma, bankacılık sisteminin bu ortama nasıl uyum sağlayacağını da kapsamalı.
 
-## Asıl mücadele daha büyük
+## Küresel finans rekabeti
 
-CLARITY Act'i yalnızca bir kripto yasası olarak görmüyorum.
-
-Burada daha büyük bir soru var:
+CLARITY Act'i ABD'nin küresel dijital finans sistemindeki konumuyla birlikte değerlendiriyorum. Bu açıdan temel soru şu:
 
 **Yeni dijital finans sisteminde kim lider olacak?**
 
@@ -86,65 +74,45 @@ ABD dünyanın en büyük sermaye piyasalarından birine sahip ve ABD doları k�
 
 Blockchain tabanlı finans büyümeye devam ederse ABD'nin bu yeni sistemin standartlarının ve kurallarının şekillenmesinde etkili olmak istemesi şaşırtıcı olmaz.
 
-Burada ABD'nin mutlaka bir "kripto hegemonyası" kuracağını iddia etmiyorum.
+Bu, ABD'nin mutlaka bir "kripto hegemonyası" kuracağı anlamına gelmiyor. Ancak CLARITY Act bir iç piyasa düzenlemesi olduğu kadar ülkenin gelişmekte olan küresel dijital finans sistemindeki konumuyla da ilişkili.[8]
 
-Ancak CLARITY Act'in yalnızca iç piyasa düzenlemesi olarak değil, ABD'nin gelişmekte olan küresel dijital finans sistemindeki konumu açısından da değerlendirilmesi gerektiğini düşünüyorum.[8]
+ABD açısından soru, büyüyen bu finansal sistemin kurallarını ve standartlarını şekillendiren ülkelerden biri olup olmayacağı.
 
-Bence ABD açısından soru artık yalnızca kriptoyu kabul edip etmemek değil.
+## Regülasyon ve merkeziyetsizlik
 
-Asıl soru, büyüyen bu finansal sistemin kurallarını ve standartlarını şekillendiren ülkelerden biri olup olmayacağı.
-
-## Regülasyon ve merkeziyetsizlik birbiriyle çelişiyor mu?
-
-Burada başka bir ayrım daha yapmak gerekiyor.
-
-Blockchain teknolojisinin yalnızca bankalar veya kurumsal finans için var olduğunu düşünmüyorum.
+Blockchain teknolojisi bankalar ve kurumsal finansla sınırlı değil.
 
 Permissionless ağların, merkeziyetsiz finansın ve kullanıcıların herhangi bir merkezi kuruma ihtiyaç duymadan işlem yapabilmesinin blockchain ekosistemindeki önemi devam ediyor.
 
 Ancak tahvillerin, fonların, özel kredilerin veya diğer gerçek dünya varlıklarının büyük ölçekte blockchain üzerine taşınmasından söz ediyorsak, finansal kurumların tabi olduğu kuralların tamamen göz ardı edilmesi gerçekçi görünmüyor.
 
-Bu nedenle merkeziyetsiz blockchain kullanımı ile regülasyon uyumlu kurumsal blockchain kullanımı birbirini tamamen dışlayan iki yaklaşım olmak zorunda değil.
+Merkeziyetsiz kullanım ile regülasyon uyumlu kurumsal kullanım farklı ihtiyaçlara cevap veren iki model olarak gelişebilir.
 
 Kripto ekosisteminin farklı alanları farklı modellerle gelişebilir.
 
-## Şimdi ne olacak?
+## Senato süreci
 
-Gözler 15 Eylül'deki kritik Senato oylamasında.
-
-Burada önemli bir ayrıntı var.
+Bir sonraki aşama 15 Eylül'deki Senato oylaması.
 
 15 Eylül'deki oylama CLARITY Act'in nihai kabul oylaması değil.
 
-Tasarının Senato'da ilerleyebilmesi için yapılacak kritik usul oylamasında **60 oy gerekiyor.**[3]
+Tasarının Senato'da ilerleyebilmesi için usul oylamasında **60 oy gerekiyor.**[3]
 
 Cumhuriyetçilerin tek başına bu sayıya ulaşması mümkün olmadığı için Demokrat senatörlerden de destek gerekiyor.
-
-Asıl siyasi mücadele de burada yaşanıyor.
 
 Eğer gerekli 60 oy bulunursa CLARITY Act Senato'daki bir sonraki aşamaya ilerleyecek.
 
 Bu, yasanın kabul edildiği veya yürürlüğe girdiği anlamına gelmeyecek. Senato sürecinde başka aşamalar bulunuyor ve yasalaşma süreci devam edecek.
 
-Ancak 60 oy eşiğinin aşılması, kapsamlı bir ABD dijital varlık düzenlemesinin ilerlemesi açısından önemli bir siyasi adım olacak.
+60 oy eşiğinin aşılması, kapsamlı bir ABD dijital varlık düzenlemesini Senato'da bir sonraki aşamaya taşıyacak.
 
 Eğer 60 oy bulunamazsa tasarı da otomatik olarak tamamen ortadan kalkmış olmayacak. Ancak mevcut haliyle ilerlemesi ciddi biçimde zorlaşacak ve yeni siyasi müzakereler gündeme gelebilecek.
 
-Bu nedenle **15 Eylül'deki 60 oy eşiğini özellikle takip etmek gerekiyor.**
+Bu nedenle 15 Eylül'deki 60 oy eşiğini takip ediyorum. Sonuç; RWA, tokenizasyon ve regülasyon uyumluluğu gözetilerek geliştirilen blockchain ağlarının önündeki düzenleyici ortamı etkileyecek.
 
-Ben özellikle RWA, tokenizasyon ve regülasyon uyumluluğu gözetilerek geliştirilen blockchain ağları açısından bundan sonraki sürecin önemli olduğunu düşünüyorum.
+Buradaki değerlendirmem belirli bir blockchain veya token için fiyat tahmini içermiyor; kurumsal blockchain kullanımını etkileyen düzenleyici belirsizliğe odaklanıyor.
 
-Bu, belirli bir blockchain veya token için fiyat tahmini değil.
-
-Daha çok, kurumsal blockchain kullanımının önündeki temel sorunlardan biri olan düzenleyici belirsizliğin nasıl şekilleneceğine ilişkin bir değerlendirme.
-
-Çünkü önümüzdeki dönemin sorusu artık yalnızca:
-
-**"Blockchain çalışıyor mu?"**
-
-olmayabilir.
-
-Kurumsal finans ve gerçek dünya varlıkları açısından çok daha önemli bir soru öne çıkabilir:
+Kurumsal finans ve gerçek dünya varlıkları açısından önümüzdeki dönemde şu soru belirleyici olabilir:
 
 **"Blockchain gerçek finans dünyasının kuralları içerisinde çalışabiliyor mu?"**
 

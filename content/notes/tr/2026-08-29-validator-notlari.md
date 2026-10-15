@@ -1,16 +1,16 @@
 ---
-title: "Validator olmak neden sadece bir binary çalıştırmak değildir"
+title: "Validator operasyonu kurulumdan sonra başlar"
 date: 2026-08-29
-summary: "Uptime, anahtar güvenliği, snapshot ve topluluk — saha notları."
+summary: "İzleme, güncelleme, yedekleme, anahtar güvenliği ve ağ takibi üzerine saha notları."
 slug: validator-olmak-neden-sadece-bir-binary-calistirmak-degildir
 ---
 
-Bir node’u ayağa kaldırmak ilk adımdır. Asıl iş; güncellemeler, snapshot, yedekleme, anahtar disiplini ve ağın sosyal katmanıdır.
+Binary çalışıp node blokları takip etmeye başladığında kurulum tamamlanır. Operasyon sırasında servis durumunu, disk kullanımını, peer bağlantılarını ve ağ duyurularını düzenli olarak kontrol ederim.
 
-## Operasyon
+## Sahada takip ettiğim noktalar
 
 - İzleme ve uyarı
 - Disk ve peers
 - Governance oyları
 
-Anatolian Team’de bunları günlük iş olarak görüyoruz.
+Anatolian Team'de güncellemeleri planlamak, anahtarları korumak, gerektiğinde güvenilir snapshot bulmak ve sorunları kesintiye dönüşmeden fark etmek günlük işimizin parçasıydı.

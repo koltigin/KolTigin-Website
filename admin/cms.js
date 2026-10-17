@@ -1241,14 +1241,19 @@
         const j = upC ? i - 1 : i + 1;
         if (j >= 0 && j < cats.length) {
           [cats[i], cats[j]] = [cats[j], cats[i]];
+          H().clearStatus();
           try {
-            await H().api('/admin/api/project-categories', {
+            const result = await H().api('/admin/api/project-categories', {
               method: 'POST',
               body: JSON.stringify({ action: 'reorder', ids: cats.map((c) => c.id) })
             });
-            H().state.projectsData = adoptProjects(await H().api('/admin/api/projects'));
-          } catch (error) { await saveFail(error); }
-          renderProjectCategories();
+            H().state.projectsData.categories = Array.isArray(result.categories) ? result.categories : cats;
+            renderProjectCategories();
+            await saveOk(t(upC ? 'cms.projectCategoryMovedUp' : 'cms.projectCategoryMovedDown'));
+          } catch (error) {
+            renderProjectCategories();
+            await saveFail(error);
+          }
         }
         return;
       }

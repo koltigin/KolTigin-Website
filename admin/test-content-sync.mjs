@@ -122,6 +122,11 @@ assert(saveWritingFn.includes("errors.savePartial"), "incomplete bilingual save 
 assert(!/catch[\s\S]*showNotice\(/.test(saveWritingFn), "failed writing save does not show the success notice");
 assert(saveVideoFn.includes("await api('/admin/api/save'") && saveVideoFn.indexOf("await api('/admin/api/save'") < saveVideoFn.indexOf("upsertVideoInState"), "video list update happens only after backend save");
 
+const projectCategoryReorder = cmsSrc.slice(cmsSrc.indexOf("const upC = event.target.closest('[data-pcat-up]')"), cmsSrc.indexOf("const gLang = event.target.closest('[data-guide-lang]')"));
+assert(projectCategoryReorder.includes('result.categories'), "project category reorder adopts the committed order immediately");
+assert(!projectCategoryReorder.includes("api('/admin/api/projects')"), "project category reorder does not overwrite the new order with stale static data");
+assert(projectCategoryReorder.indexOf('renderProjectCategories();') < projectCategoryReorder.indexOf('await saveOk('), "project category reorder shows its success notice after rerendering");
+
 const bilingualEditor = {
   kind: "articles",
   lang: "tr",

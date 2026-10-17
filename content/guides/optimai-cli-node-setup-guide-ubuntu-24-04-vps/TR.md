@@ -1,4 +1,6 @@
 ---
+title: "Ubuntu Kurulum Rehberi"
+description: "Optim AI Ubuntu Kurulum Rehberi"
 date: 2026-09-09
 slug: optimai-cli-node-kurulum-rehberi-ubuntu-24-04-vps
 ---

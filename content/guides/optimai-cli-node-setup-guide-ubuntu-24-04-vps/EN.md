@@ -1,4 +1,6 @@
 ---
+title: "Ubuntu Setup Guide"
+description: "Optim AI Ubuntu Setup Guide"
 date: 2026-09-09
 slug: optimai-cli-node-setup-guide-ubuntu-24-04-vps
 ---

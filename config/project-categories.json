@@ -55,25 +55,25 @@
     }
   },
   {
-    "id": "completedDefi",
-    "folder": "completed-defi-ecosystem",
-    "order": 6,
-    "accordion": true,
-    "protected": true,
-    "label": {
-      "en": "Completed DeFi & Ecosystem",
-      "tr": "Tamamlanan DeFi & Ekosistem"
-    }
-  },
-  {
     "id": "artificial-intelligence-ai",
     "folder": "artificial-intelligence-ai",
-    "order": 7,
+    "order": 6,
     "accordion": false,
     "protected": false,
     "label": {
       "en": "Artificial Intelligence (AI)",
       "tr": "Yapay Zeka (YZ)"
+    }
+  },
+  {
+    "id": "completedDefi",
+    "folder": "completed-defi-ecosystem",
+    "order": 7,
+    "accordion": true,
+    "protected": true,
+    "label": {
+      "en": "Completed DeFi & Ecosystem",
+      "tr": "Tamamlanan DeFi & Ekosistem"
     }
   },
   {

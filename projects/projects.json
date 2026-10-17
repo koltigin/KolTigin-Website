@@ -262,31 +262,6 @@
       "referralCode": "9vjkeqm9yv2xyxd"
     },
     {
-      "id": "optimai",
-      "name": "OptimAI",
-      "status": "active",
-      "logo": "./assets/images/projects/optimai.svg",
-      "summary": {
-        "en": "Decentralized AI infrastructure powered by distributed computing resources.",
-        "tr": "Dağıtık bilgi işlem kaynaklarıyla çalışan merkeziyetsiz yapay zeka altyapısı."
-      },
-      "links": [
-        {
-          "label": "Website",
-          "url": "https://optimai.network"
-        },
-        {
-          "label": {
-            "en": "Ubuntu Setup Guide",
-            "tr": "Ubuntu Kurulum Rehberi"
-          },
-          "guide": "optimai-cli-node-setup-guide-ubuntu-24-04-vps"
-        }
-      ],
-      "referralUrl": "https://node.optimai.network/register?ref=18ADBAE8",
-      "referralCode": "18ADBAE8"
-    },
-    {
       "id": "teneo",
       "name": "Teneo",
       "status": "active",
@@ -904,5 +879,34 @@
   ],
   "completedDefi": [],
   "activeTestnets": [],
-  "artificial-intelligence-ai": []
+  "artificial-intelligence-ai": [
+    {
+      "id": "optimai",
+      "name": "OptimAI",
+      "status": "active",
+      "logo": "./assets/images/projects/optimai.svg",
+      "summary": {
+        "en": "Decentralized AI infrastructure powered by distributed computing resources.",
+        "tr": "Dağıtık bilgi işlem kaynaklarıyla çalışan merkeziyetsiz yapay zeka altyapısı."
+      },
+      "links": [
+        {
+          "label": {
+            "en": "Website",
+            "tr": "Website"
+          },
+          "url": "https://optimai.network"
+        },
+        {
+          "label": {
+            "en": "Ubuntu Setup Guide",
+            "tr": "Ubuntu Kurulum Rehberi"
+          },
+          "guide": "optimai-cli-node-setup-guide-ubuntu-24-04-vps"
+        }
+      ],
+      "referralUrl": "https://node.optimai.network/register?ref=18ADBAE8",
+      "referralCode": "18ADBAE8"
+    }
+  ]
 }

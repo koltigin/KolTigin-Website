@@ -22,25 +22,25 @@
     }
   },
   {
-    "id": "depin",
-    "folder": "depin",
-    "order": 3,
-    "accordion": false,
-    "protected": true,
-    "label": {
-      "en": "DePIN",
-      "tr": "DePIN"
-    }
-  },
-  {
     "id": "artificial-intelligence-ai",
     "folder": "artificial-intelligence-ai",
-    "order": 4,
+    "order": 3,
     "accordion": false,
     "protected": false,
     "label": {
       "en": "Artificial Intelligence (AI)",
       "tr": "Yapay Zeka (YZ)"
+    }
+  },
+  {
+    "id": "depin",
+    "folder": "depin",
+    "order": 4,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "DePIN",
+      "tr": "DePIN"
     }
   },
   {

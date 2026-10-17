@@ -66,25 +66,25 @@
     }
   },
   {
-    "id": "activeTestnets",
-    "folder": "active-testnets",
-    "order": 7,
-    "accordion": false,
-    "protected": true,
-    "label": {
-      "en": "Active Testnets",
-      "tr": "Aktif Testnetler"
-    }
-  },
-  {
     "id": "artificial-intelligence-ai",
     "folder": "artificial-intelligence-ai",
-    "order": 8,
+    "order": 7,
     "accordion": false,
     "protected": false,
     "label": {
       "en": "Artificial Intelligence (AI)",
       "tr": "Yapay Zeka (YZ)"
+    }
+  },
+  {
+    "id": "activeTestnets",
+    "folder": "active-testnets",
+    "order": 8,
+    "accordion": false,
+    "protected": true,
+    "label": {
+      "en": "Active Testnets",
+      "tr": "Aktif Testnetler"
     }
   }
 ]

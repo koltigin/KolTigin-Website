@@ -10,7 +10,9 @@ summary:
 links:
 - label: Website
   url: https://optimai.network
-- label: Setup Guide
+- label:
+    en: "Ubuntu Setup Guide"
+    tr: "Ubuntu Kurulum Rehberi"
   guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps
 referral_url: https://node.optimai.network/register?ref=18ADBAE8
 referral_code: 18ADBAE8

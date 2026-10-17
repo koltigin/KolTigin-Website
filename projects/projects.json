@@ -276,7 +276,10 @@
           "url": "https://optimai.network"
         },
         {
-          "label": "Setup Guide",
+          "label": {
+            "en": "Ubuntu Setup Guide",
+            "tr": "Ubuntu Kurulum Rehberi"
+          },
           "guide": "optimai-cli-node-setup-guide-ubuntu-24-04-vps"
         }
       ],

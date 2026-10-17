@@ -44,25 +44,25 @@
     }
   },
   {
-    "id": "completedTestnets",
-    "folder": "completed-testnets",
-    "order": 5,
-    "accordion": true,
-    "protected": true,
-    "label": {
-      "en": "Completed Testnets",
-      "tr": "Tamamlanan Testnetler"
-    }
-  },
-  {
     "id": "artificial-intelligence-ai",
     "folder": "artificial-intelligence-ai",
-    "order": 6,
+    "order": 5,
     "accordion": false,
     "protected": false,
     "label": {
       "en": "Artificial Intelligence (AI)",
       "tr": "Yapay Zeka (YZ)"
+    }
+  },
+  {
+    "id": "completedTestnets",
+    "folder": "completed-testnets",
+    "order": 6,
+    "accordion": true,
+    "protected": true,
+    "label": {
+      "en": "Completed Testnets",
+      "tr": "Tamamlanan Testnetler"
     }
   },
   {

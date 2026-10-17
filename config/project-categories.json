@@ -22,20 +22,9 @@
     }
   },
   {
-    "id": "defi",
-    "folder": "defi",
-    "order": 3,
-    "accordion": false,
-    "protected": true,
-    "label": {
-      "en": "DeFi & Ecosystem",
-      "tr": "DeFi & Ekosistem"
-    }
-  },
-  {
     "id": "depin",
     "folder": "depin",
-    "order": 4,
+    "order": 3,
     "accordion": false,
     "protected": true,
     "label": {
@@ -44,25 +33,36 @@
     }
   },
   {
-    "id": "completedTestnets",
-    "folder": "completed-testnets",
-    "order": 5,
-    "accordion": true,
+    "id": "defi",
+    "folder": "defi",
+    "order": 4,
+    "accordion": false,
     "protected": true,
     "label": {
-      "en": "Completed Testnets",
-      "tr": "Tamamlanan Testnetler"
+      "en": "DeFi & Ecosystem",
+      "tr": "DeFi & Ekosistem"
     }
   },
   {
     "id": "artificial-intelligence-ai",
     "folder": "artificial-intelligence-ai",
-    "order": 6,
+    "order": 5,
     "accordion": false,
     "protected": false,
     "label": {
       "en": "Artificial Intelligence (AI)",
       "tr": "Yapay Zeka (YZ)"
+    }
+  },
+  {
+    "id": "completedTestnets",
+    "folder": "completed-testnets",
+    "order": 6,
+    "accordion": true,
+    "protected": true,
+    "label": {
+      "en": "Completed Testnets",
+      "tr": "Tamamlanan Testnetler"
     }
   },
   {

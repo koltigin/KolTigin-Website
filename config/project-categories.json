@@ -75,5 +75,16 @@
       "en": "Active Testnets",
       "tr": "Aktif Testnetler"
     }
+  },
+  {
+    "id": "artificial-intelligence-ai",
+    "folder": "artificial-intelligence-ai",
+    "order": 8,
+    "accordion": false,
+    "protected": false,
+    "label": {
+      "en": "Artificial Intelligence (AI)",
+      "tr": "Yapay Zeka (YZ)"
+    }
   }
 ]

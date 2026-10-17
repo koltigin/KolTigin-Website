@@ -29,4 +29,8 @@ links:
     en: "ArNS Domain"
     tr: "ArNS Domain"
   guide: how-to-get-an-arns-domain
+- label:
+    en: "Automatic SSL Installation"
+    tr: "Otomatik SSL Kurulumu"
+  guide: ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl
 ---

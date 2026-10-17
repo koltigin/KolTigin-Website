@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-content-id="ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl" data-content-kind="guides" data-en-slug="ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl" data-tr-slug="ar-io-gateway-icin-domain-cloudflare-dns-ve-otomatik-ssl-kurulumu">
+
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CD89YCN426"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CD89YCN426');
+</script>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR.IO Gateway: Domain, Cloudflare DNS, and Automatic SSL</title>
+  <meta name="description" content="You do not need a separate shared-hosting package to publish an AR.IO gateway under your own domain. If the gateway already runs on a public Ubuntu or VPS serv…">
+  <link rel="canonical" href="https://koltigin.xyz/guides/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl/EN/">
+  <meta name="theme-color" content="#121212">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="AR.IO Gateway: Domain, Cloudflare DNS, and Automatic SSL">
+  <meta property="og:description" content="You do not need a separate shared-hosting package to publish an AR.IO gateway under your own domain. If the gateway already runs on a public Ubuntu or VPS serv…">
+  <meta property="og:url" content="https://koltigin.xyz/guides/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl/EN/">
+  <meta property="og:image" content="https://koltigin.xyz/assets/images/og/guides/en/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AR.IO Gateway: Domain, Cloudflare DNS, and Automatic SSL">
+  <meta name="twitter:description" content="You do not need a separate shared-hosting package to publish an AR.IO gateway under your own domain. If the gateway already runs on a public Ubuntu or VPS serv…">
+  <meta name="twitter:image" content="https://koltigin.xyz/assets/images/og/guides/en/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl.png">
+  <link rel="icon" href="/assets/images/common/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="shortcut icon" href="/assets/images/common/favicon-32.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/common/apple-touch-icon.png" sizes="180x180">
+  <link rel="stylesheet" href="/assets/css/style.css?v=prod33">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <meta name="koltigin-share-guide" content="1">
+  <link rel="alternate" hreflang="en" href="https://koltigin.xyz/guides/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl/EN/">
+  <link rel="alternate" hreflang="tr" href="https://koltigin.xyz/guides/ar-io-gateway-icin-domain-cloudflare-dns-ve-otomatik-ssl-kurulumu/TR/">
+  <link rel="alternate" hreflang="x-default" href="https://koltigin.xyz/guides/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl/EN/">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"AR.IO Gateway: Domain, Cloudflare DNS, and Automatic SSL","description":"You do not need a separate shared-hosting package to publish an AR.IO gateway under your own domain. If the gateway already runs on a public Ubuntu or VPS serv…","author":{"@type":"Person","name":"KolTigin"},"image":"https://koltigin.xyz/assets/images/og/guides/en/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl.png","url":"https://koltigin.xyz/guides/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl/EN/","mainEntityOfPage":"https://koltigin.xyz/guides/ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl/EN/","inLanguage":"en","datePublished":"2026-10-17"}</script>
+  <script>try{localStorage.setItem("siteLang","en");}catch(e){}</script>
+</head>
+
+<body>
+
+  <a class="skip-link" href="#main-content" data-i18n="skip">Skip to content</a>
+
+  <main>
+
+    <aside class="sidebar" data-sidebar>
+
+      <div class="sidebar-info">
+
+        <figure class="avatar-box">
+          <img src="/assets/images/profile/profile.jpg" alt="KolTigin" width="80">
+        </figure>
+
+        <div class="info-content">
+          <div class="info-heading">
+            <h1 class="name" title="KolTigin">KolTigin</h1>
+            <div class="site-lang-switch site-lang-switch--sidebar" data-lang-switch role="group" aria-label="Language">
+              <button type="button" class="site-lang-btn" data-set-lang="en" aria-pressed="true" aria-label="English">EN</button>
+              <span class="site-lang-sep" aria-hidden="true">|</span>
+              <button type="button" class="site-lang-btn" data-set-lang="tr" aria-pressed="false" aria-label="Turkish">TR</button>
+            </div>
+          </div>
+          <div class="title">
+            <p class="title-motto">Think out of the box.</p>
+            <p class="title-focus">Node Operator · Developer · Web3 · Research</p>
+          </div>
+        </div>
+
+        <button type="button" class="info_more-btn" data-sidebar-btn aria-expanded="false" aria-controls="sidebar-details" aria-label="More">
+          <ion-icon name="chevron-down" aria-hidden="true"></ion-icon>
+        </button>
+
+      </div>
+
+      <div class="sidebar-info_more" id="sidebar-details">
+
+        <div class="separator"></div>
+
+        <ul class="contacts-list">
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="mail-outline"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title" data-i18n="sidebar.email">Email</p>
+              <a href="mailto:hello@koltigin.xyz" class="contact-link">hello@koltigin.xyz</a>
+            </div>
+          </li>
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="logo-whatsapp"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title" data-i18n="sidebar.whatsapp">WhatsApp</p>
+              <a href="https://wa.me/13653458473" class="contact-link" target="_blank" rel="noopener noreferrer">+1 (365) 345-8473</a>
+            </div>
+          </li>
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="location-outline"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title" data-i18n="sidebar.location">Location</p>
+              <address>Eskişehir, Türkiye</address>
+            </div>
+          </li>
+
+          <li class="contact-item">
+            <div class="icon-box">
+              <ion-icon name="calendar-outline"></ion-icon>
+            </div>
+            <div class="contact-info">
+              <p class="contact-title" data-i18n="sidebar.updated">UPDATE</p>
+              <time datetime="2026-08-29" data-last-update>August 29, 2026</time>
+            </div>
+          </li>
+
+        </ul>
+
+        <div class="separator"></div>
+
+        <ul class="social-list">
+          <li class="social-item">
+            <a href="https://github.com/koltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub">
+              <ion-icon name="logo-github"></ion-icon>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://x.com/mkoltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="X" title="X">
+              <ion-icon name="logo-twitter"></ion-icon>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://farcaster.xyz/koltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Farcaster" title="Farcaster">
+              <svg class="social-brand-icon" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false">
+                <path d="M257.778 155.556H742.222V844.445H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.445H257.778V155.556Z"/>
+                <path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.445H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z"/>
+                <path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.445H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z"/>
+              </svg>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://base.app/profile/0xdE821C1Ae8B6A6dcaECFE58be6F9265804AFc8b6" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Base" title="Base">
+              <svg class="social-brand-icon" viewBox="0 0 111 111" aria-hidden="true" focusable="false">
+                <path d="M54.921 110.034C85.359 110.034 110.034 85.402 110.034 55.017C110.034 24.6319 85.359 0 54.921 0C26.0432 0 2.35281 22.1714 0 50.3923H73.8457V59.6416H0C2.35281 87.8625 26.0432 110.034 54.921 110.034Z"/>
+              </svg>
+            </a>
+          </li>
+          <li class="social-item">
+            <a href="https://www.youtube.com/@mehmetkoltigin" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube">
+              <ion-icon name="logo-youtube"></ion-icon>
+            </a>
+          </li>
+        </ul>
+
+      </div>
+
+    </aside>
+
+    <div class="main-content" id="main-content">
+
+      <nav class="navbar">
+        <ul class="navbar-list">
+          <li class="navbar-item">
+            <a href="/about/" class="navbar-link" data-nav-link data-nav-page="about">
+              <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.about">About</span>
+            </a>
+          </li>
+          <li class="navbar-item">
+            <a href="/resume/" class="navbar-link" data-nav-link data-nav-page="resume">
+              <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.resume">Resume</span>
+            </a>
+          </li>
+          <li class="navbar-item">
+            <a href="/projects/" class="navbar-link" data-nav-link data-nav-page="projects">
+              <ion-icon name="layers-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.projects">Projects</span>
+            </a>
+          </li>
+          <li class="navbar-item">
+            <a href="/writings/" class="navbar-link" data-nav-link data-nav-page="blog">
+              <ion-icon name="create-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.blog">Writings</span>
+            </a>
+          </li>
+          <li class="navbar-item">
+            <a href="/guides/" class="navbar-link active" data-nav-link data-nav-page="guides" aria-current="page">
+              <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.guides">Guides</span>
+            </a>
+          </li>
+          <li class="navbar-item">
+            <a href="/videos/" class="navbar-link" data-nav-link data-nav-page="videos">
+              <ion-icon name="play-circle-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.videos">Videos</span>
+            </a>
+          </li>
+          <li class="navbar-item">
+            <a href="/contact/" class="navbar-link" data-nav-link data-nav-page="contact">
+              <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
+              <span class="navbar-label" data-i18n="nav.contact">Contact</span>
+            </a>
+          </li>
+        </ul>
+        <div class="site-lang-switch site-lang-switch--nav" data-lang-switch role="group" aria-label="Language">
+          <button type="button" class="site-lang-btn" data-set-lang="en" aria-pressed="true" aria-label="English">EN</button>
+          <span class="site-lang-sep" aria-hidden="true">|</span>
+          <button type="button" class="site-lang-btn" data-set-lang="tr" aria-pressed="false" aria-label="Turkish">TR</button>
+        </div>
+      </nav>
+
+      <article class="about" data-page="about">
+        <header>
+          <h2 class="h2 article-title" data-i18n="pages.about">About</h2>
+        </header>
+      </article>
+
+      <article class="resume" data-page="resume">
+        <header>
+          <h2 class="h2 article-title" data-i18n="pages.resume">Resume</h2>
+        </header>
+      </article>
+
+      <article class="projects-page" data-page="projects">
+        <header>
+          <h2 class="h2 article-title" data-i18n="pages.projects">Projects</h2>
+          <nav class="project-section-nav" aria-label="Proje bölümleri" data-i18n-aria="pages.projectsNav" hidden></nav>
+        </header>
+        <div class="project-groups"></div>
+      </article>
+
+      <article class="blog" data-page="blog">
+        <header>
+          <h2 class="h2 article-title" data-i18n="pages.blog">Writings</h2>
+          <nav class="writings-filter" data-writings-filter aria-label="Writing categories" data-i18n-aria="pages.writingsNav">
+            <button type="button" class="writings-filter-btn is-active" data-writings-kind="all" data-i18n="writings.filters.all" aria-pressed="true">All</button>
+          </nav>
+        </header>
+        <div data-writings-view>
+          <section class="blog-posts">
+            <ul class="blog-posts-list"></ul>
+          </section>
+        </div>
+      </article>
+
+      <article class="videos" data-page="videos">
+        <header>
+          <h2 class="h2 article-title" data-i18n="pages.videos">Videos</h2>
+        </header>
+        <section class="videos-list">
+          <ul class="videos-posts-list"></ul>
+          <div class="videos-load-more" data-videos-more hidden>
+            <button type="button" class="videos-load-more-btn" data-videos-more-btn data-i18n="videos.loadMore">Show More</button>
+          </div>
+        </section>
+      </article>
+
+      <article class="contact" data-page="contact"></article>
+
+      <article class="guides-page" data-page="guides">
+        <header>
+          <h2 class="h2 article-title" data-i18n="pages.guides">Guides</h2>
+        </header>
+        <section class="guides-landing">
+          <p data-i18n="guides.landing">Setup and installation guides for KolTigin’s node, testnet, and DePIN projects.</p>
+          <div class="blog-posts">
+            <ul class="blog-posts-list guides-posts-list" data-guides-index></ul>
+          </div>
+        </section>
+      </article>
+
+      <article class="guide-page active" data-page="guide">
+        <header class="guide-header">
+          <div class="guide-toolbar">
+            <button type="button" class="back-btn" data-guide-back>
+              <ion-icon name="arrow-back-outline" aria-hidden="true"></ion-icon>
+              <span data-i18n="guides.back">Back to projects</span>
+            </button>
+          </div>
+          <h2 class="h2 article-title visually-hidden" data-guide-title data-i18n="pages.guide">Guide</h2>
+        </header>
+        <div class="guide-body blog-post-content" data-guide-content>
+<h1>AR.IO Gateway: Domain, Cloudflare DNS, and Automatic SSL</h1>
+<p>You do not need a separate shared-hosting package to publish an AR.IO gateway under your own domain. If the gateway already runs on a public Ubuntu or VPS server, that server is the origin. Your domain points to it; Cloudflare manages DNS and helps Certbot complete DNS validation.</p>
+<p>A domain name alone does not host content. This guide assumes that your Ubuntu server is already running AR.IO Gateway and Nginx.</p>
+<p>The workflow was tested with <code>ario.koltigin.xyz</code> and <code>*.ario.koltigin.xyz</code>. Replace the example domain with your own.</p>
+<h2>1. Before you start</h2>
+<p>You need:</p>
+<ul><li>A domain registered with any registrar.</li><li>A public IPv4 address for the Ubuntu server; IPv6 is optional.</li><li>An AR.IO gateway and Nginx already running on that server.</li><li>Access to the registrar and to a Cloudflare account.</li></ul>
+<p>Keep API tokens, passwords, private keys, and the contents of <code>cloudflare.ini</code> out of chat messages, screenshots, backups, and Git repositories.</p>
+<h2>2. Move DNS management to Cloudflare</h2>
+<p>In Cloudflare, select <strong>Add a site</strong> and enter your domain. Cloudflare may import existing records, but check the zone before changing nameservers.</p>
+<p>Copy every record that your domain uses. Common examples are:</p>
+<ul><li>A, AAAA, and CNAME records for websites and services.</li><li>MX records for email.</li><li>TXT records for SPF, DKIM, DMARC, and service verification.</li><li>CAA, SRV, or other service-specific records.</li></ul>
+<p>Cloudflare will assign two nameservers to the zone. In your registrar&#x27;s control panel, replace the existing nameservers with those two values.</p>
+<p>This does not transfer the domain to Cloudflare. The registrar remains the same; only authoritative DNS moves to Cloudflare. Wait until the Cloudflare zone shows <strong>Active</strong> before changing application settings. DNS propagation can take from a few minutes up to 24 hours.</p>
+<h3>DNSSEC</h3>
+<p>If DNSSEC is enabled at the current DNS provider, remove the old DS record at the registrar before switching nameservers. Once Cloudflare is active and the records resolve correctly, enable DNSSEC in Cloudflare and add the DS value that Cloudflare provides at the registrar.</p>
+<p>Leaving an old DS record in place can make the domain fail to resolve.</p>
+<h2>3. Create the AR.IO gateway records</h2>
+<p>In Cloudflare → DNS → Records, add the following records. Replace <code>SERVER_IPV4</code> with your server&#x27;s public IPv4 address.</p>
+<p>| Type | Name | Target | Proxy status | |---|---|---|---| | A | <code>ario</code> | <code>SERVER_IPV4</code> | DNS only | | A | <code>*.ario</code> | <code>SERVER_IPV4</code> | DNS only | | AAAA | <code>ario</code> | <code>SERVER_IPV6</code> | DNS only, if IPv6 works on the server | | AAAA | <code>*.ario</code> | <code>SERVER_IPV6</code> | DNS only, if IPv6 works on the server |</p>
+<p>For <code>example.com</code>, these records serve <code>ario.example.com</code> and wildcard names such as <code>node.ario.example.com</code>.</p>
+<p>Start with <strong>DNS only</strong> (the grey cloud). Clients then connect directly to Nginx on your server, which avoids adding a Cloudflare proxy layer while you validate the gateway. Turn on the orange cloud later only after testing HTTPS traffic, origin TLS mode, and the gateway&#x27;s behavior through Cloudflare.</p>
+<p>Do not proxy email records. MX records and their email-service targets must stay DNS only.</p>
+<h2>4. Install Certbot and the Cloudflare DNS plugin</h2>
+<p>On Ubuntu 24.04, run the following as <code>root</code> or with <code>sudo</code>:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>apt update
+apt install -y certbot python3-certbot-dns-cloudflare</code></pre></div>
+<p>Create a scoped Cloudflare API token at Cloudflare → My Profile → API Tokens:</p>
+<ul><li>Permission: <strong>Zone / DNS / Edit</strong></li><li>Zone Resources: include only the relevant domain</li></ul>
+<p>Store it in a root-only file:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>install -d -m 700 /root/.secrets/certbot
+nano /root/.secrets/certbot/cloudflare.ini</code></pre></div>
+<p>The file contains one line:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>ini</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>dns_cloudflare_api_token = YOUR_TOKEN_HERE</code></pre></div>
+<p>Restrict its permissions:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>chmod 600 /root/.secrets/certbot/cloudflare.ini
+stat -c &#x27;%a %U:%G %n&#x27; /root/.secrets/certbot/cloudflare.ini</code></pre></div>
+<p>The expected mode and owner are <code>600 root:root</code>.</p>
+<h2>5. Request the wildcard certificate</h2>
+<p>Wildcard certificates require DNS-01 validation. Request both the main hostname and the wildcard name:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>certbot certonly \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini \
+  --dns-cloudflare-propagation-seconds 60 \
+  -d ario.example.com \
+  -d &#x27;*.ario.example.com&#x27;</code></pre></div>
+<p>If DNS changes take longer to appear, increase the propagation value.</p>
+<p>Point Nginx at the resulting files:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>nginx</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>ssl_certificate     /etc/letsencrypt/live/ario.example.com/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/ario.example.com/privkey.pem;</code></pre></div>
+<p>Test the Nginx configuration before reloading it:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>nginx -t &amp;&amp; systemctl reload nginx</code></pre></div>
+<h2>6. Change an existing manual certificate to Cloudflare DNS validation</h2>
+<p>A certificate issued with Certbot&#x27;s <code>--manual</code> authenticator cannot renew unattended unless manual hooks were configured. Inspect the current setup first:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>certbot certificates
+sed -n &#x27;1,160p&#x27; /etc/letsencrypt/renewal/ario.example.com.conf</code></pre></div>
+<p>If your Certbot version supports it, update the existing certificate lineage with:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>certbot reconfigure --cert-name ario.example.com \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini \
+  --dns-cloudflare-propagation-seconds 60</code></pre></div>
+<p>If <code>reconfigure</code> is unavailable or the existing renewal configuration needs to be replaced, request the same certificate once with the Cloudflare plugin:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>certbot certonly \
+  --cert-name ario.example.com \
+  --force-renewal \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini \
+  --dns-cloudflare-propagation-seconds 60 \
+  -d ario.example.com \
+  -d &#x27;*.ario.example.com&#x27;</code></pre></div>
+<p>Use <code>--force-renewal</code> only for a migration or repair such as this one. It is not part of regular maintenance and repeated requests can reach Let&#x27;s Encrypt rate limits.</p>
+<h2>7. Reload Nginx after a successful renewal</h2>
+<p>Create a Certbot deploy hook so Nginx reads the new certificate files after a real renewal:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+cat &gt; /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh &lt;&lt;&#x27;EOF&#x27;
+#!/bin/sh
+set -e
+nginx -t &gt;/dev/null 2&gt;&amp;1
+systemctl reload nginx
+EOF
+
+chmod 755 /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh</code></pre></div>
+<p>The hook tests the Nginx configuration first. If that test fails, <code>set -e</code> prevents a reload.</p>
+<p>Enable Certbot&#x27;s systemd timer:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>systemctl enable --now certbot.timer
+systemctl status certbot.timer
+systemctl list-timers certbot.timer</code></pre></div>
+<h2>8. Verify the full renewal path</h2>
+<p>Check that the deploy hook runs:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>/etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+echo &quot;Exit code: $?&quot;</code></pre></div>
+<p>The expected result is <code>Exit code: 0</code>.</p>
+<p>Then test the complete path without issuing a production certificate:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>certbot renew --dry-run --run-deploy-hooks</code></pre></div>
+<p>Successful output includes a simulated renewal for both names and a line similar to:</p>
+<div class="guide-code-wrap"><div class="guide-code-meta"><span>text</span><button type="button" class="guide-copy-btn" data-copy-code>Copy</button></div><pre><code>Congratulations, all simulated renewals succeeded:
+  /etc/letsencrypt/live/ario.example.com/fullchain.pem (success)</code></pre></div>
+<p><code>--run-deploy-hooks</code> also runs the Nginx hook during the dry run. The test therefore covers the Cloudflare token, DNS-01 validation, simulated certificate renewal, Nginx configuration test, and reload.</p>
+<h2>9. Checklist</h2>
+<ul><li>The Cloudflare zone is Active.</li><li><code>ario</code> and <code>*.ario</code> resolve to the correct server and are DNS only.</li><li>The credentials file is root-owned with mode <code>600</code>.</li><li>The renewal file uses <code>authenticator = dns-cloudflare</code>.</li><li><code>certbot.timer</code> is enabled and active.</li><li>The Nginx deploy hook is executable.</li><li><code>certbot renew --dry-run --run-deploy-hooks</code> completes successfully.</li></ul>
+<p>After these checks pass, the AR.IO gateway uses your domain without a separate shared-hosting service, and its certificate renews without manual DNS changes.</p>
+        </div>
+      </article>
+
+    </div>
+
+  </main>
+
+  <script src="/assets/js/router.js?v=prod7"></script>
+  <script src="/assets/js/url-map.js?v=phase4b"></script>
+  <script src="/assets/js/i18n.js?v=prod2"></script>
+  <script src="/assets/js/site.js?v=prod13"></script>
+  <script src="/assets/js/script.js?v=prod7"></script>
+  <script src="/assets/js/last-update.js?v=prod1"></script>
+  <script src="/assets/js/share-actions.js?v=prod5"></script>
+  <script src="/assets/js/content-order.js?v=prod1"></script>
+  <script src="/assets/js/blog-parser.js?v=prod21"></script>
+  <script src="/assets/js/projects-parser.js?v=prod14"></script>
+  <script src="/assets/js/guide-markdown.js?v=prod7"></script>
+  <script src="/assets/js/guides-parser.js?v=prod21"></script>
+  <script src="/assets/js/videos-parser-new.js?v=prod4"></script>
+  <script src="/assets/js/resume-parser.js?v=prod2"></script>
+  <script src="/assets/js/about-parser.js?v=prod3"></script>
+  <script src="/assets/js/contact-parser.js?v=prod2"></script>
+
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+</body>
+
+</html>

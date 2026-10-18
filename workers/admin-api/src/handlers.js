@@ -1,6 +1,6 @@
 import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, resolvePersistedSlug, normalizeDate, isHttps, allowedLinkUrl, sniffImageExt, uniqueName } from "./util.js";
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
-import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideDate, applyGuideSlug } from "./markdown.js";
+import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideCoverLogos, applyGuideDate, applyGuideSlug } from "./markdown.js";
 import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, guideOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts, localeUpper, writingOgVersion, writingOgAbsoluteUrl, writingOgAssetUrl, applyOgVersions } from "./generate.js";
 import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
 
@@ -13,6 +13,25 @@ function utcToday() {
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const day = String(now.getUTCDate()).padStart(2, "0");
   return `${now.getUTCFullYear()}-${month}-${day}`;
+}
+
+function stringArray(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+  try {
+    const parsed = JSON.parse(String(value || ""));
+    return Array.isArray(parsed) ? parsed.map((item) => String(item || "").trim()).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function coverLogoArray(value, family, id) {
+  const base = family === "guide" ? "guides" : "writings";
+  const prefix = `/assets/images/${base}/${id}/cover-logos/`;
+  return stringArray(value).map((path) => String(path).replace(/^\.\//, "/")).filter((path) => {
+    if (!path.startsWith(prefix) || path.includes("..")) throw new HttpError(400, "Invalid cover logo path");
+    return true;
+  });
 }
 
 async function readJson(github, path, fallback) {
@@ -157,6 +176,7 @@ function rewriteWritingText(text, destKind, types, externalUrl) {
     title: meta.title || "",
     date: meta.date || "",
     cover: meta.cover || meta.image || "",
+    coverLogos: stringArray(meta.coverLogos),
     externalUrl: isExternalKind(types, destKind) ? externalUrl : "",
     kind: destKind,
     external: isExternalKind(types, destKind),
@@ -236,6 +256,7 @@ async function upsertWritingLocale(github, upserts, {
     title: item.title,
     date,
     cover: item.cover,
+    coverLogos: coverLogoArray(item.coverLogos, "writing", id),
     externalUrl: destExternal ? external : "",
     kind,
     body: item.body || "",
@@ -318,6 +339,7 @@ function writingLocaleSaves(body) {
       lang,
       title,
       cover,
+      coverLogos: Array.isArray(body.coverLogos) ? body.coverLogos : [],
       body: (item && item.body) || "",
       slug: String((item && item.slug) || "").trim()
     });
@@ -759,6 +781,7 @@ export async function handleGuideSave(body, github) {
   const upserts = [];
   for (const item of locales) {
     let markdown = coverInBody ? applyGuideCover(item.markdown, body.cover) : item.markdown;
+    if (Object.prototype.hasOwnProperty.call(body, "coverLogos")) markdown = applyGuideCoverLogos(markdown, coverLogoArray(body.coverLogos, "guide", id));
     if (published) markdown = applyGuideDate(markdown, published);
     const existingMd = await optionalText(github, guidePath(id, item.lang));
     const existingMeta = existingMd ? parseFrontMatter(existingMd).meta : {};
@@ -1140,7 +1163,7 @@ export async function handleProjectCategories(body, github) {
 export async function handleUpload(kind, file, fields, github) {
   if (!file || !file.bytes || !file.bytes.length) throw new HttpError(400, "Choose an image file");
   if (file.bytes.length > 2_000_000) throw new HttpError(413, "Image is too large");
-  const allowSvg = kind === "project-logo";
+  const allowSvg = kind === "project-logo" || kind === "cover-logo";
   const ext = sniffImageExt(file.bytes, file.name, { allowSvg });
   if (!ext) throw new HttpError(400, allowSvg ? "Only PNG, JPEG, WebP, or SVG logos are accepted" : "Only PNG, JPEG, and WebP images are accepted");
   let dir = "assets/images/blog";
@@ -1156,11 +1179,19 @@ export async function handleUpload(kind, file, fields, github) {
     if (!ID_RE.test(writingId)) throw new HttpError(400, "Writing id is required before adding images");
     dir = `assets/images/writings/${writingId}`;
   }
+  if (kind === "cover-logo") {
+    const ownerId = slugify(fields.id || "");
+    const family = String(fields.family || "");
+    if (!ID_RE.test(ownerId)) throw new HttpError(400, "Content id is required before adding logos");
+    if (family === "writing") dir = `assets/images/writings/${ownerId}/cover-logos`;
+    else if (family === "guide") dir = `assets/images/guides/${ownerId}/cover-logos`;
+    else throw new HttpError(400, "Unknown logo owner");
+  }
   assertSafePath(`${dir}/x${ext}`);
   const existing = (await github.listPrefix(`${dir}/`)).map((path) => path.slice(dir.length + 1));
   const stored = uniqueName(existing, file.name.replace(/\.[^.]+$/, "") || (kind === "writing-image" ? "image" : kind), ext);
   const path = `${dir}/${stored}`;
-  const absoluteKinds = kind === "guide-image" || kind === "writing-image";
+  const absoluteKinds = kind === "guide-image" || kind === "writing-image" || kind === "cover-logo";
   const publicPath = absoluteKinds ? `/${path}` : `./${path}`;
   const result = await github.commit({
     message: commitMsg("upload", path),

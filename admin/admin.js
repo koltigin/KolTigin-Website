@@ -296,6 +296,7 @@
   function writingMarkdown(draft, pair, kind) {
     const lines = ['---', `title: ${yamlValue(draft.title)}`, `date: ${pair.date}`];
     if (draft.cover) lines.push(`cover: ${yamlValue(draft.cover)}`);
+    if (Array.isArray(draft.coverLogos) && draft.coverLogos.length) lines.push(`coverLogos: ${JSON.stringify(draft.coverLogos)}`);
     if (isExternalType(kind)) lines.push(`externalUrl: ${yamlValue(pair.externalUrl)}`);
     lines.push('---');
     const body = String(draft.body || '').replace(/^\n+|\n+$/g, '');
@@ -918,6 +919,7 @@
       sharedId: '',
       lang: 'en',
       pair: { date: today(), externalUrl: '' },
+      coverLogos: [],
       kindPending: null,
       langs: { en: emptyLang(), tr: emptyLang() },
       video: { titleEn: '', titleTr: '', date: today(), youtubeUrl: '', id: '' }
@@ -971,12 +973,34 @@
   const applyMd = Md.applyMd;
   const insertSnippet = Md.insertSnippet;
 
-  function coverBlock(draft, kindLabel) {
+  function coverBlock(draft, kindLabel, logos) {
     if (draft.coverPreview) return `<div class="cover-preview"><img src="${escapeHtml(draft.coverPreview)}" alt=""></div>`;
     if (draft.cover) return `<div class="cover-preview"><img src="${escapeHtml(coverSrc(draft.cover))}" alt=""></div>`;
+    const previewLogos = Array.isArray(logos) ? logos : [];
+    const previewSize = Math.max(8, Math.min(54, Math.floor((420 - Math.max(0, previewLogos.length - 1) * 10) / Math.max(1, previewLogos.length))));
     return `<div class="cover-fallback">
+      ${previewLogos.length ? `<div class="cover-fallback-logos">${previewLogos.map((path) => `<img style="width:${previewSize}px;height:${previewSize}px" src="${escapeHtml(rootAbsoluteAssetPath(path))}" alt="">`).join('')}</div>` : ''}
       <div class="title" data-cover-preview-title>${escapeHtml(draft.title || t('writings.titleField'))}</div>
       <div class="kicker" data-cover-preview-kicker>${escapeHtml(kindLabel)}</div>
+    </div>`;
+  }
+
+  function coverLogosBlock(logos, canUpload) {
+    const items = (Array.isArray(logos) ? logos : []).map((path, index) => `
+      <div class="cover-logo-row">
+        <img src="${escapeHtml(rootAbsoluteAssetPath(path))}" alt="">
+        <span>${escapeHtml(String(path).split('/').pop())}</span>
+        <div class="item-actions">
+          <button class="btn btn-ghost" type="button" data-cover-logo-up="${index}" ${index === 0 ? 'disabled' : ''}>${escapeHtml(t('social.up'))}</button>
+          <button class="btn btn-ghost" type="button" data-cover-logo-down="${index}" ${index === logos.length - 1 ? 'disabled' : ''}>${escapeHtml(t('social.down'))}</button>
+          <button class="btn btn-ghost" type="button" data-cover-logo-remove="${index}">${escapeHtml(t('social.remove'))}</button>
+        </div>
+      </div>`).join('');
+    return `<div class="field cover-logos-editor">
+      <label>${escapeHtml(t('writings.coverLogos'))}</label>
+      <div class="cover-logo-list">${items}</div>
+      <button class="btn btn-ghost" type="button" data-cover-logo-pick ${canUpload ? '' : 'disabled'}>${escapeHtml(t('writings.addCoverLogo'))}</button>
+      <span class="hint">${escapeHtml(canUpload ? t('writings.coverLogosHint') : t('writings.coverLogosSaveFirst'))}</span>
     </div>`;
   }
 
@@ -1041,7 +1065,7 @@
       readingTime: `${readingMinutes(draft.body)} min`,
       cover: draft.coverFile ? t('preview.coverPending', { name: draft.coverFile.name }) : (draft.cover || t('preview.coverFallback')),
       path: id ? `content/${kind}/${lang}/${filename}` : 'content/…',
-      markdown: writingMarkdown({ ...draft }, editor.pair, kind)
+      markdown: writingMarkdown({ ...draft, coverLogos: editor.coverLogos }, editor.pair, kind)
     };
   }
 
@@ -1094,10 +1118,12 @@
             <span class="hint">${escapeHtml(t('writings.dateHint'))}</span>
           </div>
           ${xField}
+          ${coverLogosBlock(editor.coverLogos, writingIsSaved(editor))}
           ${localePanel(editor, 'en')}
           ${localePanel(editor, 'tr')}
         </form>
       <input id="writing-image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+      <input id="writing-cover-logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" hidden>
       <div class="footer-actions">
         <button class="btn btn-ghost" type="button" data-preview-md>${escapeHtml(t('writings.refresh'))}</button>
         <button class="btn btn-gold" type="button" data-save>${escapeHtml(saveActionLabel('writings.save'))}</button>
@@ -1121,7 +1147,7 @@
           </div>
           <div class="auto-card" style="margin-top:12px">
             <h3>${escapeHtml(t('preview.fallback'))}</h3>
-            ${coverBlock(draft, kindDisplayKicker(kind, lang))}
+            ${coverBlock(draft, kindDisplayKicker(kind, lang), editor.coverLogos)}
           </div>
           <div class="md-card" style="margin-top:12px">
             <h3>${escapeHtml(t('preview.markdown'))}</h3>
@@ -1535,6 +1561,7 @@
         cover: row.cover,
         body: row.body
       }));
+      requestBody.coverLogos = Array.isArray(editor.coverLogos) ? editor.coverLogos : [];
       const result = await api('/admin/api/save', {
         method: 'POST',
         body: JSON.stringify(requestBody)
@@ -1796,6 +1823,7 @@
     const trPack = data.languages.tr || {};
     state.editor.pair.date = enPack.date || trPack.date || today();
     state.editor.pair.externalUrl = enPack.externalUrl || trPack.externalUrl || '';
+    state.editor.coverLogos = Sync.stringArray(enPack.coverLogos || trPack.coverLogos);
     ['en', 'tr'].forEach((lang) => {
       const pack = data.languages[lang] || {};
       state.editor.langs[lang] = {
@@ -1965,6 +1993,30 @@
           return;
         }
         document.getElementById('writing-image')?.click();
+        return;
+      }
+      if (event.target.closest('[data-cover-logo-pick]') && document.getElementById('writing-cover-logo')) {
+        event.preventDefault();
+        if (!state.editor || !writingIsSaved(state.editor)) return;
+        document.getElementById('writing-cover-logo')?.click();
+        return;
+      }
+      const logoUp = event.target.closest('[data-cover-logo-up]');
+      const logoDown = event.target.closest('[data-cover-logo-down]');
+      const logoRemove = event.target.closest('[data-cover-logo-remove]');
+      if ((logoUp || logoDown || logoRemove) && state.editor && document.getElementById('writing-cover-logo')) {
+        event.preventDefault();
+        syncDraftFromForm();
+        const button = logoUp || logoDown || logoRemove;
+        const index = Number(button.dataset.coverLogoUp ?? button.dataset.coverLogoDown ?? button.dataset.coverLogoRemove);
+        const logos = state.editor.coverLogos || [];
+        if (logoRemove) logos.splice(index, 1);
+        else {
+          const next = logoUp ? index - 1 : index + 1;
+          if (next >= 0 && next < logos.length) [logos[index], logos[next]] = [logos[next], logos[index]];
+        }
+        markDirty();
+        renderWritingEditor();
         return;
       }
       if (event.target.closest('[data-preview-md]')) {
@@ -2220,6 +2272,18 @@
         }
         return;
       }
+      if (event.target.id === 'writing-cover-logo' && state.editor && event.target.files && event.target.files[0]) {
+        const file = event.target.files[0];
+        event.target.value = '';
+        try {
+          const data = await uploadImage('/admin/api/cover-logo', file, { id: state.editor.sharedId, family: 'writing' });
+          state.editor.coverLogos = [...(state.editor.coverLogos || []), rootAbsoluteAssetPath(data.path)];
+          markDirty();
+          clearStatus();
+        } catch (error) { showError(error.message); }
+        renderWritingEditor();
+        return;
+      }
       if (event.target.id === 'avatar-file') {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
@@ -2366,7 +2430,8 @@
     openEntityDelete,
     clearStatus,
     showNotice,
-    showError
+    showError,
+    coverLogosBlock
   };
   setUiLang(state.uiLang);
   let ignoreHash = false;

@@ -9,7 +9,8 @@ const UPLOADS = {
   "/api/admin/avatar": "avatar",
   "/api/admin/project-logo": "project-logo",
   "/api/admin/guide-image": "guide-image",
-  "/api/admin/writing-image": "writing-image"
+  "/api/admin/writing-image": "writing-image",
+  "/api/admin/cover-logo": "cover-logo"
 };
 
 function pathnameOf(url) {

@@ -106,6 +106,7 @@
       id: String((draft && draft.id) || ''),
       projectId: String((draft && draft.projectId) || ''),
       cover: (draft && draft.cover) || '',
+      coverLogos: Array.isArray(draft && draft.coverLogos) ? draft.coverLogos.slice() : [],
       labelEn: en,
       labelTr: tr,
       locales

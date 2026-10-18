@@ -184,6 +184,25 @@ def main() -> None:
                 fail(f"Poppins is missing glyph for {ch!r}")
     ok("turkish uppercase helper and Poppins glyphs")
 
+    logo_paths = ["/assets/images/projects/soulmemory.png", "/assets/images/projects/ARO.png"]
+    if generate_share.parse_string_array(json.dumps(logo_paths)) != logo_paths:
+        fail("cover logo metadata must preserve upload order")
+    with tempfile.TemporaryDirectory() as logo_probe_raw:
+        logo_probe = Path(logo_probe_raw)
+        plain = logo_probe / "plain.png"
+        branded = logo_probe / "branded.png"
+        generate_share.render_fallback_png(ROOT, plain, title="Logo test", kicker="Guide", kind="guide")
+        generate_share.render_fallback_png(ROOT, branded, title="Logo test", kicker="Guide", kind="guide", cover_logos=logo_paths)
+        if plain.read_bytes() == branded.read_bytes():
+            fail("fallback renderer must place ordered logos above the title")
+        if Image.open(branded).size != (1200, 630):
+            fail("logo-enhanced fallback must remain 1200x630")
+        many = logo_probe / "many.png"
+        generate_share.render_fallback_png(ROOT, many, title="Many logo test", kicker="Article", kind="writing", cover_logos=logo_paths * 5)
+        if Image.open(many).size != (1200, 630):
+            fail("many logos must stay in the fixed single-row 1200x630 composition")
+    ok("ordered cover logos render above fallback titles")
+
     if generate_share.locale_upper(generate_share.kind_label(ROOT, "articles", "en"), "en") != "ARTICLE":
         fail("article EN kicker must be ARTICLE")
     if generate_share.locale_upper(generate_share.kind_label(ROOT, "articles", "tr"), "tr") != "MAKALE":

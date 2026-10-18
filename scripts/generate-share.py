@@ -18,6 +18,11 @@ from urllib.parse import quote
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
+try:
+    import cairosvg
+except ImportError:  # Raster-only sites can still generate without the optional SVG renderer.
+    cairosvg = None
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from public_url_policy import (  # noqa: E402
@@ -125,6 +130,19 @@ def parse_front_matter(text: str) -> tuple[dict, str]:
     return meta, raw[close + 4 :].lstrip("\n")
 
 
+def parse_string_array(value) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    raw = str(value or "").strip()
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    return [str(item).strip() for item in parsed if str(item).strip()] if isinstance(parsed, list) else []
+
+
 def load_json(path: Path, fallback):
     if not path.is_file():
         return fallback
@@ -220,9 +238,9 @@ def writing_og_canonical(
     title: str = "",
     kicker: str = "",
     mode: str = "titled",
+    cover_logos: list[str] | None = None,
 ) -> str:
-    return "\n".join(
-        [
+    parts = [
             "og-v2",
             str(lang or ""),
             str(kind or ""),
@@ -231,7 +249,9 @@ def writing_og_canonical(
             str(kicker or ""),
             str(mode or "titled"),
         ]
-    )
+    if cover_logos:
+        parts.append(json.dumps(cover_logos, ensure_ascii=False, separators=(",", ":")))
+    return "\n".join(parts)
 
 
 def writing_og_version(
@@ -242,6 +262,7 @@ def writing_og_version(
     title: str = "",
     kicker: str = "",
     mode: str = "titled",
+    cover_logos: list[str] | None = None,
 ) -> str:
     payload = writing_og_canonical(
         lang=lang,
@@ -250,6 +271,7 @@ def writing_og_version(
         title=title,
         kicker=kicker,
         mode=mode,
+        cover_logos=cover_logos,
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
 
@@ -984,9 +1006,60 @@ def save_png_if_changed(img: Image.Image, dest: Path) -> None:
     dest.write_bytes(payload)
 
 
-def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str, lang: str = "en") -> None:
+def resolve_cover_logo(root: Path, raw_path: str) -> Path | None:
+    raw = str(raw_path or "").strip().split("?", 1)[0]
+    if not raw or re.match(r"^[a-z]+://", raw, re.I):
+        return None
+    rel = raw.lstrip("./")
+    if not rel.startswith("assets/images/") or ".." in Path(rel).parts:
+        return None
+    path = (root / rel).resolve()
+    images_root = (root / "assets" / "images").resolve()
+    if images_root not in path.parents or not path.is_file():
+        return None
+    return path
+
+
+def load_cover_logo(path: Path, size: int) -> Image.Image | None:
+    try:
+        if path.suffix.lower() == ".svg":
+            if cairosvg is None:
+                raise RuntimeError("CairoSVG is required to render SVG cover logos")
+            payload = cairosvg.svg2png(url=str(path), output_width=size * 2, output_height=size * 2)
+            image = Image.open(io.BytesIO(payload)).convert("RGBA")
+        else:
+            image = Image.open(path).convert("RGBA")
+        image.thumbnail((size, size), Image.Resampling.LANCZOS)
+        return image
+    except (OSError, ValueError):
+        return None
+
+
+def draw_cover_logos(img: Image.Image, root: Path, paths: list[str]) -> None:
+    resolved = [path for raw in paths if (path := resolve_cover_logo(root, raw))]
+    if not resolved:
+        return
+    width = img.width - 2 * OG_MARGIN_X
+    band_height = 96
+    count = len(resolved)
+    gap = max(1, min(14, int(40 / count ** 0.5)))
+    size = max(1, min(72, band_height, (width - gap * (count - 1)) // count))
+    row_width = count * size + max(0, count - 1) * gap
+    x = (img.width - row_width) // 2
+    y = 46 + (band_height - size) // 2
+    for path in resolved:
+        logo = load_cover_logo(path, size)
+        if logo:
+            lx = x + (size - logo.width) // 2
+            ly = y + (size - logo.height) // 2
+            img.paste(logo, (lx, ly), logo)
+        x += size + gap
+
+
+def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str, lang: str = "en", cover_logos: list[str] | None = None) -> None:
     og_w, og_h = OG_SIZE
     img = load_og_background(root, kind)
+    draw_cover_logos(img, root, cover_logos or [])
     draw = ImageDraw.Draw(img)
     max_text = title_max_width(og_w)
     title_font, lines, title_lead = fit_og_title(draw, root, title, max_text)
@@ -1398,6 +1471,7 @@ def discover_writings(root: Path) -> list[dict]:
                     "title": str(meta.get("title") or item_id).strip(),
                     "description": str(meta.get("summary") or meta.get("excerpt") or excerpt(body)).strip(),
                     "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
+                    "coverLogos": parse_string_array(meta.get("coverLogos")),
                     "date": published_date(meta.get("date")),
                     "updated": published_date(meta.get("updated") or meta.get("modified")),
                     "slug": str(meta.get("slug") or "").strip(),
@@ -1428,6 +1502,7 @@ def discover_guides(root: Path) -> list[dict]:
                 "title": title,
                 "description": first_paragraph(text),
                 "cover": str(meta.get("cover") or meta.get("image") or "").strip(),
+                "coverLogos": parse_string_array(meta.get("coverLogos")),
                 "date": published_date(meta.get("date")),
                 "updated": published_date(meta.get("updated") or meta.get("modified")),
                 "slug": str(meta.get("slug") or "").strip(),
@@ -1813,6 +1888,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
                     kicker=kind_label(root, kind, lang),
                     kind=kind,
                     lang=lang,
+                    cover_logos=data.get("coverLogos") or [],
                 )
             # Primary canonical for this locale under the active mode.
             # In LOCALIZED mode, legacy ID HTML also points at the localized primary URL.
@@ -1829,6 +1905,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
                     title=data["title"],
                     kicker=kicker,
                     mode="titled",
+                    cover_logos=data.get("coverLogos") or [],
                 )
                 og_versions.setdefault(f"{kind}/{item_id}", {})[lang] = version
                 image = with_og_version(abs_url(base, og_rel), version)
@@ -1927,6 +2004,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
                     kicker=kicker,
                     kind="guide",
                     lang=lang,
+                    cover_logos=data.get("coverLogos") or [],
                 )
             canonical = alternates[lang]
             image = abs_url(base, og_rel)

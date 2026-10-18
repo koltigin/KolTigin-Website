@@ -550,6 +550,15 @@ textarea {
   border-radius: 12px;
 }
 
+.cover-logo-list { display: grid; gap: 8px; margin-bottom: 10px; }
+.cover-logo-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line, #333); border-radius: 10px; }
+.cover-logo-row img { width: 52px; height: 52px; object-fit: contain; border-radius: 8px; background: #fff; padding: 5px; }
+.cover-logo-row span { overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
+.cover-logo-row .item-actions { margin: 0; }
+.cover-fallback-logos { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 10px; max-width: 100%; margin-bottom: 14px; overflow: hidden; }
+.cover-fallback-logos img { width: 54px; height: 54px; object-fit: contain; }
+@media (max-width: 680px) { .cover-logo-row { grid-template-columns: 44px 1fr; } .cover-logo-row .item-actions { grid-column: 1 / -1; } }
+
 .logo-preview {
   width: 120px;
   height: 120px;

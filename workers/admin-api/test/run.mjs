@@ -2,7 +2,7 @@ import { handleRequest } from "../src/index.js";
 import { MockGitHub } from "../src/github.js";
 import { assertSafePath } from "../src/paths.js";
 import { applyWritingIndex, applyGuideIndex, upsertListed, applyProjectJson, compareProjectNames, discoverGuides, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, writingShareArtifacts, patchWritingShareHtml, markdownToHtml, writingOgVersion } from "../src/generate.js";
-import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover, applyGuideDate } from "../src/markdown.js";
+import { buildWritingMarkdown, youtubeIdFromUrl, projectJsonItem, applyGuideCover, applyGuideCoverLogos, applyGuideDate } from "../src/markdown.js";
 import { HttpError, safeExceptionDetail } from "../src/util.js";
 import { getAllowedDownloadProjects, publicScriptUrl, sanitizeScriptFilename, scriptRepoPath } from "../src/scripts.js";
 import { readFileSync } from "node:fs";
@@ -13,6 +13,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 const guideBgPng = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
+
+const logoMetadata = ["/assets/images/guides/demo/cover-logos/one.png", "/assets/images/guides/demo/cover-logos/two.svg"];
+const logoGuide = applyGuideCoverLogos("# Demo\n", logoMetadata);
+if (!logoGuide.includes(`coverLogos: ${JSON.stringify(logoMetadata)}`)) throw new Error("Guide cover logos were not stored in order");
+const logoWriting = buildWritingMarkdown({ title: "Demo", date: "2026-10-18", kind: "articles", body: "Body", coverLogos: logoMetadata });
+if (!logoWriting.includes(`coverLogos: ${JSON.stringify(logoMetadata)}`)) throw new Error("Writing cover logos were not stored in order");
 
 function bytesEqual(a, b) {
   if (!a || !b || a.length !== b.length) return false;

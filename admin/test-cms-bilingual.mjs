@@ -40,6 +40,7 @@ const guideDraft = {
   lang: "tr",
   projectId: "optimai",
   cover: "hero.png",
+  coverLogos: ["/assets/images/guides/bilingual-guide/cover-logos/one.png", "/assets/images/guides/bilingual-guide/cover-logos/two.svg"],
   langs: {
     en: "# Bilingual Guide\n\nEnglish body.",
     tr: "# Iki Dilli Rehber\n\nTurkce govde."
@@ -49,6 +50,7 @@ const guideRequest = guideSaveRequest(guideDraft);
 assert(guideRequest && guideRequest.locales.length === 2, "guide payload includes both locales when both are filled");
 assert(guideDraft.lang === "tr" && guideRequest.locales[0].lang === "en", "active TR tab does not drop the EN guide locale");
 assert(!("lang" in guideRequest) && !("markdown" in guideRequest), "guide bilingual payload does not send a single-locale lang/markdown pair");
+assert(guideRequest.coverLogos.length === 2 && guideRequest.coverLogos[0].endsWith("one.png"), "guide save preserves ordered shared cover logos");
 
 guideDraft.lang = "en";
 assert(guideSaveRequest(guideDraft).locales.length === 2, "active EN tab still sends both filled guide locales");
@@ -112,7 +114,7 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.3") && htmlSrc.includes("cms.js?v=v3.18"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.19"), "admin HTML cache-busts cms-save and cms.js");
 
 const sharedGuide = {
   id: "ario-guide",

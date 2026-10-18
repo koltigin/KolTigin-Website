@@ -709,11 +709,13 @@
         return `${visible.labelEn ? enField : ''}${visible.labelTr ? trField : ''}`;
       })()}
       ${guideCoverPicker(g)}
+      ${H().coverLogosBlock(g.coverLogos || [], Boolean(g.id))}
       <form>
         <div class="field">
           ${guideToolbar()}
           <textarea data-guide-md>${esc(md)}</textarea>
           <input id="guide-image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <input id="guide-cover-logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" hidden>
         </div>
       </form>
       <div class="footer-actions">
@@ -735,7 +737,7 @@
       projects: freshProjects.length ? freshProjects : (prevProjects.projects || [])
     };
     if (!id) {
-      H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '', buttonLabelEn: '', buttonLabelTr: '', cover: '', coverFile: null, coverPreview: '' };
+      H().state.guideDraft = { id: '', lang: 'en', langs: { en: '# \n\n', tr: '# \n\n' }, projectId: '', buttonLabelEn: '', buttonLabelTr: '', cover: '', coverLogos: [], coverFile: null, coverPreview: '' };
       renderGuideEditor();
       return;
     }
@@ -759,6 +761,7 @@
       buttonLabelEn: relation.buttonLabelEn,
       buttonLabelTr: relation.buttonLabelTr,
       cover: (data.meta && data.meta.cover) || '',
+      coverLogos: Sync().stringArray(data.meta && data.meta.coverLogos),
       coverFile: null,
       coverPreview: ''
     };
@@ -1284,6 +1287,30 @@
         }
         return;
       }
+      if (event.target.closest('[data-cover-logo-pick]') && H().state.guideDraft) {
+        event.preventDefault();
+        if (!H().state.guideDraft.id) return;
+        document.getElementById('guide-cover-logo')?.click();
+        return;
+      }
+      const logoUp = event.target.closest('[data-cover-logo-up]');
+      const logoDown = event.target.closest('[data-cover-logo-down]');
+      const logoRemove = event.target.closest('[data-cover-logo-remove]');
+      if ((logoUp || logoDown || logoRemove) && H().state.guideDraft) {
+        event.preventDefault();
+        syncGuideDraftFromForm();
+        const button = logoUp || logoDown || logoRemove;
+        const index = Number(button.dataset.coverLogoUp ?? button.dataset.coverLogoDown ?? button.dataset.coverLogoRemove);
+        const logos = H().state.guideDraft.coverLogos || [];
+        if (logoRemove) logos.splice(index, 1);
+        else {
+          const next = logoUp ? index - 1 : index + 1;
+          if (next >= 0 && next < logos.length) [logos[index], logos[next]] = [logos[next], logos[index]];
+        }
+        H().markDirty();
+        renderGuideEditor();
+        return;
+      }
       if (event.target.closest('[data-guide-image]')) {
         event.preventDefault();
         document.getElementById('guide-image')?.click();
@@ -1437,6 +1464,17 @@
           H().markDirty();
           renderGuideEditor();
         } catch (error) { await saveFail(error); renderGuideEditor(); }
+      }
+      if (event.target.id === 'guide-cover-logo' && event.target.files && event.target.files[0]) {
+        const g = H().state.guideDraft;
+        if (!g || !g.id) return;
+        try {
+          const data = await H().uploadImage('/admin/api/cover-logo', event.target.files[0], { id: g.id, family: 'guide' });
+          g.coverLogos = [...(g.coverLogos || []), String(data.path || '').replace(/^\.\//, '/')];
+          H().markDirty();
+          H().clearStatus();
+        } catch (error) { await saveFail(error); }
+        renderGuideEditor();
       }
     });
 

@@ -34,9 +34,10 @@ export function dumpYaml(data) {
   }).join("\n") + "\n";
 }
 
-export function buildWritingMarkdown({ title, date, cover, externalUrl, kind, body, external, summary, slug, aliases }) {
+export function buildWritingMarkdown({ title, date, cover, coverLogos, externalUrl, kind, body, external, summary, slug, aliases }) {
   const lines = ["---", `title: ${yamlQuote(title)}`, `date: ${date}`];
   if (cover) lines.push(`cover: ${yamlQuote(cover)}`);
+  if (Array.isArray(coverLogos) && coverLogos.length) lines.push(`coverLogos: ${JSON.stringify(coverLogos)}`);
   if (summary) lines.push(`summary: ${yamlQuote(summary)}`);
   if (slug) lines.push(`slug: ${yamlQuote(slug)}`);
   if (aliases) lines.push(`aliases: ${yamlQuote(aliases)}`);
@@ -95,6 +96,18 @@ export function applyGuideCover(text, cover) {
     return raw.replace(/^\s*cover:\s*.*$/m, "").replace(/\n{3,}/g, "\n\n");
   }
   return setYamlScalar(raw, "cover", yamlQuote(value));
+}
+
+export function applyGuideCoverLogos(text, coverLogos) {
+  const raw = String(text || "").replace(/\r\n/g, "\n");
+  const logos = Array.isArray(coverLogos) ? coverLogos : [];
+  const value = logos.length ? JSON.stringify(logos) : "";
+  if (!raw.startsWith("---")) {
+    if (!value) return raw;
+    return `---\ncoverLogos: ${value}\n---\n\n${raw.replace(/^\n+/, "")}`;
+  }
+  if (!value) return raw.replace(/^\s*coverLogos:\s*.*$/m, "").replace(/\n{3,}/g, "\n\n");
+  return setYamlScalar(raw, "coverLogos", value);
 }
 
 export function applyGuideSlug(text, slug) {

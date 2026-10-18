@@ -126,6 +126,16 @@
     return ['en', 'tr'].filter((lang) => Boolean(scalarTitle(langs[lang] && langs[lang].title)));
   }
 
+  function stringArray(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean);
+    try {
+      const parsed = JSON.parse(String(value || ''));
+      return Array.isArray(parsed) ? parsed.map((item) => String(item || '').trim()).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+
   function mergeLocaleField(editor, locale, field, value, options) {
     if (!editor || !editor.langs || !editor.langs[locale]) return;
     const hidden = Boolean(options && options.hidden);
@@ -157,6 +167,7 @@
         title: scalarTitle(draft.title),
         date,
         cover: draft.cover || '',
+        coverLogos: stringArray(editor.coverLogos),
         body: typeof draft.body === 'string' ? draft.body : String(draft.body || ''),
         externalUrl: isExternal ? String(pair.externalUrl || '') : ''
       };
@@ -179,6 +190,7 @@
       date: first.date,
       ...(first.fromKind ? { fromKind: first.fromKind } : {}),
       externalUrl: first.externalUrl || '',
+      coverLogos: stringArray(editor.coverLogos),
       locales: payloads.map((row) => ({
         lang: row.lang,
         title: row.title,
@@ -267,6 +279,7 @@
     upsertById,
     mergeRemoteList,
     writingLocalesToSave,
+    stringArray,
     writingSavePayloads,
     writingSaveRequest,
     writingSaveShouldShowSuccess,

@@ -575,6 +575,9 @@ def build_writing_markdown(payload: dict) -> str:
     cover = (payload.get("cover") or "").strip()
     if cover:
         lines.append(f"cover: {dump_yaml_value(cover)}")
+    cover_logos = payload.get("coverLogos") or []
+    if cover_logos:
+        lines.append(f"coverLogos: {json.dumps(cover_logos, ensure_ascii=False)}")
     if is_external_writing(payload.get("kind") or ""):
         lines.append(f"externalUrl: {dump_yaml_value(payload.get('externalUrl') or '')}")
     lines.append("---")
@@ -917,6 +920,36 @@ class AdminHandler(SimpleHTTPRequestHandler):
         public = f"/assets/images/writings/{writing_id}/{stored}"
         return json_ok(self, {"filename": stored, "path": public, "markdown": f"![]({public})"})
 
+    def handle_cover_logo_upload(self) -> None:
+        try:
+            parts = parse_multipart(self)
+        except ValueError as exc:
+            return json_error(self, HTTPStatus.BAD_REQUEST, str(exc))
+        filename, data = parts.get("file") or ("", b"")
+        owner_raw = parts.get("id") or ("", b"")
+        family_raw = parts.get("family") or ("", b"")
+        decode = lambda value: value.decode("utf-8", errors="replace") if isinstance(value, bytes) else str(value)
+        owner_id = slugify(decode(owner_raw[1]))
+        family = decode(family_raw[1]).strip()
+        if not data or not ID_RE.match(owner_id) or family not in {"writing", "guide"}:
+            return json_error(self, HTTPStatus.BAD_REQUEST, "A saved writing or guide is required")
+        ext = sniff_image_ext(data)
+        svg_head = data[:4000].lower()
+        if not ext and b"<svg" in svg_head and b"<script" not in svg_head and b"onload=" not in svg_head:
+            ext = ".svg"
+        if not ext:
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Only PNG, JPEG, WebP, or SVG logos are accepted")
+        base = "writings" if family == "writing" else "guides"
+        folder = ROOT / "assets" / "images" / base / owner_id / "cover-logos"
+        stem = slugify(Path(filename).stem) or "logo"
+        stored = unique_image_filename(folder, stem, ext, data)
+        dest = folder / stored
+        if not dest.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data)
+        public = f"/assets/images/{base}/{owner_id}/cover-logos/{stored}"
+        return json_ok(self, {"filename": stored, "path": public})
+
     def handle_avatar_upload(self) -> None:
         try:
             parts = parse_multipart(self)
@@ -1072,6 +1105,10 @@ class AdminHandler(SimpleHTTPRequestHandler):
             if not self.is_authed():
                 return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
             return self.handle_writing_image_upload()
+        if parsed.path == "/admin/api/cover-logo":
+            if not self.is_authed():
+                return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
+            return self.handle_cover_logo_upload()
         if parsed.path == "/admin/api/script-upload":
             if not self.is_authed():
                 return json_error(self, HTTPStatus.UNAUTHORIZED, "Sign in with the local login code")
@@ -1381,6 +1418,7 @@ class AdminHandler(SimpleHTTPRequestHandler):
                     "title": loc_item["title"],
                     "date": date,
                     "cover": loc_item["cover"],
+                    "coverLogos": body.get("coverLogos") or [],
                     "externalUrl": external,
                     "body": loc_item["body"],
                 }

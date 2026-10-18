@@ -133,6 +133,7 @@ const bilingualEditor = {
   mode: "new",
   originalKind: "articles",
   pair: { date: "2026-09-07", externalUrl: "" },
+  coverLogos: ["/assets/images/writings/production-writing-test/cover-logos/one.png", "/assets/images/writings/production-writing-test/cover-logos/two.svg"],
   langs: {
     en: { title: "Production Writing Test", body: "English body", exists: false, cover: "" },
     tr: { title: "Uretim Yazi Testi", body: "Turkce govde", exists: false, cover: "cover.png" }
@@ -203,6 +204,7 @@ const bilingualRequest = writingSaveRequest(bilingualEditor, "bilingual-producti
 assert(bilingualRequest && bilingualRequest.locales.length === 2, "client posts both locales in a single save body");
 assert(bilingualRequest.locales.every((row) => row.lang === "en" || row.lang === "tr"), "save body locales are en and tr");
 assert(bilingualRequest.fromKind == null, "new bilingual save request has no fromKind");
+assert(bilingualRequest.coverLogos.length === 2 && bilingualRequest.coverLogos[1].endsWith("two.svg"), "writing save preserves ordered shared cover logos");
 
 const ghostList = writingFromEditor({
   kind: "articles",

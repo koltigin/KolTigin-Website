@@ -282,6 +282,19 @@ def apply_guide_cover(text: str, cover) -> str:
     return raw.replace("---\n", f"---\ncover: {value}\n", 1)
 
 
+def apply_guide_cover_logos(text: str, logos) -> str:
+    raw = (text or "").replace("\r\n", "\n")
+    values = [str(item).strip() for item in (logos or []) if str(item).strip()]
+    value = json.dumps(values, ensure_ascii=False) if values else ""
+    if not raw.startswith("---"):
+        return f"---\ncoverLogos: {value}\n---\n\n{raw.lstrip()}" if value else raw
+    if not value:
+        return re.sub(r"^\s*coverLogos:\s*.*$", "", raw, count=1, flags=re.M).replace("\n\n\n", "\n\n")
+    if re.search(r"^coverLogos:\s*.*$", raw, flags=re.M):
+        return re.sub(r"^coverLogos:\s*.*$", f"coverLogos: {value}", raw, count=1, flags=re.M)
+    return raw.replace("---\n", f"---\ncoverLogos: {value}\n", 1)
+
+
 def guide_cover_from_markdown(*texts: str) -> str:
     for text in texts:
         meta, _body = parse_simple_front_matter(text)
@@ -348,6 +361,7 @@ def list_guides() -> list[dict]:
                 "existsEn": en.is_file(),
                 "existsTr": tr.is_file(),
                 "cover": guide_cover_from_markdown(en_text, tr_text),
+                "coverLogos": str(meta.get("coverLogos") or "").strip(),
                 "projects": related,
             }
         )
@@ -853,6 +867,8 @@ def handle_guide_save(handler, body, json_ok, json_error) -> None:
         markdown = item["markdown"]
         if cover_in_body:
             markdown = apply_guide_cover(markdown, body.get("cover"))
+        if "coverLogos" in body:
+            markdown = apply_guide_cover_logos(markdown, body.get("coverLogos"))
         if published:
             markdown = apply_guide_date(markdown, published)
         filename = "EN.md" if item["lang"] == "en" else "TR.md"

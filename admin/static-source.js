@@ -103,6 +103,7 @@
               date,
               file,
               cover: meta.cover || meta.image || '',
+              coverLogos: window.KTContentSync.stringArray(meta.coverLogos),
               externalUrl: meta.externalUrl || '',
               excerpt: meta.summary || excerptFromBody(body),
               readingTime: Math.max(1, Math.round((body.trim().split(/\s+/).filter(Boolean).length || 1) / 200)),
@@ -179,6 +180,7 @@
           title: meta.title || '',
           date: meta.date || '',
           cover: meta.cover || meta.image || '',
+          coverLogos: window.KTContentSync.stringArray(meta.coverLogos),
           externalUrl: meta.externalUrl || '',
           body
         };
@@ -257,6 +259,7 @@
         existsEn: Boolean(en),
         existsTr: Boolean(tr),
         cover: (enMeta.cover || trMeta.cover || enMeta.image || trMeta.image || '').trim(),
+        coverLogos: window.KTContentSync.stringArray(enMeta.coverLogos || trMeta.coverLogos),
         projects: related
       });
     }

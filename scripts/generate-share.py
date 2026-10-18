@@ -1064,10 +1064,10 @@ def load_cover_logo(path: Path, max_width: int, max_height: int) -> Image.Image 
         return None
 
 
-def draw_cover_logos(img: Image.Image, root: Path, paths: list[str]) -> None:
+def draw_cover_logos(img: Image.Image, root: Path, paths: list[str]) -> bool:
     resolved = [path for raw in paths if (path := resolve_cover_logo(root, raw))]
     if not resolved:
-        return
+        return False
     width = img.width - 2 * OG_MARGIN_X
     band_height = 112
     count = len(resolved)
@@ -1076,20 +1076,23 @@ def draw_cover_logos(img: Image.Image, root: Path, paths: list[str]) -> None:
     logo_height = min(112, band_height)
     row_width = count * cell_width + max(0, count - 1) * gap
     x = (img.width - row_width) // 2
-    y = 18 + (band_height - logo_height) // 2
+    y = 75 + (band_height - logo_height) // 2
+    pasted = False
     for path in resolved:
         logo = load_cover_logo(path, cell_width, logo_height)
         if logo:
             lx = x + (cell_width - logo.width) // 2
             ly = y + (logo_height - logo.height) // 2
             img.paste(logo, (lx, ly), logo)
+            pasted = True
         x += cell_width + gap
+    return pasted
 
 
 def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str, lang: str = "en", cover_logos: list[str] | None = None) -> None:
     og_w, og_h = OG_SIZE
     img = load_og_background(root, kind)
-    draw_cover_logos(img, root, cover_logos or [])
+    has_cover_logos = draw_cover_logos(img, root, cover_logos or [])
     draw = ImageDraw.Draw(img)
     max_text = title_max_width(og_w)
     title_font, lines, title_lead = fit_og_title(draw, root, title, max_text)
@@ -1097,7 +1100,8 @@ def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind
     spec = identity_row_geometry(draw, root, og_w, og_h)
     cx = og_w // 2
     kicker_h = int(round(OG_CATEGORY_PT * 1.2))
-    title_top = OG_TITLE_TOP
+    logo_title_shift = {1: 110, 2: 90, 3: 60}.get(len(lines), 60) if has_cover_logos else 0
+    title_top = OG_TITLE_TOP + logo_title_shift
     category = locale_upper(str(kicker or "").strip(), lang)
 
     y = title_top

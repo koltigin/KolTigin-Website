@@ -189,6 +189,20 @@ def main() -> None:
         fail("cover logo metadata must preserve upload order")
     with tempfile.TemporaryDirectory() as logo_probe_raw:
         logo_probe = Path(logo_probe_raw)
+        shape_expectations = {
+            "square": ((40, 40), (112, 112)),
+            "wide": ((120, 40), (260, 87)),
+            "portrait": ((40, 120), (37, 112)),
+        }
+        for name, (source_size, expected_size) in shape_expectations.items():
+            source = logo_probe / f"{name}.png"
+            padded = Image.new("RGBA", (source_size[0] + 20, source_size[1] + 20), (0, 0, 0, 0))
+            mark = Image.new("RGBA", source_size, (255, 255, 255, 255))
+            padded.paste(mark, (10, 10), mark)
+            padded.save(source)
+            fitted = generate_share.load_cover_logo(source, 260, 112)
+            if fitted is None or fitted.size != expected_size:
+                fail(f"{name} logo must preserve its aspect ratio and fill its available bounds: {getattr(fitted, 'size', None)}")
         plain = logo_probe / "plain.png"
         branded = logo_probe / "branded.png"
         generate_share.render_fallback_png(ROOT, plain, title="Logo test", kicker="Guide", kind="guide")
@@ -616,8 +630,11 @@ def main() -> None:
             fail("guide json-ld url")
         if guide_ld.get("mainEntityOfPage") != guide_ld.get("url"):
             fail("guide json-ld mainEntityOfPage")
-        if guide_ld.get("image") != "https://koltigin.xyz/assets/images/og/guides/en/demo-guide.png":
+        guide_image = str(guide_ld.get("image") or "")
+        if not guide_image.startswith("https://koltigin.xyz/assets/images/og/guides/en/demo-guide.png?v="):
             fail("guide json-ld image")
+        if f'property="og:image" content="{guide_image}"' not in ghtml:
+            fail("guide og image version")
         if "datePublished" in guide_ld or "dateModified" in guide_ld:
             fail("guide json-ld must omit dates without source metadata")
         guide_tr_alias = tmp / "guides" / "demo-guide" / "TR" / "index.html"

@@ -71,6 +71,7 @@ vm.runInNewContext(orderSrc, sandbox);
 vm.runInNewContext(guidesSrc, sandbox);
 const Parser = sandbox.window.GuidesParser;
 const parser = Object.create(Parser.prototype);
+const withoutVersion = (value) => String(value).split('?')[0];
 
 assert(Boolean(Parser), "GuidesParser is exported");
 assert(parser.firstHeading(aroEn) === "ARO Network DePIN — Ubuntu / VPS Installation Guide", "EN title uses H1 not slug");
@@ -79,20 +80,21 @@ assert(!parser.firstHeading(aroEn).includes(ARO), "title is not the raw slug");
 assert(parser.excerptFromMarkdown(aroEn).startsWith("ARO Network is a DePIN project"), "EN excerpt is first meaningful paragraph");
 assert(parser.excerptFromMarkdown(aroTr).startsWith("ARO Network, kullanılabilir ağ"), "TR excerpt is first meaningful paragraph");
 assert(parser.projectNameForGuide(projects, ARO) === "ARO", "related project name comes from projects.json");
-assert(parser.coverSrc(ARO, aroEn, "EN") === `/assets/images/og/guides/en/${ARO}.png`, "EN card uses existing guide OG fallback");
-assert(parser.coverSrc(ARO, aroTr, "TR") === `/assets/images/og/guides/tr/${ARO}.png`, "TR card uses existing guide OG fallback");
+assert(withoutVersion(parser.coverSrc(ARO, aroEn, "EN")) === `/assets/images/og/guides/en/${ARO}.png`, "EN card uses existing guide OG fallback");
+assert(withoutVersion(parser.coverSrc(ARO, aroTr, "TR")) === `/assets/images/og/guides/tr/${ARO}.png`, "TR card uses existing guide OG fallback");
+assert(parser.coverSrc(ARO, aroEn, "EN").includes('?v='), "generated guide covers include a cache version");
 const installId = "redbelly-mainnet-node-installation-guide";
 const updateId = "redbelly-mainnet-node-update-guide";
 const troubleId = "redbelly-node-troubleshooting";
 const installTr = readFileSync(join(repo, "content/guides", installId, "TR.md"), "utf8");
 const updateTr = readFileSync(join(repo, "content/guides", updateId, "TR.md"), "utf8");
 const troubleTr = readFileSync(join(repo, "content/guides", troubleId, "TR.md"), "utf8");
-assert(parser.coverSrc(installId, installTr, "TR") === `/assets/images/og/guides/tr/${installId}.png`, "Redbelly install card uses generated OG");
-assert(parser.coverSrc(updateId, updateTr, "TR") === `/assets/images/og/guides/tr/${updateId}.png`, "Redbelly update card uses generated OG");
-assert(parser.coverSrc(troubleId, troubleTr, "TR") === `/assets/images/og/guides/tr/${troubleId}.png`, "Redbelly troubleshooting card uses generated OG");
-assert(parser.coverFallbackSrc(installId, installTr, "TR") === `/assets/images/og/guides/en/${installId}.png`, "missing TR OG can fall back to EN raster");
+assert(withoutVersion(parser.coverSrc(installId, installTr, "TR")) === `/assets/images/og/guides/tr/${installId}.png`, "Redbelly install card uses generated OG");
+assert(withoutVersion(parser.coverSrc(updateId, updateTr, "TR")) === `/assets/images/og/guides/tr/${updateId}.png`, "Redbelly update card uses generated OG");
+assert(withoutVersion(parser.coverSrc(troubleId, troubleTr, "TR")) === `/assets/images/og/guides/tr/${troubleId}.png`, "Redbelly troubleshooting card uses generated OG");
+assert(withoutVersion(parser.coverFallbackSrc(installId, installTr, "TR")) === `/assets/images/og/guides/en/${installId}.png`, "missing TR OG can fall back to EN raster");
 assert(parser.coverSrc(installId, "---\nimage: hero.png\n---\n# Title\n", "TR") === `/assets/images/guides/${installId}/hero.png`, "cover aliases include image");
-assert(parser.coverFallbackSrc(installId, "---\ncover: missing.png\n---\n# Title\n", "TR") === `/assets/images/og/guides/tr/${installId}.png`, "broken custom cover falls back to generated OG");
+assert(withoutVersion(parser.coverFallbackSrc(installId, "---\ncover: missing.png\n---\n# Title\n", "TR")) === `/assets/images/og/guides/tr/${installId}.png`, "broken custom cover falls back to generated OG");
 
 const enCard = parser.createIndexCard({
   id: ARO,

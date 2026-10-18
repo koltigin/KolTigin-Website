@@ -317,7 +317,7 @@ class GuidesParser {
   }
 
   coverSrc(id, markdown, lang) {
-    const generated = this.generatedCoverSrc(id, lang);
+    const generated = this.generatedCoverSrc(id, lang, markdown);
     const { meta } = this.parseFrontMatter(markdown);
     const cover = this.coverField(meta);
     if (this.hasCover(cover)) {
@@ -327,17 +327,29 @@ class GuidesParser {
     return generated;
   }
 
-  generatedCoverSrc(id, lang) {
+  generatedCoverVersion(markdown) {
+    const { meta } = this.parseFrontMatter(markdown || '');
+    const source = `${meta.title || ''}|${meta.coverLogos || ''}`;
+    let hash = 2166136261;
+    for (let i = 0; i < source.length; i += 1) {
+      hash ^= source.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
+  generatedCoverSrc(id, lang, markdown) {
     const loc = String(lang || 'EN').toLowerCase() === 'tr' ? 'tr' : 'en';
-    return encodeURI(publicPath(`./assets/images/og/guides/${loc}/${id}.png`));
+    const version = this.generatedCoverVersion(markdown);
+    return encodeURI(publicPath(`./assets/images/og/guides/${loc}/${id}.png?v=${version}`));
   }
 
   coverFallbackSrc(id, markdown, lang) {
     const cover = this.coverSrc(id, markdown, lang);
-    const generated = this.generatedCoverSrc(id, lang);
+    const generated = this.generatedCoverSrc(id, lang, markdown);
     if (cover !== generated) return generated;
     const other = String(lang || 'EN').toLowerCase() === 'tr' ? 'EN' : 'TR';
-    const alt = this.generatedCoverSrc(id, other);
+    const alt = this.generatedCoverSrc(id, other, markdown);
     return alt !== cover ? alt : '';
   }
 

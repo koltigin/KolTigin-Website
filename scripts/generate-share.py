@@ -48,11 +48,11 @@ WRITING_OG_BACKGROUND = "assets/images/og/backgrounds/writing-og-background.png"
 GUIDE_OG_BACKGROUND = "assets/images/og/backgrounds/guide-og-background.png"
 OG_MARGIN_X = 72
 OG_TITLE_MAX_RATIO = 0.74
-OG_TITLE_TOP = 168
+OG_TITLE_TOP = 154
 OG_CATEGORY_PT = 34
 OG_TITLE_CATEGORY_GAP = 18
 OG_AVATAR_SIZE = 114
-OG_IDENTITY_BOTTOM = 81
+OG_IDENTITY_BOTTOM = 48
 OG_IDENTITY_GAP = 21
 OG_DIVIDER_WIDTH = 3
 OG_DIVIDER_HEIGHT_RATIO = 0.70
@@ -273,6 +273,18 @@ def writing_og_version(
         mode=mode,
         cover_logos=cover_logos,
     )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def guide_og_version(*, lang: str, item_id: str, title: str, kicker: str, cover_logos: list[str] | None = None) -> str:
+    payload = "\n".join([
+        "guide-og-v2",
+        str(lang or ""),
+        str(item_id or ""),
+        str(title or ""),
+        str(kicker or ""),
+        json.dumps(cover_logos or [], ensure_ascii=False, separators=(",", ":")),
+    ])
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
 
 
@@ -576,7 +588,14 @@ def static_guide_cards(root: Path, guides: list[dict], mode: str, *, lang: str =
             name = Path(cover.replace("\\", "/")).name
             cover_src = f"/assets/images/guides/{item_id}/{quote(name)}"
         else:
-            cover_src = f"/assets/images/og/guides/{lang}/{item_id}.png"
+            version = guide_og_version(
+                lang=lang,
+                item_id=item_id,
+                title=str(data.get("title") or item_id),
+                kicker="Guide" if lang == "en" else "Rehber",
+                cover_logos=data.get("coverLogos") or [],
+            )
+            cover_src = with_og_version(f"/assets/images/og/guides/{lang}/{item_id}.png", version)
         title = str(data.get("title") or item_id).strip()
         description = str(data.get("description") or "").strip()
         project = project_names.get(item_id, "")
@@ -938,7 +957,7 @@ def fit_og_title(
 ) -> tuple[ImageFont.FreeTypeFont, list[str], int]:
     max_lines = 3
     max_block = 188
-    for size in range(48, 27, -2):
+    for size in range(44, 27, -2):
         font = load_font(root, "semibold", size)
         lead = int(round(size * 1.22))
         lines = wrap_lines(draw, title, font, max_width, max_lines)
@@ -1020,16 +1039,26 @@ def resolve_cover_logo(root: Path, raw_path: str) -> Path | None:
     return path
 
 
-def load_cover_logo(path: Path, size: int) -> Image.Image | None:
+def load_cover_logo(path: Path, max_width: int, max_height: int) -> Image.Image | None:
     try:
         if path.suffix.lower() == ".svg":
             if cairosvg is None:
                 raise RuntimeError("CairoSVG is required to render SVG cover logos")
-            payload = cairosvg.svg2png(url=str(path), output_width=size * 2, output_height=size * 2)
+            payload = cairosvg.svg2png(url=str(path), output_width=max_width * 2)
             image = Image.open(io.BytesIO(payload)).convert("RGBA")
         else:
             image = Image.open(path).convert("RGBA")
-        image.thumbnail((size, size), Image.Resampling.LANCZOS)
+        alpha_box = image.getchannel("A").getbbox()
+        if alpha_box:
+            image = image.crop(alpha_box)
+        if image.width < 1 or image.height < 1:
+            return None
+        scale = min(max_width / image.width, max_height / image.height)
+        target = (
+            max(1, int(round(image.width * scale))),
+            max(1, int(round(image.height * scale))),
+        )
+        image = image.resize(target, Image.Resampling.LANCZOS)
         return image
     except (OSError, ValueError):
         return None
@@ -1040,20 +1069,21 @@ def draw_cover_logos(img: Image.Image, root: Path, paths: list[str]) -> None:
     if not resolved:
         return
     width = img.width - 2 * OG_MARGIN_X
-    band_height = 96
+    band_height = 112
     count = len(resolved)
     gap = max(1, min(14, int(40 / count ** 0.5)))
-    size = max(1, min(72, band_height, (width - gap * (count - 1)) // count))
-    row_width = count * size + max(0, count - 1) * gap
+    cell_width = max(1, min(260, (width - gap * (count - 1)) // count))
+    logo_height = min(112, band_height)
+    row_width = count * cell_width + max(0, count - 1) * gap
     x = (img.width - row_width) // 2
-    y = 46 + (band_height - size) // 2
+    y = 18 + (band_height - logo_height) // 2
     for path in resolved:
-        logo = load_cover_logo(path, size)
+        logo = load_cover_logo(path, cell_width, logo_height)
         if logo:
-            lx = x + (size - logo.width) // 2
-            ly = y + (size - logo.height) // 2
+            lx = x + (cell_width - logo.width) // 2
+            ly = y + (logo_height - logo.height) // 2
             img.paste(logo, (lx, ly), logo)
-        x += size + gap
+        x += cell_width + gap
 
 
 def render_fallback_png(root: Path, dest: Path, *, title: str, kicker: str, kind: str, lang: str = "en", cover_logos: list[str] | None = None) -> None:
@@ -2007,7 +2037,17 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
                     cover_logos=data.get("coverLogos") or [],
                 )
             canonical = alternates[lang]
-            image = abs_url(base, og_rel)
+            if used_cover:
+                image = abs_url(base, og_rel)
+            else:
+                version = guide_og_version(
+                    lang=lang,
+                    item_id=item_id,
+                    title=data["title"],
+                    kicker=kicker,
+                    cover_logos=data.get("coverLogos") or [],
+                )
+                image = with_og_version(abs_url(base, og_rel), version)
             payload = json_ld_payload(
                 schema_type="TechArticle",
                 headline=data["title"],

@@ -1,4 +1,5 @@
 ---
+coverLogos: ["/assets/images/guides/how-to-get-an-arns-domain/cover-logos/ario-logo.svg"]
 date: 2026-09-13
 slug: ar-io-gateway-troubleshooting
 ---

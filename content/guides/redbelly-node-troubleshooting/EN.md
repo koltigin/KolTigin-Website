@@ -1,4 +1,5 @@
 ---
+coverLogos: ["/assets/images/guides/redbelly-node-troubleshooting/cover-logos/redbelly-brand-h-color.svg"]
 date: 2026-09-11
 slug: redbelly-node-troubleshooting
 ---

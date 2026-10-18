@@ -1,5 +1,5 @@
 ---
-
+coverLogos: ["/assets/images/guides/optimai-cli-node-setup-guide-ubuntu-24-04-vps/cover-logos/optimai-logo-3.svg"]
 title: "Ubuntu Kurulum Rehberi"
 description: "Optim AI Ubuntu Kurulum Rehberi"
 date: 2026-09-09

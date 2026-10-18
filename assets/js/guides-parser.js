@@ -18,6 +18,7 @@ class GuidesParser {
     this.tocIntro = null;
     this.tocResize = null;
     this.pendingHeading = '';
+    this.ogVersions = {};
 
     this.wrapActivatePage();
     this.bindUi();
@@ -316,6 +317,17 @@ class GuidesParser {
     return src.cover || src.coverImage || src.image || src.thumbnail || '';
   }
 
+  async readOgVersions() {
+    try {
+      const response = await fetch(publicPath('./content/og-versions.json'), { cache: 'no-store' });
+      if (!response.ok) return {};
+      const data = await response.json();
+      return data && data.guides && typeof data.guides === 'object' ? data.guides : {};
+    } catch {
+      return {};
+    }
+  }
+
   coverSrc(id, markdown, lang) {
     const generated = this.generatedCoverSrc(id, lang, markdown);
     const { meta } = this.parseFrontMatter(markdown);
@@ -327,21 +339,17 @@ class GuidesParser {
     return generated;
   }
 
-  generatedCoverVersion(markdown) {
-    const { meta } = this.parseFrontMatter(markdown || '');
-    const source = `guide-cover-layout-v3|${meta.title || ''}|${meta.coverLogos || ''}`;
-    let hash = 2166136261;
-    for (let i = 0; i < source.length; i += 1) {
-      hash ^= source.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
-    return (hash >>> 0).toString(16);
+  generatedCoverVersion(id, lang) {
+    const loc = String(lang || 'EN').toLowerCase() === 'tr' ? 'tr' : 'en';
+    const versions = this.ogVersions || {};
+    return String((versions[id] && versions[id][loc]) || '');
   }
 
-  generatedCoverSrc(id, lang, markdown) {
+  generatedCoverSrc(id, lang) {
     const loc = String(lang || 'EN').toLowerCase() === 'tr' ? 'tr' : 'en';
-    const version = this.generatedCoverVersion(markdown);
-    return encodeURI(publicPath(`./assets/images/og/guides/${loc}/${id}.png?v=${version}`));
+    const version = this.generatedCoverVersion(id, lang);
+    const src = encodeURI(publicPath(`./assets/images/og/guides/${loc}/${id}.png`));
+    return version ? `${src}?v=${encodeURIComponent(version)}` : src;
   }
 
   coverFallbackSrc(id, markdown, lang) {
@@ -398,10 +406,12 @@ class GuidesParser {
     if (!list) return;
     const lang = this.siteGuideLang();
     try {
-      const [indexRes, projectsRes] = await Promise.all([
+      const [indexRes, projectsRes, ogVersions] = await Promise.all([
         fetch(`${publicPath('./content/guides/index.json')}?t=${Date.now()}`, { cache: 'no-store' }),
-        fetch(`${publicPath('./projects/projects.json')}?t=${Date.now()}`, { cache: 'no-store' })
+        fetch(`${publicPath('./projects/projects.json')}?t=${Date.now()}`, { cache: 'no-store' }),
+        this.readOgVersions()
       ]);
+      this.ogVersions = ogVersions;
       if (!indexRes.ok) throw new Error('index');
       const data = await indexRes.json();
       const projects = projectsRes.ok ? await projectsRes.json() : {};

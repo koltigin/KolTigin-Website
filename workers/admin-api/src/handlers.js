@@ -27,15 +27,15 @@ function stringArray(value) {
 
 function coverLogoArray(value, family, id) {
   return stringArray(value).map((path) => String(path).replace(/^\.\//, "/")).filter((path) => {
-    const reusable = /^\/assets\/images\/(?:cover-logos\/|(?:guides|writings)\/[a-z0-9-]+\/cover-logos\/)[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(path);
+    const reusable = /^\/assets\/images\/cover-logos\/[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(path);
     if (!reusable || path.includes("..")) throw new HttpError(400, "Invalid cover logo path");
     return true;
   });
 }
 
 export async function handleCoverLogos(_body, github) {
-  const paths = (await github.listPrefix("assets/images/"))
-    .filter((path) => /\/cover-logos\/[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(path))
+  const paths = (await github.listPrefix("assets/images/cover-logos/"))
+    .filter((path) => /^assets\/images\/cover-logos\/[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(path))
     .sort((a, b) => a.localeCompare(b));
   return {
     logos: paths.map((path) => ({

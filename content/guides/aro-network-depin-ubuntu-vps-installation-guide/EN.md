@@ -1,5 +1,5 @@
 ---
-coverLogos: ["/assets/images/guides/aro-network-depin-ubuntu-vps-installation-guide/cover-logos/aro-logo.svg"]
+coverLogos: ["/assets/images/cover-logos/aro-network.svg"]
 date: 2026-09-09
 slug: aro-network-depin-ubuntu-vps-installation-guide
 ---

@@ -133,7 +133,7 @@ const bilingualEditor = {
   mode: "new",
   originalKind: "articles",
   pair: { date: "2026-09-07", externalUrl: "" },
-  coverLogos: ["/assets/images/writings/production-writing-test/cover-logos/one.png", "/assets/images/writings/production-writing-test/cover-logos/two.svg"],
+  coverLogos: ["/assets/images/cover-logos/one.png", "/assets/images/cover-logos/two.svg"],
   langs: {
     en: { title: "Production Writing Test", body: "English body", exists: false, cover: "" },
     tr: { title: "Uretim Yazi Testi", body: "Turkce govde", exists: false, cover: "cover.png" }

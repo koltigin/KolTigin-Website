@@ -1139,8 +1139,8 @@ class AdminHandler(SimpleHTTPRequestHandler):
             return self.handle_save(body)
         if parsed.path == "/admin/api/cover-logos":
             logos = []
-            images = ROOT / "assets" / "images"
-            for path in sorted(images.glob("**/cover-logos/*")):
+            images = ROOT / "assets" / "images" / "cover-logos"
+            for path in sorted(images.glob("*")):
                 if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}:
                     logos.append({"path": f"/{path.relative_to(ROOT).as_posix()}", "name": path.name})
             return json_ok(self, {"logos": logos})

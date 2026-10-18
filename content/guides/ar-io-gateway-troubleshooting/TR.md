@@ -1,5 +1,5 @@
 ---
-coverLogos: ["/assets/images/guides/how-to-get-an-arns-domain/cover-logos/ario-logo.svg"]
+coverLogos: ["/assets/images/cover-logos/ario.svg"]
 date: 2026-09-13
 slug: ar-io-gateway-sorun-giderme
 ---

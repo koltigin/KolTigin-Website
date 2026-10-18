@@ -1,5 +1,5 @@
 ---
-coverLogos: ["/assets/images/guides/redbelly-node-troubleshooting/cover-logos/redbelly-brand-negative.svg"]
+coverLogos: ["/assets/images/cover-logos/redbelly.svg"]
 date: 2026-09-11
 slug: redbelly-node-sorunlar-ve-cozumler
 ---

@@ -82,8 +82,11 @@ assert(parser.excerptFromMarkdown(aroTr).startsWith("ARO Network, kullanılabili
 assert(parser.projectNameForGuide(projects, ARO) === "ARO", "related project name comes from projects.json");
 assert(withoutVersion(parser.coverSrc(ARO, aroEn, "EN")) === `/assets/images/og/guides/en/${ARO}.png`, "EN card uses existing guide OG fallback");
 assert(withoutVersion(parser.coverSrc(ARO, aroTr, "TR")) === `/assets/images/og/guides/tr/${ARO}.png`, "TR card uses existing guide OG fallback");
-assert(parser.coverSrc(ARO, aroEn, "EN").includes('?v='), "generated guide covers include a cache version");
-assert(guidesSrc.includes("guide-cover-layout-v3"), "guide cover layout revisions invalidate old browser cache keys");
+parser.ogVersions = { [ARO]: { en: "generated-en-version", tr: "generated-tr-version" } };
+assert(parser.coverSrc(ARO, aroEn, "EN").endsWith('?v=generated-en-version'), "generated guide covers use the published EN cache version");
+assert(parser.coverSrc(ARO, aroTr, "TR").endsWith('?v=generated-tr-version'), "generated guide covers use the published TR cache version");
+assert(guidesSrc.includes("content/og-versions.json"), "guide cards read generator-owned cover versions");
+assert(!guidesSrc.includes("guide-cover-layout-v3"), "guide cards do not invent a version that differs from the generated image");
 const installId = "redbelly-mainnet-node-installation-guide";
 const updateId = "redbelly-mainnet-node-update-guide";
 const troubleId = "redbelly-node-troubleshooting";

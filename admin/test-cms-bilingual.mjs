@@ -40,7 +40,7 @@ const guideDraft = {
   lang: "tr",
   projectId: "optimai",
   cover: "hero.png",
-  coverLogos: ["/assets/images/guides/bilingual-guide/cover-logos/one.png", "/assets/images/guides/bilingual-guide/cover-logos/two.svg"],
+  coverLogos: ["/assets/images/cover-logos/one.png", "/assets/images/cover-logos/two.svg"],
   langs: {
     en: "# Bilingual Guide\n\nEnglish body.",
     tr: "# Iki Dilli Rehber\n\nTurkce govde."

@@ -604,6 +604,16 @@ def main() -> None:
             fail("articles must use the writing master background")
         if generate_share.og_background_rel("guide") != generate_share.GUIDE_OG_BACKGROUND:
             fail("guides must use the guide master background")
+        guide_versions = json.loads((tmp / "content" / "og-versions.json").read_text(encoding="utf-8"))
+        expected_guide_version = generate_share.guide_og_version(
+            lang="en",
+            item_id="demo-guide",
+            title="Demo Guide",
+            kicker="Guide",
+            cover_logos=[],
+        )
+        if guide_versions.get("guides", {}).get("demo-guide", {}).get("en") != expected_guide_version:
+            fail("og-versions must store the generated Guide raster version")
         ok("guide without cover")
 
         guide_bg = tmp / "assets" / "images" / "og" / "backgrounds" / "guide-og-background.png"

@@ -1886,6 +1886,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
     created = []
     localized_created: list[str] = []
     og_versions: dict[str, dict[str, str]] = {}
+    guide_og_versions: dict[str, dict[str, str]] = {}
 
     writings = discover_writings(root)
     guides = discover_guides(root)
@@ -2051,6 +2052,7 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
                     kicker=kicker,
                     cover_logos=data.get("coverLogos") or [],
                 )
+                guide_og_versions.setdefault(item_id, {})[lang] = version
                 image = with_og_version(abs_url(base, og_rel), version)
             payload = json_ld_payload(
                 schema_type="TechArticle",
@@ -2113,7 +2115,11 @@ def generate(root: Path, *, public_url_mode: str | None = None) -> dict:
     versions_path = root / "content" / "og-versions.json"
     write_text(
         versions_path,
-        json.dumps({"writings": og_versions}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(
+            {"writings": og_versions, "guides": guide_og_versions},
+            indent=2,
+            ensure_ascii=False,
+        ) + "\n",
     )
     try:
         url_map_path = write_url_map(root)

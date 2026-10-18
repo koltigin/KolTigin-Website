@@ -14,7 +14,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 const guideBgPng = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 
-const logoMetadata = ["/assets/images/guides/demo/cover-logos/one.png", "/assets/images/guides/demo/cover-logos/two.svg"];
+const logoMetadata = ["/assets/images/cover-logos/one.png", "/assets/images/cover-logos/two.svg"];
 const logoGuide = applyGuideCoverLogos("# Demo\n", logoMetadata);
 if (!logoGuide.includes(`coverLogos: ${JSON.stringify(logoMetadata)}`)) throw new Error("Guide cover logos were not stored in order");
 const logoWriting = buildWritingMarkdown({ title: "Demo", date: "2026-10-18", kind: "articles", body: "Body", coverLogos: logoMetadata });

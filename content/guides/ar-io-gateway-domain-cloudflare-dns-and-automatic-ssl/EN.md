@@ -1,5 +1,5 @@
 ---
-coverLogos: ["/assets/images/guides/how-to-get-an-arns-domain/cover-logos/ario-logo.svg","/assets/images/cover-logos/cloudflare-white.png"]
+coverLogos: ["/assets/images/cover-logos/ario.svg","/assets/images/cover-logos/cloudflare-white.png"]
 slug: ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl
 date: 2026-10-17
 title: "AR.IO Gateway: Domain, Cloudflare DNS, and Automatic SSL"

@@ -1,5 +1,5 @@
 ---
-coverLogos: ["/assets/images/guides/redbelly-mainnet-telegram-monitoring-bot-installation-guide/cover-logos/redbelly-brand-negative.svg","/assets/images/guides/redbelly-mainnet-telegram-monitoring-bot-installation-guide/cover-logos/logo.svg"]
+coverLogos: ["/assets/images/cover-logos/redbelly.svg","/assets/images/cover-logos/telegram.svg"]
 date: 2026-09-11
 slug: redbelly-mainnet-telegram-monitoring-bot-kurulum-rehberi
 ---

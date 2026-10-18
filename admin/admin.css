@@ -555,9 +555,11 @@ textarea {
 .cover-logo-row img { width: 52px; height: 52px; object-fit: contain; border-radius: 8px; background: #fff; padding: 5px; }
 .cover-logo-row span { overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
 .cover-logo-row .item-actions { margin: 0; }
+.cover-logo-add-actions { display: grid; grid-template-columns: auto minmax(180px, 1fr) auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.cover-logo-add-actions select { min-width: 0; }
 .cover-fallback-logos { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 10px; max-width: 100%; margin-bottom: 14px; overflow: hidden; }
 .cover-fallback-logos img { width: 54px; height: 54px; object-fit: contain; }
-@media (max-width: 680px) { .cover-logo-row { grid-template-columns: 44px 1fr; } .cover-logo-row .item-actions { grid-column: 1 / -1; } }
+@media (max-width: 680px) { .cover-logo-row { grid-template-columns: 44px 1fr; } .cover-logo-row .item-actions { grid-column: 1 / -1; } .cover-logo-add-actions { grid-template-columns: 1fr; } }
 
 .logo-preview {
   width: 120px;

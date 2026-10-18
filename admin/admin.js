@@ -89,6 +89,8 @@
     writingsFilter: 'all',
     types: [],
     platforms: [],
+    coverLogoLibrary: [],
+    logoPreviewVersion: Date.now(),
     content: { articles: [], notes: [], social: [], videos: [] },
     site: null,
     profileLang: 'en',
@@ -490,6 +492,12 @@
       next[kind] = Sync.mergeRemoteList(data[kind] || [], previous[kind] || []);
     });
     state.content = next;
+    try {
+      const library = await api('/admin/api/cover-logos', { method: 'POST', body: '{}' });
+      state.coverLogoLibrary = Array.isArray(library.logos) ? library.logos : [];
+    } catch {
+      state.coverLogoLibrary = [];
+    }
   }
 
   async function loadSite() {
@@ -986,9 +994,10 @@
   }
 
   function coverLogosBlock(logos, canUpload) {
+    const previewSrc = (path) => `${rootAbsoluteAssetPath(path)}?admin-preview=${state.logoPreviewVersion}`;
     const items = (Array.isArray(logos) ? logos : []).map((path, index) => `
       <div class="cover-logo-row">
-        <img src="${escapeHtml(rootAbsoluteAssetPath(path))}" alt="">
+        <img src="${escapeHtml(previewSrc(path))}" data-cover-logo-preview alt="">
         <span>${escapeHtml(String(path).split('/').pop())}</span>
         <div class="item-actions">
           <button class="btn btn-ghost" type="button" data-cover-logo-up="${index}" ${index === 0 ? 'disabled' : ''}>${escapeHtml(t('social.up'))}</button>
@@ -996,10 +1005,22 @@
           <button class="btn btn-ghost" type="button" data-cover-logo-remove="${index}">${escapeHtml(t('social.remove'))}</button>
         </div>
       </div>`).join('');
+    const selected = new Set(Array.isArray(logos) ? logos.map(rootAbsoluteAssetPath) : []);
+    const libraryOptions = (state.coverLogoLibrary || [])
+      .filter((item) => item && item.path && !selected.has(rootAbsoluteAssetPath(item.path)))
+      .map((item) => `<option value="${escapeHtml(rootAbsoluteAssetPath(item.path))}">${escapeHtml(item.name || String(item.path).split('/').pop())}</option>`)
+      .join('');
     return `<div class="field cover-logos-editor">
       <label>${escapeHtml(t('writings.coverLogos'))}</label>
       <div class="cover-logo-list">${items}</div>
-      <button class="btn btn-ghost" type="button" data-cover-logo-pick ${canUpload ? '' : 'disabled'}>${escapeHtml(t('writings.addCoverLogo'))}</button>
+      <div class="cover-logo-add-actions">
+        <button class="btn btn-ghost" type="button" data-cover-logo-pick ${canUpload ? '' : 'disabled'}>${escapeHtml(t('writings.addCoverLogo'))}</button>
+        <select data-cover-logo-library ${canUpload && libraryOptions ? '' : 'disabled'}>
+          <option value="">${escapeHtml(t('writings.chooseExistingLogo'))}</option>
+          ${libraryOptions}
+        </select>
+        <button class="btn btn-ghost" type="button" data-cover-logo-add-existing ${canUpload && libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.useExistingLogo'))}</button>
+      </div>
       <span class="hint">${escapeHtml(canUpload ? t('writings.coverLogosHint') : t('writings.coverLogosSaveFirst'))}</span>
     </div>`;
   }
@@ -1873,6 +1894,15 @@
   }
 
   function bind() {
+    app.addEventListener('error', (event) => {
+      const image = event.target.closest && event.target.closest('[data-cover-logo-preview]');
+      if (!image || image.dataset.previewRetried === '1') return;
+      image.dataset.previewRetried = '1';
+      window.setTimeout(() => {
+        const base = String(image.src || '').split('?')[0];
+        image.src = `${base}?admin-preview=${Date.now()}`;
+      }, 1200);
+    }, true);
     app.addEventListener('submit', async (event) => {
       const form = event.target.closest('[data-login]');
       if (!form) return;
@@ -1999,6 +2029,17 @@
         event.preventDefault();
         if (!state.editor || !writingIsSaved(state.editor)) return;
         document.getElementById('writing-cover-logo')?.click();
+        return;
+      }
+      if (event.target.closest('[data-cover-logo-add-existing]') && state.editor && document.getElementById('writing-cover-logo')) {
+        event.preventDefault();
+        syncDraftFromForm();
+        const path = rootAbsoluteAssetPath(document.querySelector('[data-cover-logo-library]')?.value || '');
+        if (path && !(state.editor.coverLogos || []).includes(path)) {
+          state.editor.coverLogos = [...(state.editor.coverLogos || []), path];
+          markDirty();
+          renderWritingEditor();
+        }
         return;
       }
       const logoUp = event.target.closest('[data-cover-logo-up]');
@@ -2277,7 +2318,10 @@
         event.target.value = '';
         try {
           const data = await uploadImage('/admin/api/cover-logo', file, { id: state.editor.sharedId, family: 'writing' });
-          state.editor.coverLogos = [...(state.editor.coverLogos || []), rootAbsoluteAssetPath(data.path)];
+          const path = rootAbsoluteAssetPath(data.path);
+          state.editor.coverLogos = [...(state.editor.coverLogos || []), path];
+          state.coverLogoLibrary = [...(state.coverLogoLibrary || []).filter((item) => item.path !== path), { path, name: data.filename || path.split('/').pop() }];
+          state.logoPreviewVersion = Date.now();
           markDirty();
           clearStatus();
         } catch (error) { showError(error.message); }

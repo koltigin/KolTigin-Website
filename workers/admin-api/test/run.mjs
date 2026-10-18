@@ -823,6 +823,12 @@ links:
     assert([...github.files.keys()].some((path) => path.startsWith("assets/images/blog/")), "cover stored under blog");
     const blogCoverPath = [...github.files.keys()].find((path) => path.startsWith("assets/images/blog/") && path.endsWith(".png"));
 
+    const svgLogo = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M0 0h20v20H0z"/></svg>');
+    res = await json(await postForm("/api/admin/cover-logo", { name: "brand.svg", bytes: svgLogo }, { id: "demo-guide", family: "guide" }, env));
+    assert(res.status === 200 && res.body.path === "/assets/images/cover-logos/brand.svg", "cover logos upload to the reusable library");
+    res = await json(await post("/api/admin/cover-logos", {}, env));
+    assert(res.status === 200 && res.body.logos.some((item) => item.path === "/assets/images/cover-logos/brand.svg"), "cover logo library lists reusable uploads");
+
     assert(assertSafePath("assets/images/writings/demo-id/x.png") === "assets/images/writings/demo-id/x.png", "writings asset path is allowlisted");
 
     res = await json(await postForm("/api/admin/writing-image", { name: "shot.png", bytes: png }, {}, env));

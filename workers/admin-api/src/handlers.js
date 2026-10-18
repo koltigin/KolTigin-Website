@@ -26,12 +26,23 @@ function stringArray(value) {
 }
 
 function coverLogoArray(value, family, id) {
-  const base = family === "guide" ? "guides" : "writings";
-  const prefix = `/assets/images/${base}/${id}/cover-logos/`;
   return stringArray(value).map((path) => String(path).replace(/^\.\//, "/")).filter((path) => {
-    if (!path.startsWith(prefix) || path.includes("..")) throw new HttpError(400, "Invalid cover logo path");
+    const reusable = /^\/assets\/images\/(?:cover-logos\/|(?:guides|writings)\/[a-z0-9-]+\/cover-logos\/)[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(path);
+    if (!reusable || path.includes("..")) throw new HttpError(400, "Invalid cover logo path");
     return true;
   });
+}
+
+export async function handleCoverLogos(_body, github) {
+  const paths = (await github.listPrefix("assets/images/"))
+    .filter((path) => /\/cover-logos\/[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(path))
+    .sort((a, b) => a.localeCompare(b));
+  return {
+    logos: paths.map((path) => ({
+      path: `/${path}`,
+      name: path.split("/").pop() || path
+    }))
+  };
 }
 
 async function readJson(github, path, fallback) {
@@ -1180,12 +1191,7 @@ export async function handleUpload(kind, file, fields, github) {
     dir = `assets/images/writings/${writingId}`;
   }
   if (kind === "cover-logo") {
-    const ownerId = slugify(fields.id || "");
-    const family = String(fields.family || "");
-    if (!ID_RE.test(ownerId)) throw new HttpError(400, "Content id is required before adding logos");
-    if (family === "writing") dir = `assets/images/writings/${ownerId}/cover-logos`;
-    else if (family === "guide") dir = `assets/images/guides/${ownerId}/cover-logos`;
-    else throw new HttpError(400, "Unknown logo owner");
+    dir = "assets/images/cover-logos";
   }
   assertSafePath(`${dir}/x${ext}`);
   const existing = (await github.listPrefix(`${dir}/`)).map((path) => path.slice(dir.length + 1));
@@ -1296,6 +1302,7 @@ export const POST_HANDLERS = {
   "/api/admin/contact": handleContact,
   "/api/admin/writing-types": handleWritingTypes,
   "/api/admin/project-categories": handleProjectCategories,
+  "/api/admin/cover-logos": handleCoverLogos,
   "/api/admin/scripts": handleScriptsList,
   "/api/admin/script-delete": handleScriptDelete
 };

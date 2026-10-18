@@ -1293,6 +1293,17 @@
         document.getElementById('guide-cover-logo')?.click();
         return;
       }
+      if (event.target.closest('[data-cover-logo-add-existing]') && H().state.guideDraft) {
+        event.preventDefault();
+        syncGuideDraftFromForm();
+        const path = String(document.querySelector('[data-cover-logo-library]')?.value || '').replace(/^\.\//, '/');
+        if (path && !(H().state.guideDraft.coverLogos || []).includes(path)) {
+          H().state.guideDraft.coverLogos = [...(H().state.guideDraft.coverLogos || []), path];
+          H().markDirty();
+          renderGuideEditor();
+        }
+        return;
+      }
       const logoUp = event.target.closest('[data-cover-logo-up]');
       const logoDown = event.target.closest('[data-cover-logo-down]');
       const logoRemove = event.target.closest('[data-cover-logo-remove]');
@@ -1470,7 +1481,10 @@
         if (!g || !g.id) return;
         try {
           const data = await H().uploadImage('/admin/api/cover-logo', event.target.files[0], { id: g.id, family: 'guide' });
-          g.coverLogos = [...(g.coverLogos || []), String(data.path || '').replace(/^\.\//, '/')];
+          const path = String(data.path || '').replace(/^\.\//, '/');
+          g.coverLogos = [...(g.coverLogos || []), path];
+          H().state.coverLogoLibrary = [...(H().state.coverLogoLibrary || []).filter((item) => item.path !== path), { path, name: data.filename || path.split('/').pop() }];
+          H().state.logoPreviewVersion = Date.now();
           H().markDirty();
           H().clearStatus();
         } catch (error) { await saveFail(error); }

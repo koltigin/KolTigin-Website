@@ -926,28 +926,22 @@ class AdminHandler(SimpleHTTPRequestHandler):
         except ValueError as exc:
             return json_error(self, HTTPStatus.BAD_REQUEST, str(exc))
         filename, data = parts.get("file") or ("", b"")
-        owner_raw = parts.get("id") or ("", b"")
-        family_raw = parts.get("family") or ("", b"")
-        decode = lambda value: value.decode("utf-8", errors="replace") if isinstance(value, bytes) else str(value)
-        owner_id = slugify(decode(owner_raw[1]))
-        family = decode(family_raw[1]).strip()
-        if not data or not ID_RE.match(owner_id) or family not in {"writing", "guide"}:
-            return json_error(self, HTTPStatus.BAD_REQUEST, "A saved writing or guide is required")
+        if not data:
+            return json_error(self, HTTPStatus.BAD_REQUEST, "Choose an image file")
         ext = sniff_image_ext(data)
         svg_head = data[:4000].lower()
         if not ext and b"<svg" in svg_head and b"<script" not in svg_head and b"onload=" not in svg_head:
             ext = ".svg"
         if not ext:
             return json_error(self, HTTPStatus.BAD_REQUEST, "Only PNG, JPEG, WebP, or SVG logos are accepted")
-        base = "writings" if family == "writing" else "guides"
-        folder = ROOT / "assets" / "images" / base / owner_id / "cover-logos"
+        folder = ROOT / "assets" / "images" / "cover-logos"
         stem = slugify(Path(filename).stem) or "logo"
         stored = unique_image_filename(folder, stem, ext, data)
         dest = folder / stored
         if not dest.exists():
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(data)
-        public = f"/assets/images/{base}/{owner_id}/cover-logos/{stored}"
+        public = f"/assets/images/cover-logos/{stored}"
         return json_ok(self, {"filename": stored, "path": public})
 
     def handle_avatar_upload(self) -> None:
@@ -1143,6 +1137,13 @@ class AdminHandler(SimpleHTTPRequestHandler):
 
         if parsed.path == "/admin/api/save":
             return self.handle_save(body)
+        if parsed.path == "/admin/api/cover-logos":
+            logos = []
+            images = ROOT / "assets" / "images"
+            for path in sorted(images.glob("**/cover-logos/*")):
+                if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}:
+                    logos.append({"path": f"/{path.relative_to(ROOT).as_posix()}", "name": path.name})
+            return json_ok(self, {"logos": logos})
         if parsed.path == "/admin/api/site":
             return self.handle_site_save(body)
         if parsed.path == "/admin/api/writing-types":

@@ -25,6 +25,7 @@ const ALLOWED_PREFIXES = [
   "i18n/tr.json",
   "assets/images/blog/",
   "assets/images/profile/",
+  "assets/images/cover-logos/",
   "assets/images/projects/",
   "assets/images/guides/",
   "assets/images/writings/",

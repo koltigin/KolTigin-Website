@@ -17,6 +17,7 @@ const {
 } = createRequire(join(root, "cms-save.js"))("./cms-save.js");
 
 const cmsSrc = readFileSync(join(root, "cms.js"), "utf8");
+const adminSrc = readFileSync(join(root, "admin.js"), "utf8");
 const htmlSrc = readFileSync(join(root, "index.html"), "utf8");
 
 let failed = 0;
@@ -114,7 +115,8 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.20"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.21"), "admin HTML cache-busts cms-save and cms.js");
+assert(adminSrc.includes("data-cover-logo-delete-existing") && cmsSrc.includes("/admin/api/cover-logo-delete"), "Guide editor can safely delete an unused shared logo");
 
 const sharedGuide = {
   id: "ario-guide",

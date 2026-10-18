@@ -1304,6 +1304,22 @@
         }
         return;
       }
+      if (event.target.closest('[data-cover-logo-delete-existing]') && H().state.guideDraft) {
+        event.preventDefault();
+        const path = String(document.querySelector('[data-cover-logo-library]')?.value || '').replace(/^\.\//, '/');
+        if (!path) return;
+        const name = path.split('/').pop() || path;
+        if (!window.confirm(t('writings.deleteCoverLogoConfirm', { name }))) return;
+        try {
+          await H().api('/admin/api/cover-logo-delete', { method: 'POST', body: JSON.stringify({ path }) });
+          H().state.coverLogoLibrary = (H().state.coverLogoLibrary || []).filter((item) => String(item.path || '').replace(/^\.\//, '/') !== path);
+          H().showNotice(t('writings.coverLogoDeleted', { name }), { tone: 'destructive' });
+        } catch (error) {
+          H().showError(error.message);
+        }
+        renderGuideEditor();
+        return;
+      }
       const logoUp = event.target.closest('[data-cover-logo-up]');
       const logoDown = event.target.closest('[data-cover-logo-down]');
       const logoRemove = event.target.closest('[data-cover-logo-remove]');

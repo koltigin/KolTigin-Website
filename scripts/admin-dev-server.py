@@ -1144,6 +1144,25 @@ class AdminHandler(SimpleHTTPRequestHandler):
                 if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}:
                     logos.append({"path": f"/{path.relative_to(ROOT).as_posix()}", "name": path.name})
             return json_ok(self, {"logos": logos})
+        if parsed.path == "/admin/api/cover-logo-delete":
+            public_path = str(body.get("path") or "").strip()
+            if not re.fullmatch(r"/assets/images/cover-logos/[^/]+\.(?:png|jpe?g|webp|svg)", public_path, re.I):
+                return json_error(self, HTTPStatus.BAD_REQUEST, "Invalid cover logo path")
+            target = ROOT / public_path.lstrip("/")
+            if not target.is_file():
+                return json_error(self, HTTPStatus.NOT_FOUND, "Cover logo not found")
+            used_by = []
+            for source in sorted((ROOT / "content").glob("**/*.md")):
+                try:
+                    if public_path in source.read_text(encoding="utf-8"):
+                        used_by.append(source.relative_to(ROOT).as_posix())
+                except OSError:
+                    continue
+            if used_by:
+                shown = ", ".join(used_by[:6])
+                return json_error(self, HTTPStatus.CONFLICT, f"This logo is still used by {len(used_by)} content file(s): {shown}")
+            target.unlink()
+            return json_ok(self, {"deleted": True, "path": public_path})
         if parsed.path == "/admin/api/site":
             return self.handle_site_save(body)
         if parsed.path == "/admin/api/writing-types":

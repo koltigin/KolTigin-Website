@@ -828,6 +828,16 @@ links:
     assert(res.status === 200 && res.body.path === "/assets/images/cover-logos/brand.svg", "cover logos upload to the reusable library");
     res = await json(await post("/api/admin/cover-logos", {}, env));
     assert(res.status === 200 && res.body.logos.some((item) => item.path === "/assets/images/cover-logos/brand.svg"), "cover logo library lists reusable uploads");
+    github.files.set("content/guides/uses-brand/EN.md", `---\ncoverLogos: ["/assets/images/cover-logos/brand.svg"]\n---\n# Uses brand\n`);
+    res = await json(await post("/api/admin/cover-logo-delete", { path: "/assets/images/cover-logos/brand.svg" }, env));
+    assert(res.status === 409 && String(res.body.error).includes("uses-brand/EN.md"), "used cover logo cannot be deleted");
+    assert(github.files.has("assets/images/cover-logos/brand.svg"), "blocked cover logo deletion keeps the file");
+    github.files.delete("content/guides/uses-brand/EN.md");
+    res = await json(await post("/api/admin/cover-logo-delete", { path: "/assets/images/cover-logos/brand.svg" }, env));
+    assert(res.status === 200 && res.body.deleted === true, "unused cover logo can be deleted");
+    assert(!github.files.has("assets/images/cover-logos/brand.svg"), "cover logo deletion removes the repository file");
+    res = await json(await post("/api/admin/cover-logo-delete", { path: "/assets/images/projects/redbelly.svg" }, env));
+    assert(res.status === 400, "cover logo deletion cannot target project logos");
 
     assert(assertSafePath("assets/images/writings/demo-id/x.png") === "assets/images/writings/demo-id/x.png", "writings asset path is allowlisted");
 

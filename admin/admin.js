@@ -1020,6 +1020,7 @@
           ${libraryOptions}
         </select>
         <button class="btn btn-ghost" type="button" data-cover-logo-add-existing ${canUpload && libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.useExistingLogo'))}</button>
+        <button class="btn btn-danger" type="button" data-cover-logo-delete-existing ${canUpload && libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.deleteExistingLogo'))}</button>
       </div>
       <span class="hint">${escapeHtml(canUpload ? t('writings.coverLogosHint') : t('writings.coverLogosSaveFirst'))}</span>
     </div>`;
@@ -2040,6 +2041,22 @@
           markDirty();
           renderWritingEditor();
         }
+        return;
+      }
+      if (event.target.closest('[data-cover-logo-delete-existing]') && state.editor && document.getElementById('writing-cover-logo')) {
+        event.preventDefault();
+        const path = rootAbsoluteAssetPath(document.querySelector('[data-cover-logo-library]')?.value || '');
+        if (!path) return;
+        const name = path.split('/').pop() || path;
+        if (!window.confirm(t('writings.deleteCoverLogoConfirm', { name }))) return;
+        try {
+          await api('/admin/api/cover-logo-delete', { method: 'POST', body: JSON.stringify({ path }) });
+          state.coverLogoLibrary = (state.coverLogoLibrary || []).filter((item) => rootAbsoluteAssetPath(item.path) !== path);
+          showNotice(t('writings.coverLogoDeleted', { name }), { tone: 'destructive' });
+        } catch (error) {
+          showError(error.message);
+        }
+        renderWritingEditor();
         return;
       }
       const logoUp = event.target.closest('[data-cover-logo-up]');

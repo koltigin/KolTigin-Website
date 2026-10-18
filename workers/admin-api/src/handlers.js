@@ -45,6 +45,40 @@ export async function handleCoverLogos(_body, github) {
   };
 }
 
+function coverLogoSourcePath(path, writingTypes) {
+  if (/^content\/guides\/[a-z0-9-]+\/(?:EN|TR)\.md$/i.test(path)) return true;
+  const match = path.match(/^content\/([a-z0-9-]+)\/(?:en|tr)\/[^/]+\.md$/i);
+  return Boolean(match && writingTypes.has(match[1]));
+}
+
+export async function handleCoverLogoDelete(body, github) {
+  const publicPath = String((body && body.path) || "").replace(/^\.\//, "/");
+  if (!/^\/assets\/images\/cover-logos\/[^/]+\.(?:png|jpe?g|webp|svg)$/i.test(publicPath) || publicPath.includes("..")) {
+    throw new HttpError(400, "Invalid cover logo path");
+  }
+  const repoPath = publicPath.slice(1);
+  if (!(await github.exists(repoPath))) throw new HttpError(404, "Cover logo not found");
+
+  const typesPack = await readJson(github, "config/writing-types.json", { types: [] });
+  const writingTypes = new Set((typesPack.types || []).map((item) => String(item && item.id || "")).filter(Boolean));
+  const sources = (await github.listPrefix("content/"))
+    .filter((path) => coverLogoSourcePath(path, writingTypes));
+  const usedBy = [];
+  for (const path of sources) {
+    const text = await github.getText(path);
+    if (text.includes(publicPath)) usedBy.push(path);
+  }
+  if (usedBy.length) {
+    throw new HttpError(409, `This logo is still used by ${usedBy.length} content file(s): ${usedBy.slice(0, 6).join(", ")}`);
+  }
+
+  const result = await github.commit({
+    message: commitMsg("delete cover logo", repoPath.split("/").pop()),
+    deletes: [repoPath]
+  });
+  return { deleted: true, path: publicPath, sha: result.sha };
+}
+
 async function readJson(github, path, fallback) {
   try {
     return JSON.parse(await github.getText(path));
@@ -1303,6 +1337,7 @@ export const POST_HANDLERS = {
   "/api/admin/writing-types": handleWritingTypes,
   "/api/admin/project-categories": handleProjectCategories,
   "/api/admin/cover-logos": handleCoverLogos,
+  "/api/admin/cover-logo-delete": handleCoverLogoDelete,
   "/api/admin/scripts": handleScriptsList,
   "/api/admin/script-delete": handleScriptDelete
 };

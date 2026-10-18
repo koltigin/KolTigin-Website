@@ -1,4 +1,5 @@
 ---
+coverLogos: ["/assets/images/guides/aro-network-depin-ubuntu-vps-installation-guide/cover-logos/aro-logo.svg"]
 date: 2026-09-09
 slug: aro-network-depin-ubuntu-vps-kurulum-rehberi
 ---

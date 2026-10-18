@@ -12,5 +12,51 @@
       "en": "09643f0115e8",
       "tr": "6d4d8bcd3449"
     }
+  },
+  "guides": {
+    "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl": {
+      "en": "6ab533ef0002",
+      "tr": "d1d3982a80e0"
+    },
+    "ar-io-gateway-installation": {
+      "en": "b47fbfcad5cd",
+      "tr": "4d7754e5be24"
+    },
+    "ar-io-gateway-troubleshooting": {
+      "en": "75897788e332",
+      "tr": "ea741f52e0a9"
+    },
+    "ar-io-gateway-update": {
+      "en": "fe31404faddd",
+      "tr": "8672ee04c9ae"
+    },
+    "aro-network-depin-ubuntu-vps-installation-guide": {
+      "en": "4146821abbe2",
+      "tr": "c100b46a8594"
+    },
+    "how-to-get-an-arns-domain": {
+      "en": "d21f0595b4ff",
+      "tr": "bea3d418a9f5"
+    },
+    "optimai-cli-node-setup-guide-ubuntu-24-04-vps": {
+      "en": "7f816192807e",
+      "tr": "3db3e4ee97cd"
+    },
+    "redbelly-mainnet-node-installation-guide": {
+      "en": "74b4e666d71c",
+      "tr": "de3662e84968"
+    },
+    "redbelly-mainnet-node-update-guide": {
+      "en": "e199e29b4f5c",
+      "tr": "13967fd2e449"
+    },
+    "redbelly-mainnet-telegram-monitoring-bot-installation-guide": {
+      "en": "490a69fa2b10",
+      "tr": "cc69bf972909"
+    },
+    "redbelly-node-troubleshooting": {
+      "en": "7c9486683ac0",
+      "tr": "a07f2c859d74"
+    }
   }
 }

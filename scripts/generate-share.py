@@ -278,7 +278,7 @@ def writing_og_version(
 
 def guide_og_version(*, lang: str, item_id: str, title: str, kicker: str, cover_logos: list[str] | None = None) -> str:
     payload = "\n".join([
-        "guide-og-v2",
+        "guide-og-v3",
         str(lang or ""),
         str(item_id or ""),
         str(title or ""),

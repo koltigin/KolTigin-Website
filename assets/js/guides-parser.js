@@ -329,7 +329,7 @@ class GuidesParser {
 
   generatedCoverVersion(markdown) {
     const { meta } = this.parseFrontMatter(markdown || '');
-    const source = `${meta.title || ''}|${meta.coverLogos || ''}`;
+    const source = `guide-cover-layout-v3|${meta.title || ''}|${meta.coverLogos || ''}`;
     let hash = 2166136261;
     for (let i = 0; i < source.length; i += 1) {
       hash ^= source.charCodeAt(i);

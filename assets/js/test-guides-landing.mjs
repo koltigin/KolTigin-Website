@@ -83,6 +83,7 @@ assert(parser.projectNameForGuide(projects, ARO) === "ARO", "related project nam
 assert(withoutVersion(parser.coverSrc(ARO, aroEn, "EN")) === `/assets/images/og/guides/en/${ARO}.png`, "EN card uses existing guide OG fallback");
 assert(withoutVersion(parser.coverSrc(ARO, aroTr, "TR")) === `/assets/images/og/guides/tr/${ARO}.png`, "TR card uses existing guide OG fallback");
 assert(parser.coverSrc(ARO, aroEn, "EN").includes('?v='), "generated guide covers include a cache version");
+assert(guidesSrc.includes("guide-cover-layout-v3"), "guide cover layout revisions invalidate old browser cache keys");
 const installId = "redbelly-mainnet-node-installation-guide";
 const updateId = "redbelly-mainnet-node-update-guide";
 const troubleId = "redbelly-node-troubleshooting";

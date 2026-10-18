@@ -1,4 +1,5 @@
 ---
+coverLogos: ["/assets/images/guides/redbelly-mainnet-node-installation-guide/cover-logos/redbelly-brand-negative.svg"]
 date: 2026-09-11
 slug: redbelly-mainnet-node-kurulum-rehberi
 ---

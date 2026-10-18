@@ -1,4 +1,5 @@
 ---
+coverLogos: ["/assets/images/guides/how-to-get-an-arns-domain/cover-logos/ario-logo.svg","/assets/images/cover-logos/cloudflare-white.jpg"]
 slug: ar-io-gateway-icin-domain-cloudflare-dns-ve-otomatik-ssl-kurulumu
 date: 2026-10-17
 title: "AR.IO Gateway için Domain, Cloudflare DNS ve Otomatik SSL Kurulumu"

@@ -20,6 +20,10 @@ links:
       tr: Explorer
     url: "https://redbelly.routescan.io"
   -     label:
+      en: Snapshot
+      tr: Snapshot
+    url: "https://github.com/Lorento34/redbellysnapshot/blob/main/RedbellySnapshotT%C3%BCrk%C3%A7e.md"
+  -     label:
       en: "Installation Guide"
       tr: "Kurulum Rehberi"
     guide: redbelly-mainnet-node-installation-guide

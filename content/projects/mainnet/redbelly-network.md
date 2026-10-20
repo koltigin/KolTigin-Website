@@ -31,9 +31,9 @@ links:
       en: "Update Guide"
       tr: "Güncelleme Rehberi"
     guide: redbelly-mainnet-node-update-guide
-  -     label:
+  - label:
       en: Troubleshooting
-      tr: "Sorunlar ve Çözümler"
+      tr: Sorunlar
     guide: redbelly-node-troubleshooting
   -     label:
       en: "Telegram Monitoring Bot"

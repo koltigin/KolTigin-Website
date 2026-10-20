@@ -164,7 +164,7 @@
         {
           "label": {
             "en": "Troubleshooting",
-            "tr": "Sorunlar ve Çözümler"
+            "tr": "Sorunlar"
           },
           "guide": "redbelly-node-troubleshooting"
         },

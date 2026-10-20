@@ -1,7 +1,7 @@
 ---
 title: "Dijital Üniversite Platformu Başvuruları"
 date: 2026-10-20
-coverLogos: ["/assets/images/cover-logos/dup-brand-footer.png","/assets/images/cover-logos/yok.png","/assets/images/cover-logos/marmamara-uni.png","/assets/images/cover-logos/yildiz-teknik-universitesi.png"]
+coverLogos: ["/assets/images/cover-logos/dijital-universite.png","/assets/images/cover-logos/yok.png","/assets/images/cover-logos/marmamara-universitesi.png","/assets/images/cover-logos/yildiz-teknik-universitesi-beyaz.png"]
 slug: dijital-universite-platformu-basvurulari
 ---
 
@@ -79,36 +79,4 @@ Devam koşullarını sağlayan katılımcılara katılım belgesi verilecek. Kı
 Başvuru takvimi şöyle:
 
 | Aşama | Tarih |
-|---|---|
-| Başvuruların başlaması | 14 Ekim 2026 |
-| Son başvuru | 26 Ekim 2026, 23.59 (TSİ) |
-| Sonuçların açıklanması | 30 Ekim 2026 |
-| Eğitimlerin başlaması | 3 Kasım 2026 |
-
-## Ben hangi eğitimleri seçtim?
-
-Başvurumu **Yapay Zekâ: Makine Öğrenmesi** ve **Modern Yazılım Geliştirme** modüllerini seçerek tamamladım.
-
-Zooloji alanında doktora derecem bulunuyor ancak son yıllarda ağırlıklı olarak yazılım ve blockchain teknolojileriyle ilgileniyorum. Linux sunucular yönetiyor, blockchain ağlarında node operatörlüğü yapıyor ve mobil uygulama geliştirmeye çalışıyorum.
-
-Son dönemde üzerinde çalıştığım projelerden biri Seekase adlı mobil uygulama. Bunun dışında senaryo yazıyor, yapay zekâ araçlarından yararlanarak hikâyelerimi kısa filmlere dönüştürmek için çalışmalar yapıyorum.
-
-Bu işlerle uğraşırken yazılım ve yapay zekâ konusundaki eksiklerimi daha fazla fark ettim. Özellikle makine öğrenmesinin nasıl çalıştığını anlamak ve geliştirdiğim uygulamalara yapay zekâ özellikleri ekleyebilmek istiyorum. Tercihlerimi de buna göre yaptım.
-
-Elbette başvurunun kabul edilip edilmeyeceği henüz belli değil. Sonuçlar 30 Ekim'de açıklanacak.
-
-## Başvuru nasıl yapılır?
-
-Başvuru için [Dijital Üniversite Platformu'nun resmî internet sitesine](https://www.dijitaluniversiteplatformu.org/tr/) girmeniz gerekiyor.
-
-Sitedeki başvuru bölümünden kişisel ve eğitim bilgilerinizi doldurabilir, ardından ilgi alanınıza uygun en fazla iki modülü seçebilirsiniz.
-
-**Son başvuru tarihi 26 Ekim 2026 Pazartesi, saat 23.59 (TSİ).**
-
-Yapay zekâ, veri analizi veya sürdürülebilirlik konularıyla ilgileniyorsanız ders içeriklerine göz atmanızı öneririm. Belki sizin çalışmalarınıza uygun bir eğitim de vardır.
-
-### Kaynaklar
-
-- [Dijital Üniversite Platformu – Resmî internet sitesi](https://www.dijitaluniversiteplatformu.org/tr/)
-- [Dijital Üniversite Platformu – Ders programı](https://dijitaluniversiteplatformu.org/tr/program/)
-- [Anadolu Ajansı – Başvuru süresinin 26 Ekim'e uzatılması](https://www.aa.com.tr/tr/gundem/dijital-universite-platformu-icin-basvuru-suresi-26-ekime-uzatildi/4093707)
+|

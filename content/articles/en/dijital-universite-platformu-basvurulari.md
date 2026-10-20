@@ -1,7 +1,7 @@
 ---
 title: "Digital University Platform Applications"
 date: 2026-10-20
-coverLogos: ["/assets/images/cover-logos/dup-brand-footer.png","/assets/images/cover-logos/yok.png","/assets/images/cover-logos/marmamara-uni.png","/assets/images/cover-logos/yildiz-teknik-universitesi.png"]
+coverLogos: ["/assets/images/cover-logos/dijital-universite.png","/assets/images/cover-logos/yok.png","/assets/images/cover-logos/marmamara-universitesi.png","/assets/images/cover-logos/yildiz-teknik-universitesi-beyaz.png"]
 slug: digital-university-platform-applications
 ---
 
@@ -102,50 +102,4 @@ Participants who meet the attendance requirements will receive a certificate of 
 ### Application Timeline
 
 | Event | Date |
-|---|---|
-| Applications open | October 14, 2026 |
-| Extended application deadline | October 26, 2026, 23:59 (UTC+3) |
-| Application results | October 30, 2026 |
-| Courses begin | November 3, 2026 |
-
-## Why I Applied
-
-I completed my PhD in Zoology in 2020 and spent several years conducting scientific research, primarily on freshwater crustaceans. My research was published in international scientific journals.
-
-Over the past few years, my interests have shifted toward software development, blockchain technologies, and artificial intelligence.
-
-I currently manage Linux servers, operate nodes on blockchain networks, and work on my own software projects. One of these projects is **Seekase**, a mobile application I have been developing for documenting and managing collectible items.
-
-I have also been writing a screenplay and exploring ways to turn stories into short films using AI tools. My interests include AI-generated visuals, video production, character consistency across scenes, voice generation, and editing.
-
-Working on these projects has shown me how much more I need to learn about programming and artificial intelligence.
-
-I already use AI tools regularly, but I want to understand the underlying technologies and become more capable of developing my own solutions.
-
-For these reasons, I applied to two modules:
-
-- **Artificial Intelligence: Machine Learning**
-- **Modern Software Development**
-
-I hope to use what I learn to improve my mobile applications, develop new software projects, and experiment with AI-assisted filmmaking.
-
-My application is complete, and I am now waiting for the results, which are expected to be announced on October 30.
-
-## How to Apply
-
-Applications can be submitted through the [Digital University Platform's official website](https://dijitaluniversiteplatformu.org/en/).
-
-Applicants need to complete the online form, provide the requested information, and select up to two modules.
-
-A motivation letter of no more than 2,000 characters is also required.
-
-**The extended application deadline is October 26, 2026, at 23:59 Türkiye time (UTC+3).**
-
-If you are interested in artificial intelligence, data analysis, or sustainability, you can review the available modules and decide whether they match your interests.
-
-### Official Links
-
-- [Digital University Platform](https://dijitaluniversiteplatformu.org/en/)
-- [Course Schedule](https://dijitaluniversiteplatformu.org/en/program/)
-- [Application Portal](https://basvuru.dijitaluniversiteplatformu.org/)
-- [Wikipedia: Council of Higher Education (Türkiye)](https://en.wikipedia.org/wiki/Council_of_Higher_Education_(Turkey))
+|

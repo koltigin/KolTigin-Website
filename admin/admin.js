@@ -2052,11 +2052,11 @@
         try {
           await api('/admin/api/cover-logo-delete', { method: 'POST', body: JSON.stringify({ path }) });
           state.coverLogoLibrary = (state.coverLogoLibrary || []).filter((item) => rootAbsoluteAssetPath(item.path) !== path);
+          renderWritingEditor();
           showNotice(t('writings.coverLogoDeleted', { name }), { tone: 'destructive' });
         } catch (error) {
           showError(error.message);
         }
-        renderWritingEditor();
         return;
       }
       const logoUp = event.target.closest('[data-cover-logo-up]');

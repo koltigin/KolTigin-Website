@@ -1312,11 +1312,11 @@
         try {
           await H().api('/admin/api/cover-logo-delete', { method: 'POST', body: JSON.stringify({ path }) });
           H().state.coverLogoLibrary = (H().state.coverLogoLibrary || []).filter((item) => String(item.path || '').replace(/^\.\//, '/') !== path);
+          renderGuideEditor();
           H().showNotice(t('writings.coverLogoDeleted', { name }), { tone: 'destructive' });
         } catch (error) {
           H().showError(error.message);
         }
-        renderGuideEditor();
         return;
       }
       const logoUp = event.target.closest('[data-cover-logo-up]');

@@ -116,7 +116,10 @@
       "id": "redbelly-network",
       "name": "Redbelly Network",
       "status": "active",
-      "role": "Node Operator",
+      "role": {
+        "en": "Node Operator",
+        "tr": "Node Operator"
+      },
       "logo": "./assets/images/projects/redbelly.svg",
       "summary": {
         "en": "I operate as an active node operator on Redbelly Network.",
@@ -124,12 +127,25 @@
       },
       "links": [
         {
-          "label": "Website",
+          "label": {
+            "en": "Website",
+            "tr": "Website"
+          },
           "url": "https://redbelly.network"
         },
         {
-          "label": "Explorer",
+          "label": {
+            "en": "Explorer",
+            "tr": "Explorer"
+          },
           "url": "https://redbelly.routescan.io"
+        },
+        {
+          "label": {
+            "en": "Snapshot",
+            "tr": "Snapshot"
+          },
+          "url": "https://github.com/Lorento34/redbellysnapshot/blob/main/RedbellySnapshotT%C3%BCrk%C3%A7e.md"
         },
         {
           "label": {

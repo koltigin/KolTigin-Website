@@ -74,6 +74,20 @@
         "en": "Projects",
         "tr": "Projeler"
       }
+    },
+    {
+      "id": "opinions",
+      "core": false,
+      "mode": "internal",
+      "icon": "chatbubble-ellipses-outline",
+      "label": {
+        "en": "Opinions",
+        "tr": "Görüşler"
+      },
+      "filter": {
+        "en": "Opinions",
+        "tr": "Görüşler"
+      }
     }
   ],
   "articles": {
@@ -149,6 +163,10 @@
     "tr": []
   },
   "projects": {
+    "en": [],
+    "tr": []
+  },
+  "opinions": {
     "en": [],
     "tr": []
   }

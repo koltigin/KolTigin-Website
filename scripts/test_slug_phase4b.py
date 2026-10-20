@@ -40,12 +40,12 @@ GUIDE_TR = "arns-domain-nasil-alinir"
 PHASE4B_SCRIPT_MARKERS = {
     "assets/js/router.js": "prod7",
     "assets/js/url-map.js": "phase4b",
-    "assets/js/site.js": "prod13",
+    "assets/js/site.js": "prod14",
     "assets/js/share-actions.js": "prod5",
     "assets/js/blog-parser.js": "prod21",
     "assets/js/projects-parser.js": "prod14",
     "assets/js/guide-markdown.js": "prod7",
-    "assets/js/guides-parser.js": "prod21",
+    "assets/js/guides-parser.js": "prod23",
 }
 
 
@@ -217,10 +217,10 @@ def test_primary_counts_and_slug_eq_id() -> None:
     sitemap = read(ROOT / "sitemap.xml")
     writing_locs = [u for u in sitemap_locs(sitemap) if re.search(r"/writings/(en|tr)/[^/]+/[^/]+/?$", u)]
     guide_locs = [u for u in sitemap_locs(sitemap) if re.search(r"/guides/[^/]+/(EN|TR)/?$", u)]
-    if len(writing_locs) != 8:
-        fail(f"expected 8 writing primaries in sitemap, got {len(writing_locs)}: {writing_locs}")
-    if len(guide_locs) != 20:
-        fail(f"expected 20 guide primaries in sitemap, got {len(guide_locs)}")
+    if len(writing_locs) != 10:
+        fail(f"expected 10 writing primaries in sitemap, got {len(writing_locs)}: {writing_locs}")
+    if len(guide_locs) != 22:
+        fail(f"expected 22 guide primaries in sitemap, got {len(guide_locs)}")
     if f"/writings/en/articles/{SOUL_EN}/" not in sitemap:
         fail("sitemap missing SoulMemory EN localized primary")
     if f"/writings/en/articles/{SOUL_ID}/" in sitemap:

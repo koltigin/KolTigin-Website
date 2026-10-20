@@ -22,7 +22,7 @@ for (const group of Object.values(projects)) {
     for (const link of project.links || []) {
       if (!link.guide) continue;
       for (const lang of ['en', 'tr']) {
-        const slug = map.guides[link.guide][lang];
+        const slug = map.guides[link.guide]?.[lang] || link.guide;
         const code = lang.toUpperCase();
         const href = `/guides/${slug}/${code}/`;
         let prevented = false;

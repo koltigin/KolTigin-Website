@@ -59,7 +59,7 @@ assert(guides.includes("^#\\/guides\\/"), "legacy hash parser remains for redire
 assert(projects.includes("`/guides/${encodeURIComponent(guideId)}/${code}/`"), "project guide href is the new public route");
 assert(projects.includes("event.preventDefault()"), "project guide clicks stay in the spa");
 assert(share.includes("/guides/${encodeURIComponent(slug)}/${code}/"), "share canonical is the new public route");
-assert(md.includes('href="/guides/${this.escapeHtml(guideId)}/${lang}/"'), "in-guide locale links use public paths");
+assert(md.includes("window.KolTiginRouter.guidePublicPath(guideId, lang)"), "in-guide locale links use public paths");
 assert(generate.includes("guides/{item_id}/{code}/index.html"), "share generator writes guides/id/EN");
 assert(generate.includes('root / "content" / "guides"'), "share generator reads guide markdown from content/guides");
 assert(!generate.includes("guide_legacy_share_path"), "share generator no longer writes /guide/ stubs");

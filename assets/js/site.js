@@ -162,8 +162,10 @@ function applyLangSwitch() {
       const active = code === lang;
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      const visibleCode = code === 'tr' ? 'TR' : 'EN';
       const nameKey = code === 'tr' ? 'lang.trName' : 'lang.enName';
-      button.setAttribute('aria-label', window.KolTiginI18n.t(nameKey, null, code === 'tr' ? 'Turkish' : 'English'));
+      const languageName = window.KolTiginI18n.t(nameKey, null, code === 'tr' ? 'Türkçe' : 'English');
+      button.setAttribute('aria-label', `${visibleCode} — ${languageName}`);
     });
   });
 }

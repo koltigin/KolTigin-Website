@@ -425,13 +425,17 @@ def test_exact_counts_and_all_robots() -> None:
 
     tmp = current_id_tree()
     try:
+        url_map = json.loads(read(tmp / "content" / "url-map.json"))
+        writing_ids = set((url_map.get("writings") or {}).keys())
+        guide_ids = set((url_map.get("guides") or {}).keys())
         id_writing = 0
         for path in (tmp / "writings").rglob("index.html"):
             rel = str(path.relative_to(tmp)).replace("\\", "/")
             if rel in paths:
                 continue
             parts = path.relative_to(tmp / "writings").parts
-            if len(parts) == 4:
+            stable_key = f"{parts[1]}/{parts[2]}" if len(parts) == 4 else ""
+            if stable_key in writing_ids:
                 id_writing += 1
                 html = read(path)
                 if robots(html) and "noindex" in (robots(html) or ""):
@@ -442,13 +446,16 @@ def test_exact_counts_and_all_robots() -> None:
             if rel in paths:
                 continue
             parts = path.relative_to(tmp / "guides").parts
-            if len(parts) == 3 and parts[1] in ("EN", "TR"):
+            if len(parts) == 3 and parts[0] in guide_ids and parts[1] in ("EN", "TR"):
                 id_guide += 1
                 html = read(path)
                 if robots(html) and "noindex" in (robots(html) or ""):
                     fail(f"stable-ID guide must not have Phase 3 noindex: {rel}")
-        if id_writing != 8 or id_guide != 20:
-            fail(f"expected 8/20 ID destinations, got {id_writing}/{id_guide}")
+        if id_writing != len(writing_ids) * 2 or id_guide != len(guide_ids) * 2:
+            fail(
+                f"expected {len(writing_ids) * 2}/{len(guide_ids) * 2} ID destinations, "
+                f"got {id_writing}/{id_guide}"
+            )
 
         for rel in paths:
             html = read(tmp / rel)

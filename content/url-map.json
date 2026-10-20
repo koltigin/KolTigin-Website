@@ -1,5 +1,9 @@
 {
   "writings": {
+    "announcements/dijital-universite-platformu-basvurulari": {
+      "en": "digital-university-platform-applications",
+      "tr": "dijital-universite-platformu-basvurulari"
+    },
     "articles/2026-08-31-soulmemory": {
       "en": "soulmemory-on-chain-mood-diary",
       "tr": "soulmemory-on-chain-duygu-gunlugu"
@@ -18,6 +22,10 @@
     }
   },
   "guides": {
+    "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl": {
+      "en": "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl",
+      "tr": "ar-io-gateway-icin-domain-cloudflare-dns-ve-otomatik-ssl-kurulumu"
+    },
     "ar-io-gateway-installation": {
       "en": "ar-io-gateway-installation",
       "tr": "ar-io-gateway-kurulumu"
@@ -61,6 +69,7 @@
   },
   "legacy": {
     "writingHashes": {
+      "announcements/digital-university-platform-applications": "announcements/dijital-universite-platformu-basvurulari",
       "articles/soulmemory-on-chain-duygu-gunlugu": "articles/2026-08-31-soulmemory",
       "articles/soulmemory-on-chain-mood-diary": "articles/2026-08-31-soulmemory",
       "articles/clarity-act-all-eyes-on-the-us-senate": "articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da",

@@ -24,6 +24,10 @@ from redirects import load_redirects, validate_redirects  # noqa: E402
 from url_map import UrlMapError, build_url_map, dump_url_map, write_url_map  # noqa: E402
 
 EXPECTED_WRITING_SLUGS = {
+    "announcements/dijital-universite-platformu-basvurulari": {
+        "en": "digital-university-platform-applications",
+        "tr": "dijital-universite-platformu-basvurulari",
+    },
     "articles/2026-08-31-soulmemory": {
         "en": "soulmemory-on-chain-mood-diary",
         "tr": "soulmemory-on-chain-duygu-gunlugu",
@@ -43,6 +47,10 @@ EXPECTED_WRITING_SLUGS = {
 }
 
 EXPECTED_GUIDE_SLUGS = {
+    "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl": {
+        "en": "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl",
+        "tr": "ar-io-gateway-icin-domain-cloudflare-dns-ve-otomatik-ssl-kurulumu",
+    },
     "how-to-get-an-arns-domain": {
         "en": "how-to-get-an-arns-domain",
         "tr": "arns-domain-nasil-alinir",

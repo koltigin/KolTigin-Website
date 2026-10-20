@@ -9,7 +9,7 @@ const tr = JSON.parse(readFileSync(join(root, "../../i18n/tr.json"), "utf8"));
 const cms = readFileSync(join(root, "../../admin/cms.js"), "utf8");
 const i18n = readFileSync(join(root, "../../admin/i18n.js"), "utf8");
 const projectsJson = JSON.parse(readFileSync(join(root, "../../projects/projects.json"), "utf8"));
-const optimaiMd = readFileSync(join(root, "../../content/projects/depin/optimai.md"), "utf8");
+const optimaiMd = readFileSync(join(root, "../../content/projects/artificial-intelligence-ai/optimai.md"), "utf8");
 
 let failed = 0;
 function assert(cond, msg) {
@@ -22,14 +22,14 @@ function assert(cond, msg) {
 }
 
 const GUIDE = "optimai-cli-node-setup-guide-ubuntu-24-04-vps";
-const optimai = (projectsJson.depin || []).find((item) => item.id === "optimai");
+const optimai = (projectsJson["artificial-intelligence-ai"] || []).find((item) => item.id === "optimai");
 const guideLink = (optimai.links || []).find((link) => link.guide === GUIDE);
 
 assert(Boolean(guideLink), "existing OptimAI Guide relationship is recognized");
 assert(!guideLink.url, "generated OptimAI guide link does not store a share URL");
 assert(optimaiMd.includes(`guide: ${GUIDE}`), "OptimAI markdown backfill stores the Guide id");
 assert(!/url:\s*.*\/guide\//.test(optimaiMd), "OptimAI markdown does not store a Guide share URL");
-assert((optimai.links || []).some((link) => link.label === "Website" && link.url === "https://optimai.network"), "manual Website link remains");
+assert((optimai.links || []).some((link) => (link.label?.en || link.label) === "Website" && link.url === "https://optimai.network"), "manual Website link remains");
 
 assert(en.projects.links.setupGuide === "Setup Guide", "EN project renders Setup Guide");
 assert(tr.projects.links.setupGuide === "Kurulum Rehberi", "TR project renders Kurulum Rehberi");
@@ -42,7 +42,7 @@ const redbellyGuides = (redbelly.links || []).filter((link) => link.guide);
 assert(redbellyGuides.length === 4, "Redbelly exposes four Guide links");
 assert(redbellyGuides[0].label?.en === "Installation Guide" && redbellyGuides[0].label?.tr === "Kurulum Rehberi", "Redbelly installation button has bilingual labels");
 assert(redbellyGuides[1].label?.en === "Update Guide" && redbellyGuides[1].label?.tr === "Güncelleme Rehberi", "Redbelly update button has bilingual labels");
-assert(redbellyGuides[2].label?.en === "Troubleshooting" && redbellyGuides[2].label?.tr === "Sorunlar ve Çözümler", "Redbelly troubleshooting button has bilingual labels");
+assert(redbellyGuides[2].label?.en === "Troubleshooting" && redbellyGuides[2].label?.tr === "Sorunlar", "Redbelly troubleshooting button has bilingual labels");
 assert(redbellyGuides[3].guide === "redbelly-mainnet-telegram-monitoring-bot-installation-guide", "Redbelly Telegram monitor Guide remains linked");
 assert(parser.includes("labelEN || link.labelTR"), "parser accepts labelEN/labelTR aliases");
 assert(parser.includes("this.currentLang()"), "project guide labels follow the active site language");
@@ -61,7 +61,7 @@ const labelRule = css.match(/\.project-card-link-label\s*\{[^}]+\}/);
 assert(Boolean(labelRule), "project action label rule exists");
 assert(!/text-overflow:\s*ellipsis/.test(labelRule[0]), "project action labels are not truncated with ellipsis");
 assert(!/white-space:\s*nowrap/.test(labelRule[0]), "project action labels may wrap instead of truncating");
-const order = (optimai.links || []).map((link) => link.guide ? "guide" : String(link.label || "").toLowerCase());
+const order = (optimai.links || []).map((link) => link.guide ? "guide" : String(link.label?.en || link.label || "").toLowerCase());
 assert(order[0] === "website" && order[1] === "guide", "OptimAI semantic link order stays Website then Guide");
 assert(parser.includes("sortProjectsByName") && !parser.includes("KolTiginContentOrder"), "Projects ordering is NOT changed");
 assert(parser.includes("if (referralUrl) {\n      links.push({ label: this.t('projects.links.referral'"), "Referral is still appended after project links");

@@ -225,6 +225,9 @@ assert(pageEditor.indexOf("data-save-page") < pageEditor.indexOf("admin-md-previ
 assert(pageEditor.includes("data-page-md") && pageEditor.includes("renderAboutIconPicker"), "about/resume markdown and icon picker remain");
 
 assert(!adminSrc.includes("parts[1] !== 'videos'"), "edit routes no longer default to writings");
+assert(adminSrc.includes('data-go="#/edit/writings/${item.kind}/${encodeURIComponent(item.id)}"'), "Writing edit links use a namespace that cannot collide with Projects");
+assert(adminSrc.includes("page === 'edit' && parts[1] === 'writings' && writingKindIds().includes(parts[2]) && parts[3]"), "namespaced Writing edit routes accept dynamic writing types");
+assert(adminSrc.indexOf("window.AdminCMS.handleRoute(page, parts)") < adminSrc.indexOf("page === 'edit' && writingKindIds().includes(parts[1]) && parts[2]"), "Project and Guide edit routes take precedence over legacy dynamic Writing routes");
 const navStart = adminSrc.indexOf("function navIdFromParts");
 const navEnd = adminSrc.indexOf("function currentNav");
 assert(navStart !== -1 && navEnd > navStart, "central navIdFromParts helper exists");

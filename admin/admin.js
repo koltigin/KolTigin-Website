@@ -752,7 +752,7 @@
     writingKindIds().forEach((kind) => { counts[kind] = (state.content[kind] || []).length; });
     app.innerHTML = layout(t('nav.dashboard'), `
       <div class="row-actions">
-        <button class="btn btn-gold" data-go="#/new/articles">${escapeHtml(t('dash.newWriting'))}</button>
+        <button class="btn btn-gold" data-go="#/new/writings/articles">${escapeHtml(t('dash.newWriting'))}</button>
         <button class="btn btn-ghost" data-go="#/new/videos">${escapeHtml(t('dash.newVideo'))}</button>
         <button class="btn btn-ghost" data-go="#/new/projects">${escapeHtml(t('dash.newProject'))}</button>
         <button class="btn btn-ghost" data-go="#/new/guides">${escapeHtml(t('dash.newGuide'))}</button>
@@ -864,7 +864,7 @@
               <span class="pill">${escapeHtml(item.date || '')}</span>
             </div>
             <div class="item-actions">
-              <button class="btn btn-ghost" data-go="#/edit/${item.kind}/${encodeURIComponent(item.id)}">${escapeHtml(t('writings.editBtn'))}</button>
+              <button class="btn btn-ghost" data-go="#/edit/writings/${item.kind}/${encodeURIComponent(item.id)}">${escapeHtml(t('writings.editBtn'))}</button>
               <a class="btn btn-ghost" href="${escapeHtml(previewHref(item))}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('writings.preview'))}</a>
               ${isExternalType(item.kind) ? '' : `<a class="btn btn-ghost" href="${escapeHtml(shareHref(item))}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('writings.sharePage'))}</a>`}
               ${entityDeleteButton({ family: 'writing', id: item.id, kind: item.kind, title })}
@@ -876,7 +876,7 @@
 
     app.innerHTML = layout(t('writings.title'), `
       <div class="row-actions">
-        <button class="btn btn-gold" data-go="#/new/articles">${escapeHtml(t('writings.new'))}</button>
+        <button class="btn btn-gold" data-go="#/new/writings/articles">${escapeHtml(t('writings.new'))}</button>
         <button class="btn btn-ghost" data-go="#/writing-types">${escapeHtml(t('types.manage'))}</button>
       </div>
       <div class="filters" role="group">
@@ -1599,7 +1599,7 @@
       editor.originalKind = editor.kind;
       if (!isExternalType(editor.kind)) editor.pair.externalUrl = '';
       if (previousKind && previousKind !== editor.kind) {
-        history.replaceState(null, '', `${location.pathname}${location.search}#/edit/${editor.kind}/${encodeURIComponent(editor.sharedId)}`);
+        history.replaceState(null, '', `${location.pathname}${location.search}#/edit/writings/${editor.kind}/${encodeURIComponent(editor.sharedId)}`);
       }
       if (Sync.writingSaveShouldShowSuccess(savedLangs.length, payloads.length, false)
           && payloads.every((row) => savedLangs.includes(row.lang))) {
@@ -2425,19 +2425,19 @@
         renderSocial();
         return;
       }
-      if (page === 'new' && (writingKindIds().includes(parts[1]) || parts[1] === 'writing')) {
-        await openEditor(parts[1] === 'writing' ? 'articles' : parts[1]);
+      if (page === 'new' && parts[1] === 'writings' && writingKindIds().includes(parts[2])) {
+        await openEditor(parts[2]);
+        renderWritingEditor();
+        return;
+      }
+      if (page === 'edit' && parts[1] === 'writings' && writingKindIds().includes(parts[2]) && parts[3]) {
+        await openEditor(parts[2], decodeURIComponent(parts[3]));
         renderWritingEditor();
         return;
       }
       if (page === 'new' && parts[1] === 'videos') {
         await openEditor('videos');
         renderVideoEditor();
-        return;
-      }
-      if (page === 'edit' && writingKindIds().includes(parts[1]) && parts[2]) {
-        await openEditor(parts[1], decodeURIComponent(parts[2]));
-        renderWritingEditor();
         return;
       }
       if (page === 'edit' && parts[1] === 'videos' && parts[2]) {
@@ -2448,6 +2448,16 @@
       if (window.AdminCMS && typeof window.AdminCMS.handleRoute === 'function') {
         const handled = await window.AdminCMS.handleRoute(page, parts);
         if (handled) return;
+      }
+      if (page === 'new' && (writingKindIds().includes(parts[1]) || parts[1] === 'writing')) {
+        await openEditor(parts[1] === 'writing' ? 'articles' : parts[1]);
+        renderWritingEditor();
+        return;
+      }
+      if (page === 'edit' && writingKindIds().includes(parts[1]) && parts[2]) {
+        await openEditor(parts[1], decodeURIComponent(parts[2]));
+        renderWritingEditor();
+        return;
       }
       renderDashboard();
     } catch (error) {

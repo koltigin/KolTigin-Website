@@ -4,6 +4,10 @@ Public site for [koltigin.xyz](https://koltigin.xyz/). Static HTML, CSS, and Jav
 
 English is the default language. Turkish is a manual choice stored in the browser.
 
+## Installation and customization
+
+Forking this repository for your own portfolio? A separate Turkish step-by-step setup guide is available from the repository maintainer. It covers identity and content changes, local preview, GitHub Pages, custom domains, SEO generation, security checks, and the optional Cloudflare-backed admin panel.
+
 ## Local preview
 
 ```bash

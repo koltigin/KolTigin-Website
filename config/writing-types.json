@@ -46,6 +46,20 @@
         "en": "X Posts",
         "tr": "X Paylaşımları"
       }
+    },
+    {
+      "id": "announcements",
+      "core": false,
+      "mode": "internal",
+      "icon": "newspaper-outline",
+      "label": {
+        "en": "Announcements",
+        "tr": "Duyurular"
+      },
+      "filter": {
+        "en": "Announcements",
+        "tr": "Duyurular"
+      }
     }
   ]
 }

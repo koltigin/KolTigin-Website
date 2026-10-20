@@ -60,6 +60,20 @@
         "en": "Announcements",
         "tr": "Duyurular"
       }
+    },
+    {
+      "id": "projects",
+      "core": false,
+      "mode": "internal",
+      "icon": "code-slash-outline",
+      "label": {
+        "en": "Projects",
+        "tr": "Projeler"
+      },
+      "filter": {
+        "en": "Projects",
+        "tr": "Projeler"
+      }
     }
   ]
 }

@@ -1,5 +1,9 @@
 {
   "writings": {
+    "announcements/dijital-universite-platformu-basvurulari": {
+      "en": "5ba07bed8684",
+      "tr": "0db20ff1744e"
+    },
     "articles/clarity-act-abd-kripto-piyasasinda-gozler-senato-da": {
       "en": "bc3d2fb5a924",
       "tr": "399eec6328b6"
@@ -11,10 +15,6 @@
     "notes/2026-08-29-validator-notlari": {
       "en": "09643f0115e8",
       "tr": "6d4d8bcd3449"
-    },
-    "announcements/dijital-universite-platformu-basvurulari": {
-      "en": "52393cf472c7",
-      "tr": "b4e5f107dd8c"
     }
   },
   "guides": {

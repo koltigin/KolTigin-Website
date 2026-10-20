@@ -4,10 +4,6 @@
       "en": "bc3d2fb5a924",
       "tr": "399eec6328b6"
     },
-    "articles/dijital-universite-platformu-basvurulari": {
-      "en": "b649c9728e34",
-      "tr": "5eb5268488ec"
-    },
     "notes/2025-06-01-turkce-node-rehberi": {
       "en": "9e641a6085f1",
       "tr": "a0b02f54a89b"
@@ -15,6 +11,10 @@
     "notes/2026-08-29-validator-notlari": {
       "en": "09643f0115e8",
       "tr": "6d4d8bcd3449"
+    },
+    "announcements/dijital-universite-platformu-basvurulari": {
+      "en": "52393cf472c7",
+      "tr": "b4e5f107dd8c"
     }
   },
   "guides": {

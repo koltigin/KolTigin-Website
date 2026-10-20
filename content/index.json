@@ -92,12 +92,10 @@
   ],
   "articles": {
     "en": [
-      "dijital-universite-platformu-basvurulari.md",
       "clarity-act-abd-kripto-piyasasinda-gozler-senato-da.md",
       "2026-08-31-soulmemory.md"
     ],
     "tr": [
-      "dijital-universite-platformu-basvurulari.md",
       "clarity-act-abd-kripto-piyasasinda-gozler-senato-da.md",
       "2026-08-31-soulmemory.md"
     ]
@@ -159,8 +157,12 @@
     "starknet-airdrop-rehberi.md"
   ],
   "announcements": {
-    "en": [],
-    "tr": []
+    "en": [
+      "dijital-universite-platformu-basvurulari.md"
+    ],
+    "tr": [
+      "dijital-universite-platformu-basvurulari.md"
+    ]
   },
   "projects": {
     "en": [],

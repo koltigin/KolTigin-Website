@@ -115,8 +115,12 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.21"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.22"), "admin HTML cache-busts cms-save and cms.js");
 assert(adminSrc.includes("data-cover-logo-delete-existing") && cmsSrc.includes("/admin/api/cover-logo-delete"), "Guide editor can safely delete an unused shared logo");
+assert(!adminSrc.includes("coverLogosBlock(editor.coverLogos, writingIsSaved(editor))"), "new Writing editor does not disable the reusable logo library before first save");
+assert(!cmsSrc.includes("coverLogosBlock(g.coverLogos || [], Boolean(g.id))"), "new Guide editor does not disable the reusable logo library before first save");
+assert(!adminSrc.includes("if (!state.editor || !writingIsSaved(state.editor)) return;"), "new Writing can open the shared logo uploader before first save");
+assert(!cmsSrc.includes("if (!H().state.guideDraft.id) return;"), "new Guide can open the shared logo uploader before first save");
 
 const sharedGuide = {
   id: "ario-guide",

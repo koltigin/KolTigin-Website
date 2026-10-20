@@ -709,7 +709,7 @@
         return `${visible.labelEn ? enField : ''}${visible.labelTr ? trField : ''}`;
       })()}
       ${guideCoverPicker(g)}
-      ${H().coverLogosBlock(g.coverLogos || [], Boolean(g.id))}
+      ${H().coverLogosBlock(g.coverLogos || [])}
       <form>
         <div class="field">
           ${guideToolbar()}
@@ -1289,7 +1289,6 @@
       }
       if (event.target.closest('[data-cover-logo-pick]') && H().state.guideDraft) {
         event.preventDefault();
-        if (!H().state.guideDraft.id) return;
         document.getElementById('guide-cover-logo')?.click();
         return;
       }
@@ -1494,7 +1493,7 @@
       }
       if (event.target.id === 'guide-cover-logo' && event.target.files && event.target.files[0]) {
         const g = H().state.guideDraft;
-        if (!g || !g.id) return;
+        if (!g) return;
         try {
           const data = await H().uploadImage('/admin/api/cover-logo', event.target.files[0], { id: g.id, family: 'guide' });
           const path = String(data.path || '').replace(/^\.\//, '/');

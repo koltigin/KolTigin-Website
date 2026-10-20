@@ -993,7 +993,7 @@
     </div>`;
   }
 
-  function coverLogosBlock(logos, canUpload) {
+  function coverLogosBlock(logos) {
     const previewSrc = (path) => `${rootAbsoluteAssetPath(path)}?admin-preview=${state.logoPreviewVersion}`;
     const items = (Array.isArray(logos) ? logos : []).map((path, index) => `
       <div class="cover-logo-row">
@@ -1014,15 +1014,15 @@
       <label>${escapeHtml(t('writings.coverLogos'))}</label>
       <div class="cover-logo-list">${items}</div>
       <div class="cover-logo-add-actions">
-        <button class="btn btn-ghost" type="button" data-cover-logo-pick ${canUpload ? '' : 'disabled'}>${escapeHtml(t('writings.addCoverLogo'))}</button>
-        <select data-cover-logo-library ${canUpload && libraryOptions ? '' : 'disabled'}>
+        <button class="btn btn-ghost" type="button" data-cover-logo-pick>${escapeHtml(t('writings.addCoverLogo'))}</button>
+        <select data-cover-logo-library ${libraryOptions ? '' : 'disabled'}>
           <option value="">${escapeHtml(t('writings.chooseExistingLogo'))}</option>
           ${libraryOptions}
         </select>
-        <button class="btn btn-ghost" type="button" data-cover-logo-add-existing ${canUpload && libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.useExistingLogo'))}</button>
-        <button class="btn btn-danger" type="button" data-cover-logo-delete-existing ${canUpload && libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.deleteExistingLogo'))}</button>
+        <button class="btn btn-ghost" type="button" data-cover-logo-add-existing ${libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.useExistingLogo'))}</button>
+        <button class="btn btn-danger" type="button" data-cover-logo-delete-existing ${libraryOptions ? '' : 'disabled'}>${escapeHtml(t('writings.deleteExistingLogo'))}</button>
       </div>
-      <span class="hint">${escapeHtml(canUpload ? t('writings.coverLogosHint') : t('writings.coverLogosSaveFirst'))}</span>
+      <span class="hint">${escapeHtml(t('writings.coverLogosHint'))}</span>
     </div>`;
   }
 
@@ -1140,7 +1140,7 @@
             <span class="hint">${escapeHtml(t('writings.dateHint'))}</span>
           </div>
           ${xField}
-          ${coverLogosBlock(editor.coverLogos, writingIsSaved(editor))}
+          ${coverLogosBlock(editor.coverLogos)}
           ${localePanel(editor, 'en')}
           ${localePanel(editor, 'tr')}
         </form>
@@ -2028,7 +2028,7 @@
       }
       if (event.target.closest('[data-cover-logo-pick]') && document.getElementById('writing-cover-logo')) {
         event.preventDefault();
-        if (!state.editor || !writingIsSaved(state.editor)) return;
+        if (!state.editor) return;
         document.getElementById('writing-cover-logo')?.click();
         return;
       }

@@ -1705,12 +1705,6 @@ main {
   margin-top: 14px;
   margin-bottom: 16px;
   min-height: calc(1.7em * 2);
-  max-height: calc(1.7em * 2);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
 }
 
 .project-card:has(.project-card-role) .project-card-summary {

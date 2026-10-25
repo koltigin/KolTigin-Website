@@ -241,11 +241,17 @@ function bindLangSwitch() {
     const writing = window.KolTiginRouter && window.KolTiginRouter.parseWritingPath(window.location.pathname);
     if (writing) {
       const loc = button.getAttribute('data-set-lang') === 'tr' ? 'tr' : 'en';
-      // Phase 3: language switch stays on stable-ID URLs even from localized dual-publish paths.
+      const slugKey = loc === 'tr' ? 'trSlug' : 'enSlug';
+      const embeddedSlug = String(document.documentElement.dataset[slugKey] || '').trim();
+      const counterpart = window.KolTiginRouter.writingLocalizedCounterpartPath
+        ? window.KolTiginRouter.writingLocalizedCounterpartPath(writing, loc)
+        : '';
       const stableId = window.KolTiginRouter.writingStableIdFromRoute
         ? window.KolTiginRouter.writingStableIdFromRoute(writing)
         : writing.id;
-      const next = window.KolTiginRouter.writingPublicPath(loc, writing.kind, stableId || writing.id);
+      const next = embeddedSlug && window.KolTiginRouter.writingLocalizedPublicPath
+        ? window.KolTiginRouter.writingLocalizedPublicPath(loc, writing.kind, embeddedSlug)
+        : counterpart || window.KolTiginRouter.writingPublicPath(loc, writing.kind, stableId || writing.id);
       if (window.KolTiginRouter.normalizePath(window.location.pathname) !== window.KolTiginRouter.normalizePath(next)) {
         window.location.assign(next);
       }

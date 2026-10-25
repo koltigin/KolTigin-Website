@@ -389,8 +389,8 @@ def test_localized_generator_mode() -> None:
         ]
         guide_locs = [u for u in locs if re.search(r"/guides/[^/]+/(EN|TR)/?$", u)]
         # Exact primary counts from live corpus copied into temp.
-        if len(writing_locs) != 10:
-            fail(f"LOCALIZED sitemap expected 10 writing URLs, got {len(writing_locs)}: {writing_locs}")
+        if len(writing_locs) != 12:
+            fail(f"LOCALIZED sitemap expected 12 writing URLs, got {len(writing_locs)}: {writing_locs}")
         if len(guide_locs) != 22:
             fail(f"LOCALIZED sitemap expected 22 guide URLs, got {len(guide_locs)}")
         if f"/writings/en/articles/{SOUL_ID}/" in sitemap:

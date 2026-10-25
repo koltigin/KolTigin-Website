@@ -7,6 +7,7 @@ const blog = readFileSync(join(root, "blog-parser.js"), "utf8");
 const guides = readFileSync(join(root, "guides-parser.js"), "utf8");
 
 const share = readFileSync(join(root, "share-actions.js"), "utf8");
+const site = readFileSync(join(root, "site.js"), "utf8");
 
 let failed = 0;
 function assert(cond, msg) {
@@ -26,6 +27,8 @@ assert(/#\\\/guides\\\/\(\[a-z0-9-\]+\)/.test(guides) || guides.includes("^#\\/g
 assert(share.includes("writingShareUrl") && share.includes("guideShareUrl"), "canonical share helpers exist");
 assert(blog.includes("publicWritingPath()"), "public writing path helper remains");
 assert(blog.includes("writingPublicPath"), "language switch on a public writing page navigates to the other locale URL");
+assert(site.includes("document.documentElement.dataset") && site.includes("writingLocalizedPublicPath"), "page language switch uses the target locale slug embedded in the HTML");
+assert(!site.includes("language switch stays on stable-ID URLs"), "page language switch no longer intentionally falls back to stable-ID URLs");
 assert(blog.includes("parseInline") && blog.includes("<img src="), "writing parser renders markdown images");
 assert(!share.includes("location.href"), "share helpers do not use location.href");
 

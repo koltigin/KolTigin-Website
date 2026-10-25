@@ -92,12 +92,10 @@
   ],
   "articles": {
     "en": [
-      "abd-de-stablecoin-tartismasi-turkiye-de-bankalarin-dijital-donusumu.md",
       "clarity-act-abd-kripto-piyasasinda-gozler-senato-da.md",
       "2026-08-31-soulmemory.md"
     ],
     "tr": [
-      "abd-de-stablecoin-tartismasi-turkiye-de-bankalarin-dijital-donusumu.md",
       "clarity-act-abd-kripto-piyasasinda-gozler-senato-da.md",
       "2026-08-31-soulmemory.md"
     ]
@@ -171,7 +169,11 @@
     "tr": []
   },
   "opinions": {
-    "en": [],
-    "tr": []
+    "en": [
+      "abd-de-stablecoin-tartismasi-turkiye-de-bankalarin-dijital-donusumu.md"
+    ],
+    "tr": [
+      "abd-de-stablecoin-tartismasi-turkiye-de-bankalarin-dijital-donusumu.md"
+    ]
   }
 }

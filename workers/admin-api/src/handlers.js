@@ -306,7 +306,7 @@ async function upsertWritingLocale(github, upserts, {
     kind,
     body: item.body || "",
     external: destExternal,
-    summary: extra.summary || "",
+    summary: extra.summary || excerptWriting(item.body || ""),
     slug,
     aliases: extra.aliases || ""
   }));

@@ -273,6 +273,7 @@ links:
     }, env));
     assert(res.status === 200 && res.body.ok === true, "save writing ok");
     assert(github.files.has("content/articles/en/smoke-note.md"), "writing file written");
+    assert(github.files.get("content/articles/en/smoke-note.md").includes("summary: Hello"), "new writing summary is generated from the first paragraph");
     assert(github.files.has("assets/images/og/writings/en/articles/smoke-note.png"), "new EN writing gets same-locale OG placeholder");
     assert(!github.files.has("assets/images/og/writings/tr/articles/smoke-note.png"), "EN-only save does not write a TR OG raster");
     const index = JSON.parse(github.files.get("content/index.json"));

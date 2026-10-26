@@ -299,6 +299,8 @@
     const lines = ['---', `title: ${yamlValue(draft.title)}`, `date: ${pair.date}`];
     if (draft.cover) lines.push(`cover: ${yamlValue(draft.cover)}`);
     if (Array.isArray(draft.coverLogos) && draft.coverLogos.length) lines.push(`coverLogos: ${JSON.stringify(draft.coverLogos)}`);
+    const summary = excerpt(draft.body);
+    if (summary) lines.push(`summary: ${yamlValue(summary)}`);
     if (isExternalType(kind)) lines.push(`externalUrl: ${yamlValue(pair.externalUrl)}`);
     lines.push('---');
     const body = String(draft.body || '').replace(/^\n+|\n+$/g, '');

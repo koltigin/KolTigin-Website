@@ -5,14 +5,6 @@ cover: seekase-solana-dapp-store.png
 slug: seekase-is-now-available-on-the-solana-dapp-store
 ---
 
----
-title: "Seekase Is Now Available on the Solana dApp Store"
-date: "2026-10-26"
-summary: "I built Seekase for collectors to record and share their collections through photos and stories. It is now available to Seeker users."
-slug: seekase-now-available-solana-dapp-store
-cover: "seekase-solana-dapp-store.png"
----
-
 Seekase, the application I have been working on for some time, is now available on the Solana dApp Store. Seeker users can find and install it by searching for **Seekase** in the store.
 
 [Visit the Seekase website](https://seekase.app/)

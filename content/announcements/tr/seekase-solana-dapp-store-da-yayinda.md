@@ -5,14 +5,6 @@ cover: seekase-solana-dapp-store-tr.png
 slug: seekase-solana-dapp-store-da-yayinda
 ---
 
----
-title: "Seekase Solana dApp Store'da Yayında"
-date: "2026-10-26"
-summary: "Koleksiyonları fotoğrafları ve hikâyeleriyle kaydetmek, paylaşmak ve yeni koleksiyoncular keşfetmek için geliştirdiğim Seekase artık Seeker kullanıcılarıyla buluşuyor."
-slug: seekase-solana-dapp-storeda-yayinda
-cover: "seekase-solana-dapp-store-tr.png"
----
-
 Bir süredir üzerinde çalıştığım Seekase, Solana dApp Store'da yayımlandı. Seeker kullananlar uygulamayı mağazada **Seekase** adıyla bulup indirebilir.
 
 [Seekase web sitesini ziyaret edin](https://seekase.app/)

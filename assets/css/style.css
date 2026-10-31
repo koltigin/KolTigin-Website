@@ -834,6 +834,16 @@ main {
   text-overflow: clip;
 }
 
+/* Keep the two longer Turkish labels legible on iPhone 11-sized screens. */
+@media (max-width: 430px) {
+  html[lang="tr"] .navbar-link:is(
+    [data-nav-page="about"],
+    [data-nav-page="resume"]
+  ) {
+    font-size: 9px;
+  }
+}
+
 .navbar-link:hover,
 .navbar-link:focus { color: var(--light-gray-70); }
 

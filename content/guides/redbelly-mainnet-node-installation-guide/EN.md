@@ -41,7 +41,7 @@ nslookup redbelly.example.com
 Make sure the following ports are open in your firewall:
 
 | Port | Protocol | Purpose |
-|---|---|---|
+| :--- | :--- | :--- |
 | 22 | TCP | SSH |
 | 80 | TCP | Let's Encrypt / Certbot |
 | 1888 | TCP | Consensus |

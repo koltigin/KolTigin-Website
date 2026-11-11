@@ -309,7 +309,7 @@ Value: YOUR_SERVER_IP</code></pre></div>
 <div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>nslookup redbelly.example.com</code></pre></div>
 <h3>Gerekli Portlar</h3>
 <p>Firewall üzerinde aşağıdaki portların açık olduğundan emin olun:</p>
-<p>| Port | Protokol | Kullanım | |---|---|---| | 22 | TCP | SSH | | 80 | TCP | Let&#x27;s Encrypt / Certbot | | 1888 | TCP | Consensus | | 1111 | TCP | Recovery | | 6540 | UDP | Status Server |</p>
+<p>| Port | Protokol | Kullanım | | :--- | :--- | :--- | | 22 | TCP | SSH | | 80 | TCP | Let&#x27;s Encrypt / Certbot | | 1888 | TCP | Consensus | | 1111 | TCP | Recovery | | 6540 | UDP | Status Server |</p>
 <p>UFW kullanıyorsanız:</p>
 <div class="guide-code-wrap"><div class="guide-code-meta"><span>bash</span><button type="button" class="guide-copy-btn" data-copy-code>Kopyala</button></div><pre><code>sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp

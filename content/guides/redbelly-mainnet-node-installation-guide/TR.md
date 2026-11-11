@@ -41,7 +41,7 @@ nslookup redbelly.example.com
 Firewall üzerinde aşağıdaki portların açık olduğundan emin olun:
 
 | Port | Protokol | Kullanım |
-|---|---|---|
+| :--- | :--- | :--- |
 | 22 | TCP | SSH |
 | 80 | TCP | Let's Encrypt / Certbot |
 | 1888 | TCP | Consensus |

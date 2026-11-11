@@ -126,8 +126,26 @@ install_dependencies() {
 
   if [[ ${#missing[@]} -gt 0 ]]; then
     echo "$(t installing_deps) ${missing[*]}"
-    apt-get update
-    apt-get install -y curl jq openssl grep gawk sed
+    if command -v dnf >/dev/null 2>&1; then
+      dnf install -y curl jq openssl grep gawk sed
+    elif command -v yum >/dev/null 2>&1; then
+      yum install -y curl jq openssl grep gawk sed
+    elif command -v apt-get >/dev/null 2>&1; then
+      apt-get update
+      apt-get install -y curl jq openssl grep gawk sed
+    else
+      echo "❌ Supported package manager not found (dnf, yum, or apt-get)." >&2
+      return 1
+    fi
+
+    local still_missing=()
+    for cmd in "${missing[@]}"; do
+      command -v "$cmd" >/dev/null 2>&1 || still_missing+=("$cmd")
+    done
+    if [[ ${#still_missing[@]} -gt 0 ]]; then
+      echo "❌ Dependencies still missing after installation: ${still_missing[*]}" >&2
+      return 1
+    fi
   fi
 }
 
@@ -264,33 +282,44 @@ governor_check() {
 }
 
 node_status_from_log() {
-  local status_line recovery
+  local status_line recovery_line version_line recovery
 
+  # Prefer the legacy combined status record when available.
   status_line=$(grep -a 'msg="Node status"' "$LOG_FILE" 2>/dev/null | tail -1)
+  if [[ -n "$status_line" ]]; then
+    NODE_BLOCK=$(echo "$status_line" | grep -oP 'CurrentBlock:\K[0-9]+' | head -1 || true)
+    SUPERBLOCK=$(echo "$status_line" | grep -oP 'CurrentSuperblock:\K[0-9]+' | head -1 || true)
+    recovery=$(echo "$status_line" | grep -oP 'status\.isRecoveryComplete=\K(true|false)' | head -1 || true)
+    NODE_VERSION=$(echo "$status_line" | grep -oP 'status\.version="\K[^"]+' | head -1 || true)
+  else
+    # Newer SEVM logs report the local block and superblock in downloader lines.
+    status_line=$(grep -a 'current local block' "$LOG_FILE" 2>/dev/null | tail -1)
+    NODE_BLOCK=$(echo "$status_line" | grep -oP 'current local block \K[0-9]+' | head -1 || true)
+    SUPERBLOCK=$(echo "$status_line" | grep -oP 'and superblock \K[0-9]+' | head -1 || true)
 
-  if [[ -z "$status_line" ]]; then
-    NODE_BLOCK=""
-    SUPERBLOCK="-"
-    RECOVERY_STATUS="⚠️ Unknown"
-    NODE_VERSION="-"
-    return
+    # The version and commit are emitted when SEVM starts.
+    version_line=$(grep -a 'msg="Starting SEVM"' "$LOG_FILE" 2>/dev/null | tail -1)
+    NODE_VERSION=$(echo "$version_line" | sed -nE 's/.*version=([^ ]+).*commit=([^ ]+).*/\1 \2/p')
+
+    # Recovery events are separate log records in newer SEVM versions.
+    recovery_line=$(grep -aE 'msg="(Finish Recovery|Check for blockchain status for recovery)"' "$LOG_FILE" 2>/dev/null | tail -1)
+    case "$recovery_line" in
+      *'msg="Finish Recovery"'*) recovery=true ;;
+      *'msg="Check for blockchain status for recovery"'*) recovery=false ;;
+      *) recovery="" ;;
+    esac
   fi
 
-  NODE_BLOCK=$(echo "$status_line" | grep -oP 'CurrentBlock:\K[0-9]+' | head -1 || true)
-  SUPERBLOCK=$(echo "$status_line" | grep -oP 'CurrentSuperblock:\K[0-9]+' | head -1 || true)
-  recovery=$(echo "$status_line" | grep -oP 'status\.isRecoveryComplete=\K(true|false)' | head -1 || true)
-  NODE_VERSION=$(echo "$status_line" | grep -oP 'status\.version="\K[^"]+' | head -1 || true)
+  NODE_BLOCK="${NODE_BLOCK:-}"
+  SUPERBLOCK="${SUPERBLOCK:--}"
+  NODE_VERSION="${NODE_VERSION:--}"
 
   case "$recovery" in
     true)  RECOVERY_STATUS="✅ Complete" ;;
     false) RECOVERY_STATUS="⚠️ Incomplete" ;;
     *)     RECOVERY_STATUS="⚠️ Unknown" ;;
   esac
-
-  SUPERBLOCK="${SUPERBLOCK:--}"
-  NODE_VERSION="${NODE_VERSION:--}"
 }
-
 network_block_height() {
   local response latest_hex
   response=$(curl -fsS --max-time 15 \

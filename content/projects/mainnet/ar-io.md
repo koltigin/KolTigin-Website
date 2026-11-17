@@ -33,4 +33,8 @@ links:
     en: "Automatic SSL Installation"
     tr: "Otomatik SSL Kurulumu"
   guide: ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl
+- label:
+    en: "AR.IO Disk Guard"
+    tr: "AR.IO Disk Guard"
+  guide: ar-io-disk-guard
 ---

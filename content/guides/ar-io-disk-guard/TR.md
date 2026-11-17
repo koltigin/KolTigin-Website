@@ -1,4 +1,5 @@
 ---
+coverLogos: ["/assets/images/cover-logos/ario.svg"]
 slug: ar-io-disk-guard
 date: 2026-11-17
 ---

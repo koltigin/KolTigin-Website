@@ -22,6 +22,10 @@
     }
   },
   "guides": {
+    "ar-io-disk-guard": {
+      "en": "8e8a22a05856",
+      "tr": "f10f2d68b1ed"
+    },
     "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl": {
       "en": "6ab533ef0002",
       "tr": "d1d3982a80e0"

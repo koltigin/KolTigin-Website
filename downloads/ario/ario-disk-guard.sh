@@ -4,7 +4,7 @@
 # It never deletes SQLite, Redis, Docker volumes, or files outside the verified cache path.
 set -Eeuo pipefail
 
-VERSION=3.0.0
+VERSION=3.1.0
 SELF=$(readlink -f -- "$0")
 DIR=${ARIO_DIR:-/root/ar-io-node}
 LANGUAGE=${GUARD_LANG:-}
@@ -254,6 +254,24 @@ status() {
   journalctl -u ario-disk-guard.service -n 30 --no-pager || true
 }
 
+uninstall() {
+  need_root
+  choose_language
+  if [[ -t 0 ]]; then
+    if [[ "$LANGUAGE" == tr ]]; then printf 'Disk Guard zamanlayıcısını ve script dosyalarını kaldırmak için KALDIR yazın: '; else printf 'Type UNINSTALL to remove Disk Guard and its timer: '; fi
+    read -r answer
+    if [[ "$LANGUAGE" == tr ]]; then [[ "$answer" == KALDIR ]] || { say 'Kaldırma iptal edildi.' 'Uninstall cancelled.'; return; }
+    else [[ "$answer" == UNINSTALL ]] || { say 'Kaldırma iptal edildi.' 'Uninstall cancelled.'; return; }; fi
+  fi
+  systemctl disable --now ario-disk-guard.timer 2>/dev/null || true
+  rm -f /etc/systemd/system/ario-disk-guard.service /etc/systemd/system/ario-disk-guard.timer
+  systemctl daemon-reload
+  rm -rf "$STATE_DIR"
+  rm -f /usr/local/sbin/ario-disk-guard
+  [[ "$SELF" == /usr/local/sbin/ario-disk-guard ]] || rm -f -- "$SELF"
+  say 'AR.IO Disk Guard kaldırıldı. AR.IO verileri ve cache dosyaları değiştirilmedi.' 'AR.IO Disk Guard was removed. AR.IO data and cache files were not changed.'
+}
+
 shift || true
 while (($#)); do
   case "$1" in
@@ -268,8 +286,9 @@ case "$MODE" in
   --setup) setup ;;
   --watch) watch ;;
   --status) status ;;
+  --uninstall) uninstall ;;
   --help|-h)
-    printf 'AR.IO Disk Guard v%s\n\nRun without arguments for automatic setup.\n' "$VERSION"
+    printf 'AR.IO Disk Guard v%s\n\nRun without arguments for automatic setup. Use --uninstall to remove the tool and its timer.\n' "$VERSION"
     ;;
   *) fail "Unknown mode: $MODE" ;;
 esac

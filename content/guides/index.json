@@ -1,5 +1,6 @@
 {
   "guides": [
+    "dante-proxy-setup-guide",
     "ar-io-disk-guard",
     "ar-io-gateway-domain-cloudflare-dns-and-automatic-ssl",
     "how-to-get-an-arns-domain",

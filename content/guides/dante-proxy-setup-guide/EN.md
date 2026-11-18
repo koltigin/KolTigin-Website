@@ -1,12 +1,12 @@
 ---
 slug: dante-proxy-setup-guide
 date: 2026-11-18
-coverLogos: ["/assets/images/cover-logos/dante-socks-proxy-logo.svg"]
+coverLogos: ["/assets/images/cover-logos/dante-socks-proxy-logo-2.svg"]
 ---
 
 # Dante Proxy Setup Guide
 
-> A guide to safely update Dante proxy access and the required UFW rule whenever your home internet IP changes.
+A guide to safely update Dante proxy access and the required UFW rule whenever your home internet IP changes.
 
 ## Purpose
 
@@ -72,5 +72,3 @@ Expected results:
 - The script removes only its old UFW rules labelled `dante-home-auto`; it does not delete manual or unlabelled rules.
 - If UFW is inactive, the script refuses to enable or modify it.
 - Your server addresses remain only in a permission-restricted local configuration file.
-
-

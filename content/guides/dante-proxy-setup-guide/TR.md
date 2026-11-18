@@ -1,12 +1,12 @@
 ---
 slug: dante-proxy-kurulum-rehberi
 date: 2026-11-18
-coverLogos: ["/assets/images/cover-logos/dante-socks-proxy-logo.svg"]
+coverLogos: ["/assets/images/cover-logos/dante-socks-proxy-logo-2.svg"]
 ---
 
 # Dante Proxy Kurulum Rehberi
 
-> Ev internet IP'niz değiştiğinde Dante proxy erişimini ve yalnızca gerekli UFW iznini güvenle güncelleyen rehber.
+Ev internet IP'niz değiştiğinde Dante proxy erişimini ve yalnızca gerekli UFW iznini güvenle güncelleyen rehber.
 
 ## Amaç
 
@@ -72,5 +72,3 @@ Beklenen sonuçlar:
 - Betik sadece kendi `dante-home-auto` etiketli eski UFW kurallarını kaldırır; el ile eklenmiş kuralları silmez.
 - UFW devre dışıysa betik onu kendiliğinden etkinleştirmez ve işlem yapmadan durur.
 - Sunucu adresleriniz yalnızca yerel, izinleri kısıtlanmış yapılandırma dosyasında kalır.
-
-

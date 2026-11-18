@@ -33,7 +33,7 @@ Bu rehber, Ubuntu VPS üzerinde systemd ile çalışan OptimAI Clean Node için 
 2. `/newbot` yazın.
 3. Bot için görüntülenen bir ad belirleyin.
 4. Kullanıcı adı belirleyin; kullanıcı adı `bot` ile bitmelidir.
-5. BotFather’ın verdiği **HTTP API token** değerini güvenli bir yere kaydedin. Bu token bir şifre gibidir; kimseyle paylaşmayın.
+5. BotFather’ın verdiği **HTTP API token** değerini güvenli bir yere kaydedin. Bu değer `123456789:AA...` biçimindedir. Botun kullanıcı adını (`@ornek_bot`) veya sayısal bot ID’sini girmeyin. Token bir şifre gibidir; kimseyle paylaşmayın.
 
 ## 2. Monitorü indirin ve kurun
 
@@ -56,6 +56,8 @@ Menüde önce **Türkçe** veya **English**, ardından **Ubuntu/Linux** seçilir
 - Node/Docker sağlığı
 
 Script yalnızca bot token’ını ister. Ardından Telegram’da botunuza `/start` göndermenizi ister ve chat ID’nizi otomatik alır. Node, Docker, node adı/ID ve servis başlangıcı da script tarafından doğrulanır. Kurulum sonunda Telegram’a ilk durum mesajı gelir.
+
+Kurulum sırasında düzenli durum özeti sıklığı seçilir: **15 dakika, 30 dakika, 1 saat, 12 saat veya 24 saat**. Node/imza kritik uyarıları seçilen özet sıklığından bağımsız olarak en geç 15 dakika içinde kontrol edilir.
 
 ### macOS
 
@@ -90,7 +92,7 @@ Menüden **Windows** seçilir. Son satır kurulum tamamlandıktan sonra indirile
 
 ## 5. Bildirimleri okuyun
 
-Günlük durum mesajı node adını, node ID’yi, node başlangıcını, çalışma süresini ve imzaya kalan zamanı içerir. Node kapalıysa veya Docker erişilemezse kritik bildirim gönderilir.
+Seçilen sıklıktaki durum özeti; node adını, node ID’yi, node başlangıcını, çalışma süresini ve imzaya kalan zamanı içerir. Node kapalıysa veya Docker erişilemezse kritik bildirim gönderilir.
 
 İmza zamanı yaklaştığında bot hatırlatır. Süre dolduğunda manuel olarak OptimAI giriş/imza yenilemesini tamamlayın ve node’u yeniden başlatın. Monitor yeni systemd başlangıç zamanını sonraki kontrolde algılar.
 
@@ -100,6 +102,12 @@ Anlık monitor durumu:
 
 ```bash
 sudo /usr/local/lib/optimai-telegram-monitor/optimai-telegram-monitor.sh --status
+```
+
+Özet sıklığını sonradan değiştirmek için:
+
+```bash
+sudo /usr/local/lib/optimai-telegram-monitor/optimai-telegram-monitor.sh --set-interval
 ```
 
 Node servisi:
@@ -116,7 +124,7 @@ journalctl -u optimai.service -n 80 --no-pager -l
 
 ## Monitorü kaldırma
 
-Bu komut 15 dakikalık zamanlayıcıyı ve VPS’te saklanan token/chat ID yapılandırmasını kaldırır:
+Bu komut arka plan kontrol zamanlayıcısını ve VPS’te saklanan token/chat ID yapılandırmasını kaldırır:
 
 ```bash
 sudo /usr/local/lib/optimai-telegram-monitor/install-optimai-cli-telegram-monitor.sh --uninstall

@@ -33,7 +33,7 @@ The signature baseline comes from the `ActiveEnterTimestamp` of `optimai.service
 2. Send `/newbot`.
 3. Choose a display name for the bot.
 4. Choose a username ending in `bot`.
-5. Save the **HTTP API token** BotFather returns. Treat it like a password and do not share it.
+5. Save the **HTTP API token** BotFather returns. It looks like `123456789:AA...`; do not enter the bot username (`@example_bot`) or numeric bot ID. Treat it like a password and do not share it.
 
 ## 2. Download and install the monitor
 
@@ -56,6 +56,8 @@ Choose **Türkçe** or **English** in the menu, then choose **Ubuntu/Linux**. Th
 - Node and Docker health
 
 The script asks only for the bot token. It then asks you to send `/start` to the bot and automatically retrieves your chat ID. It also validates the node, Docker, node name/ID, and service start time. The installation sends an initial status message to Telegram.
+
+During setup, choose the regular status-summary frequency: **15 minutes, 30 minutes, 1 hour, 12 hours, or 24 hours**. Critical node and signature alerts are checked independently at least every 15 minutes.
 
 ### macOS
 
@@ -90,7 +92,7 @@ Choose **Windows** from the menu. The last line deletes the downloaded ZIP and t
 
 ## 5. Understand the alerts
 
-The daily status message includes the node name, node ID, start time, uptime, and remaining signature time. A critical alert is sent if the node is down or Docker is unavailable.
+The regular status summary, sent at the selected frequency, includes the node name, node ID, start time, uptime, and remaining signature time. A critical alert is sent if the node is down or Docker is unavailable.
 
 When the signature deadline approaches, the bot sends reminders. At expiry, manually complete the OptimAI login/signature renewal and restart the node. The monitor detects the new systemd start time during its next check.
 
@@ -100,6 +102,12 @@ Show the monitor’s current status:
 
 ```bash
 sudo /usr/local/lib/optimai-telegram-monitor/optimai-telegram-monitor.sh --status
+```
+
+To change the summary frequency later:
+
+```bash
+sudo /usr/local/lib/optimai-telegram-monitor/optimai-telegram-monitor.sh --set-interval
 ```
 
 Show the node service:
@@ -116,7 +124,7 @@ journalctl -u optimai.service -n 80 --no-pager -l
 
 ## Remove the monitor
 
-This removes the 15-minute scheduler and the locally stored token/chat ID configuration from the VPS:
+This removes the background monitoring scheduler and the locally stored token/chat ID configuration from the VPS:
 
 ```bash
 sudo /usr/local/lib/optimai-telegram-monitor/install-optimai-cli-telegram-monitor.sh --uninstall

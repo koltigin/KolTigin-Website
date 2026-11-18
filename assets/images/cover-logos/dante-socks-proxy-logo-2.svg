@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 260" role="img" aria-labelledby="title desc">
+  <title id="title">Dante SOCKS Proxy</title>
+  <desc id="desc">Original shield and network logo for a Dante SOCKS proxy guide.</desc>
+  <defs>
+    <linearGradient id="shieldGradient" x1="42" y1="28" x2="180" y2="226" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="linkGradient" x1="55" y1="60" x2="174" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BAE6FD"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Original abstract shield: protected network transit. -->
+  <path d="M110 20 200 55v65c0 55-36 96-90 120-54-24-90-65-90-120V55z" fill="url(#shieldGradient)"/>
+  <path d="M110 43 180 70v50c0 39-24 72-70 94-46-22-70-55-70-94V70z" fill="none" stroke="#93C5FD" stroke-width="4" opacity=".8"/>
+
+  <!-- Network nodes and an intentionally asymmetric routed path. -->
+  <path d="M68 89 111 119l43-30M68 166l43-47 43 47" fill="none" stroke="url(#linkGradient)" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <circle cx="68" cy="89" r="12" fill="#FFF"/>
+  <circle cx="154" cy="89" r="12" fill="#FFF"/>
+  <circle cx="68" cy="166" r="12" fill="#FFF"/>
+  <circle cx="154" cy="166" r="12" fill="#FFF"/>
+  <circle cx="111" cy="119" r="17" fill="#DBEAFE" stroke="#FFF" stroke-width="5"/>
+  <circle cx="111" cy="119" r="6" fill="#2563EB"/>
+
+  <g fill="#F8FAFC">
+    <text x="245" y="124" font-family="Inter, Arial, Helvetica, sans-serif" font-size="90" font-weight="800" letter-spacing="7">DANTE</text>
+    <text x="251" y="171" font-family="Inter, Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="6" fill="#CBD5E1">SOCKS PROXY</text>
+  </g>
+</svg>

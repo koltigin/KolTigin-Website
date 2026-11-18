@@ -35,32 +35,7 @@ Bu rehber, Ubuntu VPS üzerinde systemd ile çalışan OptimAI Clean Node için 
 4. Kullanıcı adı belirleyin; kullanıcı adı `bot` ile bitmelidir.
 5. BotFather’ın verdiği **HTTP API token** değerini güvenli bir yere kaydedin. Bu token bir şifre gibidir; kimseyle paylaşmayın.
 
-## 2. Chat ID’nizi alın
-
-1. Yeni botunuza gidin ve `/start` gönderin.
-2. VPS terminalinde aşağıdaki komutu çalıştırın. Token terminal geçmişine yazılmasın diye gizli istenir.
-
-```bash
-read -rsp 'Telegram bot token: ' TG_TOKEN; echo
-curl -s "https://api.telegram.org/bot${TG_TOKEN}/getUpdates"
-unset TG_TOKEN
-```
-
-3. Çıktıda `"chat":{"id": ... }` alanındaki sayıyı not edin. Bu sizin **chat ID** değerinizdir.
-
-Bot gruba bildirim gönderecekse botu gruba ekleyin, gruba bir mesaj gönderin ve aynı komuttaki grup `chat.id` değerini kullanın.
-
-## 3. Node’un hazır olduğunu doğrulayın
-
-```bash
-optimai-cli node device
-optimai-cli node status
-systemctl status optimai.service --no-pager
-```
-
-Node çevrimiçi, Docker erişilebilir ve `optimai.service` durumu `active (running)` olmalıdır.
-
-## 4. Monitorü indirin ve kurun
+## 2. Monitorü indirin ve kurun
 
 ### Ubuntu/Linux
 
@@ -80,7 +55,7 @@ Menüde önce **Türkçe** veya **English**, ardından **Ubuntu/Linux** seçilir
 - Node başlangıcı: `systemctl show optimai.service -p ActiveEnterTimestamp --value`
 - Node/Docker sağlığı
 
-Sadece bot token ve chat ID sorulur. Kurulum sonunda Telegram’a ilk durum mesajı gelir. Gelmezse token, chat ID ve VPS’in internet erişimini kontrol edin.
+Script yalnızca bot token’ını ister. Ardından Telegram’da botunuza `/start` göndermenizi ister ve chat ID’nizi otomatik alır. Node, Docker, node adı/ID ve servis başlangıcı da script tarafından doğrulanır. Kurulum sonunda Telegram’a ilk durum mesajı gelir.
 
 ### macOS
 
@@ -164,5 +139,3 @@ Windows kaldırma komutu:
 ## Güvenlik notu
 
 Monitor seed phrase, özel anahtar veya OptimAI hesap parolanızı istemez. Bu bilgileri hiçbir Telegram mesajında, ekran görüntüsünde veya destek talebinde paylaşmayın.
-
-

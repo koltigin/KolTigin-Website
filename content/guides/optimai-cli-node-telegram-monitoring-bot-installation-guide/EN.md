@@ -35,32 +35,7 @@ The signature baseline comes from the `ActiveEnterTimestamp` of `optimai.service
 4. Choose a username ending in `bot`.
 5. Save the **HTTP API token** BotFather returns. Treat it like a password and do not share it.
 
-## 2. Find your chat ID
-
-1. Open the new bot and send `/start`.
-2. Run the command below in your VPS terminal. The token is requested without echoing it into your terminal history.
-
-```bash
-read -rsp 'Telegram bot token: ' TG_TOKEN; echo
-curl -s "https://api.telegram.org/bot${TG_TOKEN}/getUpdates"
-unset TG_TOKEN
-```
-
-3. In the output, copy the number in `"chat":{"id": ... }`. This is your **chat ID**.
-
-To receive notifications in a group, add the bot to the group, send a message in the group, then use that group’s `chat.id` value.
-
-## 3. Verify that the node is ready
-
-```bash
-optimai-cli node device
-optimai-cli node status
-systemctl status optimai.service --no-pager
-```
-
-The node should be online, Docker should be available, and `optimai.service` should show `active (running)`.
-
-## 4. Download and install the monitor
+## 2. Download and install the monitor
 
 ### Ubuntu/Linux
 
@@ -80,7 +55,7 @@ Choose **Türkçe** or **English** in the menu, then choose **Ubuntu/Linux**. Th
 - Node start time through `systemctl show optimai.service -p ActiveEnterTimestamp --value`
 - Node and Docker health
 
-It asks only for the bot token and chat ID. The installation sends an initial status message to Telegram. If it does not arrive, check the token, chat ID, and VPS internet access.
+The script asks only for the bot token. It then asks you to send `/start` to the bot and automatically retrieves your chat ID. It also validates the node, Docker, node name/ID, and service start time. The installation sends an initial status message to Telegram.
 
 ### macOS
 

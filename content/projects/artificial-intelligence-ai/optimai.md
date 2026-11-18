@@ -16,10 +16,6 @@ links:
       en: "Ubuntu Setup Guide"
       tr: "Ubuntu Kurulum Rehberi"
     guide: optimai-cli-node-setup-guide-ubuntu-24-04-vps
-  - label:
-      en: "Telegram Monitoring Bot"
-      tr: "Telegram İzleme Botu"
-    guide: optimai-cli-node-telegram-monitoring-bot-installation-guide
 referral_url: "https://node.optimai.network/register?ref=18ADBAE8"
 referral_code: 18ADBAE8
 ---

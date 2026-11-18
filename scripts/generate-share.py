@@ -1402,7 +1402,7 @@ def writing_detail_html(
         if "data-writings-view" in html_out:
             html_out = re.sub(
                 r"<div data-writings-view>[\s\S]*?</div>",
-                f'<div data-writings-view>\n{article_html}\n        </div>',
+                lambda _match: f'<div data-writings-view>\n{article_html}\n        </div>',
                 html_out,
                 count=1,
             )
@@ -1768,7 +1768,7 @@ def patch_guide_spa_page(
     )
     html_out, count = re.subn(
         r'(<div class="guide-body blog-post-content" data-guide-content>)[\s\S]*?(</div>)',
-        rf"\1\n{article_html}\n        \2",
+        lambda match: f"{match.group(1)}\n{article_html}\n        {match.group(2)}",
         html_out,
         count=1,
     )

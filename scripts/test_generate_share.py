@@ -98,7 +98,8 @@ def setup_root(tmp: Path) -> Path:
     )
     write(
         tmp / "content" / "guides" / "demo-guide" / "EN.md",
-        "---\nslug: demo-guide\n---\n\n# Demo Guide\n\nInstall the node.\n",
+        "---\nslug: demo-guide\n---\n\n# Demo Guide\n\nInstall the node.\n\n"
+        "```powershell\n& \"$TempDir\\optimai-monitor\\menu.ps1\"\n```\n",
     )
     write(
         tmp / "content" / "guides" / "demo-guide" / "TR.md",
@@ -584,6 +585,8 @@ def main() -> None:
         ghtml = read(spa_html)
         if "Demo Guide" not in ghtml or "koltigin-share-guide" not in ghtml:
             fail("guide spa html")
+        if '$TempDir\\optimai-monitor\\menu.ps1' not in ghtml:
+            fail("guide spa html must preserve Windows paths")
         if "/guides/demo-guide/EN/" not in ghtml:
             fail("guide spa canonical path")
         if 'hreflang="en" href="https://koltigin.xyz/guides/demo-guide/EN/"' not in ghtml:

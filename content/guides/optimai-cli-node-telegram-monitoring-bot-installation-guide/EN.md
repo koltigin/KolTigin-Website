@@ -25,7 +25,7 @@ The signature baseline comes from the `ActiveEnterTimestamp` of `optimai.service
 - Docker running
 - The `optimai-cli` command available in PATH
 - A Telegram account
-- The [OptimAI Telegram Monitor Universal ZIP package](https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip)
+- The [OptimAI Telegram Monitor Universal ZIP package](https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip)
 
 ## 1. Create a Telegram bot
 
@@ -44,7 +44,7 @@ This block downloads the ZIP into a temporary directory, extracts it, opens the 
 ```bash
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
-curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip"
+curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip"
 unzip -q "$TEMP_DIR/optimai-monitor.zip" -d "$TEMP_DIR"
 sudo bash "$TEMP_DIR/optimai-telegram-monitor-universal/menu.sh"
 ```
@@ -64,7 +64,7 @@ During setup, choose the regular status-summary frequency: **15 minutes, 30 minu
 ```bash
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
-curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip"
+curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip"
 unzip -q "$TEMP_DIR/optimai-monitor.zip" -d "$TEMP_DIR"
 bash "$TEMP_DIR/optimai-telegram-monitor-universal/menu.sh"
 ```
@@ -79,7 +79,7 @@ Open PowerShell as a normal user and run:
 $TempDir = Join-Path $env:TEMP ("optimai-monitor-" + [guid]::NewGuid())
 try {
   New-Item -ItemType Directory -Path $TempDir | Out-Null
-  Invoke-WebRequest "https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip" -OutFile "$TempDir\optimai-monitor.zip"
+  Invoke-WebRequest "https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip" -OutFile "$TempDir\optimai-monitor.zip"
   Expand-Archive "$TempDir\optimai-monitor.zip" -DestinationPath $TempDir
   Set-ExecutionPolicy -Scope Process Bypass
   & "$TempDir\optimai-telegram-monitor-universal\menu.ps1"
@@ -90,7 +90,7 @@ try {
 
 Choose **Windows** from the menu. The last line deletes the downloaded ZIP and temporary folder after the installation finishes.
 
-## 5. Understand the alerts
+## 3. Understand the alerts
 
 The regular status summary, sent at the selected frequency, includes the node name, node ID, start time, uptime, and remaining signature time. A critical alert is sent if the node is down or Docker is unavailable.
 

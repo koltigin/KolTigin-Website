@@ -25,7 +25,7 @@ Bu rehber, Ubuntu VPS üzerinde systemd ile çalışan OptimAI Clean Node için 
 - Docker’ın çalışıyor olması
 - `optimai-cli` komutunun PATH içinde olması
 - Telegram hesabı
-- [OptimAI Telegram Monitor Universal ZIP paketi](https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip)
+- [OptimAI Telegram Monitor Universal ZIP paketi](https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip)
 
 ## 1. Telegram botunu oluşturun
 
@@ -44,7 +44,7 @@ Aşağıdaki blok ZIP’i geçici klasöre indirir, açar, menüyü başlatır v
 ```bash
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
-curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip"
+curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip"
 unzip -q "$TEMP_DIR/optimai-monitor.zip" -d "$TEMP_DIR"
 sudo bash "$TEMP_DIR/optimai-telegram-monitor-universal/menu.sh"
 ```
@@ -64,7 +64,7 @@ Kurulum sırasında düzenli durum özeti sıklığı seçilir: **15 dakika, 30 
 ```bash
 TEMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEMP_DIR"' EXIT
-curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip"
+curl -fL -o "$TEMP_DIR/optimai-monitor.zip" "https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip"
 unzip -q "$TEMP_DIR/optimai-monitor.zip" -d "$TEMP_DIR"
 bash "$TEMP_DIR/optimai-telegram-monitor-universal/menu.sh"
 ```
@@ -79,7 +79,7 @@ PowerShell’i normal kullanıcı olarak açın ve aşağıdaki komutları çal�
 $TempDir = Join-Path $env:TEMP ("optimai-monitor-" + [guid]::NewGuid())
 try {
   New-Item -ItemType Directory -Path $TempDir | Out-Null
-  Invoke-WebRequest "https://koltigin.xyz/downloads/common/optimai-telegram-monitor-universal.zip" -OutFile "$TempDir\optimai-monitor.zip"
+  Invoke-WebRequest "https://koltigin.xyz/downloads/optimai/optimai-telegram-monitor-universal.zip" -OutFile "$TempDir\optimai-monitor.zip"
   Expand-Archive "$TempDir\optimai-monitor.zip" -DestinationPath $TempDir
   Set-ExecutionPolicy -Scope Process Bypass
   & "$TempDir\optimai-telegram-monitor-universal\menu.ps1"
@@ -90,7 +90,7 @@ try {
 
 Menüden **Windows** seçilir. Son satır kurulum tamamlandıktan sonra indirilen ZIP ve geçici klasörü siler.
 
-## 5. Bildirimleri okuyun
+## 3. Bildirimleri okuyun
 
 Seçilen sıklıktaki durum özeti; node adını, node ID’yi, node başlangıcını, çalışma süresini ve imzaya kalan zamanı içerir. Node kapalıysa veya Docker erişilemezse kritik bildirim gönderilir.
 

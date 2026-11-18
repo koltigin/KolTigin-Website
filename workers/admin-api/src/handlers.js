@@ -2,7 +2,7 @@ import { HttpError, ID_RE, CORE_TYPE_IDS, CONTACT_I18N_KEYS, slugify, resolvePer
 import { writingPath, videoPath, pagePath, projectMdPath, guidePath, guideIndexPath, staleGuideSourcePaths, assertSafePath } from "./paths.js";
 import { buildWritingMarkdown, buildVideoMarkdown, buildProjectMarkdown, projectJsonItem, youtubeIdFromUrl, parseFrontMatter, setYamlScalar, isExternalKind, isXUrl, applyGuideCover, applyGuideCoverLogos, applyGuideDate, applyGuideSlug } from "./markdown.js";
 import { pretty, applyWritingIndex, applyVideoIndex, applyGuideIndex, applyProjectJson, stripGuideFromProjectsJson, stripGuideFromProjectMarkdown, attachGuideToProjectMarkdown, attachGuideToProjectsJson, extractGuideIdsFromMarkdown, extractGuideLinksFromMarkdown, normalizeGuideLinkLabel, projectMarkdownId, findProjectsWithGuide, findProjectInJson, writingShareArtifacts, writingShareHtmlPath, writingOgPath, guideOgPath, writingKindLabel, excerptWriting, patchWritingShareHtml, guideShareArtifacts, localeUpper, writingOgVersion, writingOgAbsoluteUrl, writingOgAssetUrl, applyOgVersions } from "./generate.js";
-import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder } from "./scripts.js";
+import { SCRIPT_UPLOAD_LIMIT, sanitizeScriptFilename, scriptExtension, scriptRepoPath, parseDownloadPath, publicScriptUrl, isOverwriteFlag, scriptCommitMessage, resolveScriptProject, getAllowedDownloadProjects, buildScriptOptions, downloadFolder, isZipArchive } from "./scripts.js";
 
 function commitMsg(action, target) {
   return `admin: ${action} ${target}`;
@@ -1256,11 +1256,16 @@ async function scriptCatalog(github) {
 export async function handleScriptUpload(file, fields, github) {
   if (!file || !file.bytes || !file.bytes.length) throw new HttpError(400, "Choose a script file");
   if (file.bytes.length > SCRIPT_UPLOAD_LIMIT) throw new HttpError(413, "File is too large");
-  if ([...file.bytes].some((byte) => byte === 0)) throw new HttpError(400, "Unsupported file type");
   const { allowed } = await scriptCatalog(github);
   const project = resolveScriptProject(String((fields && fields.project) || ""), allowed);
   const fallbackExt = scriptExtension(file.name);
   const filename = sanitizeScriptFilename((fields && (fields.filename || fields.name)) || file.name, fallbackExt);
+  const extension = scriptExtension(filename);
+  if (extension === ".zip") {
+    if (!isZipArchive(file.bytes)) throw new HttpError(400, "Unsupported file type");
+  } else if ([...file.bytes].some((byte) => byte === 0)) {
+    throw new HttpError(400, "Unsupported file type");
+  }
   const path = scriptRepoPath(project, filename, allowed);
   const exists = await github.exists(path);
   if (exists && !isOverwriteFlag(fields && (fields.overwrite || fields.replace))) {

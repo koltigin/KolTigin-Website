@@ -917,7 +917,7 @@
     renderContact();
   }
 
-  const SCRIPT_ACCEPT = '.sh,.py,.js,.json,.yaml,.yml,.toml,.txt';
+  const SCRIPT_ACCEPT = '.sh,.py,.js,.json,.yaml,.yml,.toml,.txt,.zip';
 
   function scriptDraft() {
     if (!H().state.scriptDraft) {

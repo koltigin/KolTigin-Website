@@ -2,10 +2,10 @@ import { HttpError, ID_RE } from "./util.js";
 import { assertSafePath } from "./paths.js";
 import { compareProjectNames } from "./generate.js";
 
-export const SCRIPT_UPLOAD_LIMIT = 1_000_000;
+export const SCRIPT_UPLOAD_LIMIT = 10_000_000;
 export const SCRIPT_SITE_ORIGIN = "https://koltigin.xyz";
 export const COMMON_SCRIPT_PROJECT = "common";
-export const SCRIPT_EXTENSIONS = new Set([".sh", ".py", ".js", ".json", ".yaml", ".yml", ".toml", ".txt"]);
+export const SCRIPT_EXTENSIONS = new Set([".sh", ".py", ".js", ".json", ".yaml", ".yml", ".toml", ".txt", ".zip"]);
 const SCRIPT_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export const PREFERRED_SCRIPT_CATEGORY_ORDER = [
@@ -104,6 +104,13 @@ export function resolveScriptProject(raw, allowed) {
 export function scriptExtension(name) {
   const match = String(name || "").toLowerCase().match(/(\.[a-z0-9]+)$/);
   return match ? match[1] : "";
+}
+
+export function isZipArchive(bytes) {
+  if (!bytes || bytes.length < 4) return false;
+  if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) return false;
+  const marker = (bytes[2] << 8) | bytes[3];
+  return marker === 0x0304 || marker === 0x0506 || marker === 0x0708;
 }
 
 export function sanitizeScriptFilename(raw, fallbackExt = "") {

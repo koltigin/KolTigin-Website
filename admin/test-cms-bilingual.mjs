@@ -115,7 +115,7 @@ assert(savePageFn.includes("applyServiceIcons") && savePageFn.indexOf("applyServ
 assert(savePageFn.includes("saveShouldShowSuccess"), "savePage requires response langs before success");
 assert(localesFromLangs(aboutDraft.langs).length === 2, "localesFromLangs keeps filled About markdown");
 
-assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.23"), "admin HTML cache-busts cms-save and cms.js");
+assert(htmlSrc.includes("cms-save.js?v=v3.4") && htmlSrc.includes("cms.js?v=v3.24"), "admin HTML cache-busts cms-save and cms.js");
 assert(adminSrc.includes("data-cover-logo-delete-existing") && cmsSrc.includes("/admin/api/cover-logo-delete"), "Guide editor can safely delete an unused shared logo");
 const writingLogoDeleteBlock = adminSrc.slice(adminSrc.indexOf("if (event.target.closest('[data-cover-logo-delete-existing]')"), adminSrc.indexOf("const logoUp = event.target.closest('[data-cover-logo-up]')", adminSrc.indexOf("if (event.target.closest('[data-cover-logo-delete-existing]')")));
 const guideLogoDeleteBlock = cmsSrc.slice(cmsSrc.indexOf("if (event.target.closest('[data-cover-logo-delete-existing]')"), cmsSrc.indexOf("const logoUp = event.target.closest('[data-cover-logo-up]')", cmsSrc.indexOf("if (event.target.closest('[data-cover-logo-delete-existing]')")));

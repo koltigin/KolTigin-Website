@@ -22,10 +22,11 @@ assert(i18n.includes("scripts: 'Scripts'") && i18n.includes("scripts: 'Scriptler
 assert(admin.includes("navLink('#/scripts'") && admin.includes("href=\"#/scripts\""), "Scripts is in admin nav and dashboard");
 assert(cms.includes("page === 'scripts'") && cms.includes("renderScripts"), "Scripts route is handled");
 assert(cms.includes("/admin/api/script-upload") && cms.includes("overwrite"), "upload form posts to the Worker upload route");
+assert(cms.includes(".zip") && cms.includes("SCRIPT_ACCEPT"), "script picker accepts ZIP packages");
 assert(cms.includes("/admin/api/script-delete") && cms.includes("scripts.deleteConfirm"), "delete requires confirmation");
 assert(cms.includes("https://koltigin.xyz/downloads/") || cms.includes("item.url"), "list uses generated public URLs");
 assert(i18n.includes("Upload / Update") && i18n.includes("Yükle / Güncelle"), "bilingual upload button");
-assert(html.includes("cms.js?v=v3.23") && html.includes("admin.js?v=v3.24"), "Scripts UI cache-bust");
+assert(html.includes("cms.js?v=v3.24") && html.includes("admin.js?v=v3.24"), "Scripts UI cache-bust");
 assert(cms.includes("data.options") && cms.includes("optgroup") && cms.includes("scriptCatalogOptions"), "Scripts project dropdown is populated from canonical Projects options");
 assert(cms.includes("(group.scripts || []).length") && !cms.includes("id: 'redbelly', label:"), "existing Scripts groups skip empty projects and are not hard-coded");
 

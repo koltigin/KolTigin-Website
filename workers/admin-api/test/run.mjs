@@ -922,6 +922,14 @@ links:
     assert(github.commits.at(-1).message === "Add downloadable script: redbelly/redbelly-monitor.sh", "new script commit message");
     assert(github.commits.length === beforeScripts + 1, "new script creates a GitHub commit");
 
+    const zip = Uint8Array.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]);
+    res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-tools.zip", bytes: zip }, { project: "redbelly", filename: "redbelly-tools.zip" }, env));
+    assert(res.status === 200 && github.files.has("downloads/redbelly/redbelly-tools.zip"), "valid ZIP script package upload succeeds");
+    assert(bytesEqual(github.files.get("downloads/redbelly/redbelly-tools.zip"), zip), "ZIP package bytes are preserved");
+
+    res = await json(await postForm("/api/admin/script-upload", { name: "fake.zip", bytes: sh }, { project: "redbelly", filename: "fake.zip" }, env));
+    assert(res.status === 400 && String(res.body.error).toLowerCase().includes("unsupported"), "fake ZIP content is rejected");
+
     res = await json(await postForm("/api/admin/script-upload", { name: "redbelly-monitor.sh", bytes: sh }, { project: "redbelly-network", filename: "redbelly-canonical.sh" }, env));
     assert(res.status === 200 && github.files.has("downloads/redbelly/redbelly-canonical.sh"), "canonical Redbelly id still writes the existing redbelly folder");
     assert(!github.files.has("downloads/redbelly-network/redbelly-canonical.sh"), "canonical Redbelly id never creates downloads/redbelly-network/");

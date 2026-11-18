@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Updates the Dante "home-auto" source address on four servers.
-# It changes UFW only on Alper (38.242.251.142), for TCP port 33534.
+# Updates the Dante "home-auto" source address on one to six servers.
+# Server names and the UFW target are loaded from a private local config file.
 
 set -Eeuo pipefail
 IFS=$'\n\t'
@@ -9,17 +9,10 @@ umask 077
 readonly DANTE_CONFIG='/etc/danted.conf'
 readonly HOME_MARKER='home-auto'
 readonly UFW_TAG='dante-home-auto'
-readonly ALPER_HOST='root@38.242.251.142'
-readonly ALPER_PROXY_PORT='33534'
 LANGUAGE='en'
-
-# The first three servers deliberately have no UFW action in this script.
-SERVERS=(
-  'root@194.163.172.118'
-  'root@194.163.159.100'
-  'root@176.57.189.36'
-  "$ALPER_HOST"
-)
+LANGUAGE_EXPLICIT=0
+ACTION=''
+readonly CONFIG_FILE="${DANTE_UPDATE_CONFIG:-$HOME/.config/dante-update/servers.conf}"
 
 SSH_OPTIONS=(
   -o BatchMode=yes
@@ -43,8 +36,8 @@ say() {
     en:preflight) log "Preflight: $1" ;;
     tr:check) log 'Ön denetim başarılı; hiçbir değişiklik yapılmadı.' ;;
     en:check) log 'Preflight passed; no changes were made.' ;;
-    tr:ufw) log "Alper UFW eşitleniyor (yalnızca $1/tcp)" ;;
-    en:ufw) log "Synchronizing UFW on Alper ($1/tcp only)" ;;
+    tr:ufw) log "Hedef sunucuda UFW eşitleniyor (yalnızca $1/tcp)" ;;
+    en:ufw) log "Synchronizing UFW on the target server ($1/tcp only)" ;;
     tr:dante) log "Dante güncelleniyor: $1" ;;
     en:dante) log "Updating Dante on $1" ;;
     tr:done) log 'Başarıyla tamamlandı.' ;;
@@ -55,11 +48,140 @@ say() {
 usage() {
   cat >&2 <<'USAGE'
 Usage / Kullanım:
-  update-dante-ip.sh [--check] [--lang tr|en]
+  update-dante-ip.sh [--setup] [--check] [--lang tr|en]
 
+  --setup          Start the interactive server setup wizard
+                   Etkileşimli sunucu kurulum sihirbazını başlat
   --check          Read-only SSH and UFW preflight / Salt-okunur SSH ve UFW ön denetimi
   --lang tr|en     Progress-message language (default: en) / İlerleme iletisi dili (varsayılan: en)
 USAGE
+}
+
+choose_action() {
+  local choice
+  [[ -t 0 && -t 1 ]] || { printf 'ERROR: Use --setup, --check, or --lang in non-interactive mode.\n' >&2; exit 1; }
+  if [[ $LANGUAGE == tr ]]; then
+    printf '\nDante Proxy Yönetimi\n  1) İlk kurulum / sunucu bilgilerini düzenle\n  2) Güvenli ön denetim\n  3) IP güncellemesini başlat\n  4) Çıkış\nSeçim [1-4]: ' >&2
+  else
+    printf '\nDante Proxy Manager\n  1) First setup / edit server details\n  2) Safe preflight check\n  3) Start IP update\n  4) Exit\nSelection [1-4]: ' >&2
+  fi
+  read -r choice || true
+  case "$choice" in
+    1) ACTION='setup' ;;
+    2) ACTION='check' ;;
+    3) ACTION='update' ;;
+    4) ACTION='exit' ;;
+    *) die 'Invalid menu selection.' ;;
+  esac
+}
+
+choose_language() {
+  local choice
+  (( LANGUAGE_EXPLICIT )) && return 0
+  # Do not prompt in scheduled/non-interactive runs; retain English by default.
+  [[ -t 0 && -t 1 ]] || return 0
+  printf '\nDil / Language\n  1) Türkçe\n  2) English\nSeçim / Selection [2]: ' >&2
+  read -r choice || true
+  case "$choice" in
+    1|tr|TR) LANGUAGE='tr' ;;
+    ''|2|en|EN) LANGUAGE='en' ;;
+    *) log 'Invalid selection; English was selected.' ;;
+  esac
+}
+
+setup_config() {
+  local config_dir host username destination server_count target_number port overwrite
+  local -a configured_servers=()
+  [[ -t 0 && -t 1 ]] || die '--setup must be run interactively in Terminal or Git Bash.'
+  config_dir=$(dirname "$CONFIG_FILE")
+  mkdir -p "$config_dir"
+  chmod 700 "$config_dir"
+
+  if [[ -e $CONFIG_FILE ]]; then
+    if [[ $LANGUAGE == tr ]]; then
+      read -r -p 'Mevcut sunucu bilgileri değiştirilecek. Devam edilsin mi? [e/H]: ' overwrite
+    else
+      read -r -p 'Existing server details will be replaced. Continue? [y/N]: ' overwrite
+    fi
+    [[ $overwrite =~ ^([eEyY])$ ]] || return 0
+  fi
+
+  if [[ $LANGUAGE == tr ]]; then
+    printf '\nKaç sunucu yapılandırmak istediğinizi seçin; ardından SSH bilgileri sorulacaktır.\n' >&2
+  else
+    printf '\nChoose how many servers to configure; SSH details will then be requested.\n' >&2
+  fi
+  while :; do
+    if [[ $LANGUAGE == tr ]]; then
+      read -r -p 'Sunucu sayısı [1-6]: ' server_count
+    else
+      read -r -p 'Number of servers [1-6]: ' server_count
+    fi
+    [[ $server_count =~ ^[1-6]$ ]] && break
+  done
+  for ((target_number = 1; target_number <= server_count; target_number++)); do
+    while :; do
+      if [[ $LANGUAGE == tr ]]; then
+        read -r -p "Sunucu ${target_number} adresi: " host
+        read -r -p "Sunucu ${target_number} SSH kullanıcısı [root]: " username
+      else
+        read -r -p "Server ${target_number} address: " host
+        read -r -p "Server ${target_number} SSH username [root]: " username
+      fi
+      username=${username:-root}
+      [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9._:-]*$ && $username =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] && break
+      if [[ $LANGUAGE == tr ]]; then
+        printf 'Geçersiz adres veya kullanıcı adı. Tekrar deneyin.\n' >&2
+      else
+        printf 'Invalid address or username. Please try again.\n' >&2
+      fi
+    done
+    configured_servers+=("${username}@${host}")
+  done
+
+  while :; do
+    if [[ $LANGUAGE == tr ]]; then
+      read -r -p "UFW güncellemesi yapılacak sunucu numarası [1-${server_count}]: " target_number
+    else
+      read -r -p "Server number to receive the UFW update [1-${server_count}]: " target_number
+    fi
+    [[ $target_number =~ ^[1-6]$ && $target_number -le $server_count ]] && break
+  done
+  while :; do
+    if [[ $LANGUAGE == tr ]]; then
+      read -r -p 'Dante/proxy TCP portu [33534]: ' port
+    else
+      read -r -p 'Dante/proxy TCP port [33534]: ' port
+    fi
+    port=${port:-33534}
+    [[ $port =~ ^[0-9]{1,5}$ && $port -ge 1 && $port -le 65535 ]] && break
+  done
+
+  {
+    printf '# Private Dante update configuration. Do not publish this file.\nSERVERS=(\n'
+    for destination in "${configured_servers[@]}"; do
+      printf '  %q\n' "$destination"
+    done
+    printf ')\nTARGET_HOST=%q\nTARGET_PROXY_PORT=%q\n' "${configured_servers[$((target_number - 1))]}" "$port"
+  } >"$CONFIG_FILE"
+  chmod 600 "$CONFIG_FILE"
+  load_config
+  [[ $LANGUAGE == tr ]] && log "Özel yapılandırma hazır: $CONFIG_FILE" || log "Private configuration is ready: $CONFIG_FILE"
+}
+
+load_config() {
+  local host target_found=0
+  [[ -r $CONFIG_FILE ]] || die "Private config not found: $CONFIG_FILE"
+  # shellcheck source=/dev/null
+  source "$CONFIG_FILE"
+  declare -p SERVERS >/dev/null 2>&1 || die 'SERVERS is required in the private config.'
+  [[ ${#SERVERS[@]} -ge 1 && ${#SERVERS[@]} -le 6 ]] || die 'SERVERS must contain between one and six SSH destinations.'
+  [[ -n ${TARGET_HOST:-} && -n ${TARGET_PROXY_PORT:-} ]] || die 'TARGET_HOST and TARGET_PROXY_PORT are required.'
+  [[ $TARGET_PROXY_PORT =~ ^[0-9]{1,5}$ && $TARGET_PROXY_PORT -ge 1 && $TARGET_PROXY_PORT -le 65535 ]] || die 'TARGET_PROXY_PORT must be between 1 and 65535.'
+  for host in "${SERVERS[@]}"; do
+    [[ $host == "$TARGET_HOST" ]] && target_found=1
+  done
+  (( target_found )) || die 'TARGET_HOST must also appear in SERVERS.'
 }
 
 cleanup() { rmdir "$LOCK_DIR" 2>/dev/null || true; }
@@ -152,9 +274,9 @@ fi
 REMOTE
 }
 
-sync_alper_ufw() {
+sync_target_ufw() {
   local ip=$1
-  ssh_run "$ALPER_HOST" "bash -s -- $(printf '%q ' "$ip" "$ALPER_PROXY_PORT" "$UFW_TAG")" <<'REMOTE'
+  ssh_run "$TARGET_HOST" "bash -s -- $(printf '%q ' "$ip" "$TARGET_PROXY_PORT" "$UFW_TAG")" <<'REMOTE'
 set -Eeuo pipefail
 ip=$1 port=$2 tag=$3
 command -v ufw >/dev/null
@@ -190,35 +312,58 @@ echo "UFW permits ${ip}/32 to TCP ${port}; managed old rules were removed."
 REMOTE
 }
 
-check_alper_ufw() {
-  ssh_run "$ALPER_HOST" "bash -s -- $(printf '%q ' "$ALPER_PROXY_PORT")" <<'REMOTE'
+check_target_ufw() {
+  ssh_run "$TARGET_HOST" "bash -s -- $(printf '%q ' "$TARGET_PROXY_PORT")" <<'REMOTE'
 set -Eeuo pipefail
 port=$1
 command -v ufw >/dev/null
 ufw status | grep -qx 'Status: active'
-echo "Current Alper UFW rules for TCP ${port}:"
+echo "Current UFW rules on the target server for TCP ${port}:"
 ufw status numbered | grep "${port}/tcp" || true
 REMOTE
 }
 
 main() {
-  local current_ip host check_only=0
+  local current_ip host check_only=0 setup_only=0
   while (( $# > 0 )); do
     case "$1" in
+      --setup) setup_only=1 ;;
       --check) check_only=1 ;;
       --lang)
         shift
         (( $# > 0 )) || { usage; die '--lang requires tr or en.'; }
         LANGUAGE=$1
+        LANGUAGE_EXPLICIT=1
         ;;
-      --lang=tr) LANGUAGE='tr' ;;
-      --lang=en) LANGUAGE='en' ;;
+      --lang=tr) LANGUAGE='tr'; LANGUAGE_EXPLICIT=1 ;;
+      --lang=en) LANGUAGE='en'; LANGUAGE_EXPLICIT=1 ;;
       -h|--help) usage; return 0 ;;
       *) usage; die "Unknown option: $1" ;;
     esac
     shift
   done
   [[ $LANGUAGE == tr || $LANGUAGE == en ]] || { usage; die 'Language must be tr or en.'; }
+  choose_language
+
+  if (( setup_only )); then
+    (( check_only == 0 )) || die '--setup and --check cannot be used together.'
+    ACTION='setup'
+  elif (( check_only )); then
+    ACTION='check'
+  elif [[ -t 0 && -t 1 ]]; then
+    choose_action
+  else
+    ACTION='update'
+  fi
+
+  case "$ACTION" in
+    exit) return 0 ;;
+    setup) setup_config; return 0 ;;
+    check|update) ;;
+    *) die 'No action selected.' ;;
+  esac
+
+  load_config
 
   current_ip=$(get_public_ipv4) || die 'Could not determine a valid public IPv4 address.'
   say detected "$current_ip"
@@ -229,15 +374,15 @@ main() {
     preflight_server "$host"
   done
 
-  if (( check_only )); then
-    check_alper_ufw
+  if [[ $ACTION == check ]]; then
+    check_target_ufw
     say check
     return 0
   fi
 
-  # Alper UFW is deliberately independent of Dante's previous/current IP.
-  say ufw "$ALPER_PROXY_PORT"
-  sync_alper_ufw "$current_ip"
+  # Target-server UFW is deliberately independent of Dante's previous/current IP.
+  say ufw "$TARGET_PROXY_PORT"
+  sync_target_ufw "$current_ip"
 
   for host in "${SERVERS[@]}"; do
     say dante "$host"
